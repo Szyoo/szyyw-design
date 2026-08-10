@@ -9,16 +9,22 @@
 信息密度可以高，但视觉噪音必须低：细边框、低饱和、克制的动效。
 所有动效使用同一条缓动曲线 `--ease: cubic-bezier(0.22, 1, 0.36, 1)`——快出慢停，有弹性但不弹跳。
 
-## 2. 两条轴：主题 × 明暗
+## 2. 三层：主题 → 配色 → 明暗
 
-- **主题（palette）**：`html[data-theme]`，缺省 `nebula`（深空青紫）。备选 `aurora`（极光翠青）。
-  新主题只需覆盖 hue 相关 token（accent/bg/tint/df-*），结构 token 不动。
+- **主题（theme）**：`html[data-theme]`。主题是**一整套**——背景效果、动效曲线、
+  光效（光晕/光斑）、配色族，不只是颜色。目前唯一主题 `nebula`（深空）：
+  DotField 点阵背景 + 毛玻璃层级 + 光晕跟随 + .spot 光斑。
+  新主题 = 新 token 块 +（按需）新的背景/光效模块；效果类参数尽量做成
+  token 旋钮（如 `--df-sparkle` / `--df-wave`），让主题只用 CSS 就能重配行为。
+- **配色（palette）**：`html[data-palette]`，主题的附属色彩变体，只覆盖 hue
+  相关 token（accent/bg/tint/df-*）。nebula 缺省青紫；附属配色 `aurora`（极光翠青）。
 - **明暗（scheme）**：`html[data-scheme]`，`dark`（缺省）/ `light` / `auto`（跟随系统）。
   实现：token 全部用 `light-dark()` 双值书写，scheme 只切换根节点的 `color-scheme`。
   auto = `color-scheme: light dark`，由系统决定取哪套，无需 JS 参与。
 
 规则：**组件层禁止硬编码颜色**。透明度派生用 `color-mix(in srgb, var(--x) N%, transparent)`，
-新颜色一律先进 tokens.css。
+新颜色一律先进 tokens.css。渐变到透明必须用「同色 + 0 透明度」，
+`transparent` 关键字是透明黑，插值中段会发灰。
 
 ## 3. 层级模型
 

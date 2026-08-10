@@ -38,10 +38,17 @@ function parseColor(text) {
 
 function readThemeColors() {
   const cs = getComputedStyle(document.documentElement);
+  const num = (name, fallback) => {
+    const v = parseFloat(cs.getPropertyValue(name));
+    return Number.isFinite(v) ? v : fallback;
+  };
   return {
     from: parseColor(cs.getPropertyValue("--df-from")) ?? { r: 56, g: 189, b: 248, a: 0.5 },
     to: parseColor(cs.getPropertyValue("--df-to")) ?? { r: 168, g: 85, b: 247, a: 0.4 },
-    glow: (cs.getPropertyValue("--df-glow") || "#0b1020").trim()
+    glow: (cs.getPropertyValue("--df-glow") || "#0b1020").trim(),
+    // 主题级效果旋钮：主题可以只用 CSS 重配背景行为
+    sparkle: num("--df-sparkle", 1) > 0,
+    wave: num("--df-wave", 2.5)
   };
 }
 
@@ -111,7 +118,9 @@ export function mountDotField(container, options = {}) {
   let colorCache = [];
 
   function rebuildColors() {
-    const { from, to, glow } = readThemeColors();
+    const { from, to, glow, sparkle, wave } = readThemeColors();
+    if (options.sparkle === undefined) props.sparkle = sparkle;
+    if (options.waveAmplitude === undefined) props.waveAmplitude = wave;
     colorCache = [];
     for (let gi = 0; gi <= GRAD_STEPS; gi++) {
       const t = gi / GRAD_STEPS;
@@ -258,7 +267,7 @@ export function mountDotField(container, options = {}) {
 
   // 主题/明暗切换 → 换色；auto 模式下系统切换也要响应
   const attrObserver = new MutationObserver(rebuildColors);
-  attrObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme", "data-scheme"] });
+  attrObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme", "data-palette", "data-scheme"] });
   const mql = window.matchMedia("(prefers-color-scheme: dark)");
   mql.addEventListener("change", rebuildColors);
 
