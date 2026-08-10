@@ -1,0 +1,41 @@
+# @szyyw/design
+
+szyyw.xyz 设计语言的共享实现：design tokens、玻璃组件层、交互式点阵背景。
+纯 CSS/JS，无构建步骤，React 与非 React 项目都能用。
+
+## 用法
+
+```jsonc
+// package.json
+"dependencies": {
+  "@szyyw/design": "github:Szyoo/szyyw-design#v0.1.0"
+}
+```
+
+```ts
+// 入口（Next.js: app/layout.tsx）
+import "@szyyw/design/tokens.css";
+import "@szyyw/design/components.css";
+
+// 点阵背景 + hover 光斑
+import { mountDotField, attachSpot } from "@szyyw/design/dotfield";
+const field = mountDotField(document.querySelector(".bg-layer"));
+attachSpot();
+```
+
+非 React 项目（Flask/静态页）直接 `<link>` 两个 css、`<script type="module">` 引 dotfield.js。
+
+## 主题与明暗
+
+```html
+<html data-theme="nebula" data-scheme="auto">
+```
+
+- `data-theme`: `nebula`（缺省，深空青紫）| `aurora`（极光翠青）
+- `data-scheme`: `dark`（缺省）| `light` | `auto`（跟随系统，靠 `color-scheme` + `light-dark()`，无 JS）
+
+规范与参数详见 [DESIGN.md](DESIGN.md)。
+
+## 升级流程
+
+改动 → 升 `version` → 打 tag（`git tag v0.x.y && git push --tags`）→ 各项目改依赖引用后 `npm install`。
