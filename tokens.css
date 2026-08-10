@@ -73,11 +73,15 @@
   --nav-h: 62px;
   --sidebar-w: 224px;
 
-  /* 终端窗（刻意保持深色——真实终端的样子，两种模式共用） */
-  --term-bg: rgba(2, 6, 23, 0.82);
+  /* 终端窗（刻意保持深色——真实终端的样子，两种模式共用固定色板） */
+  --term-bg: rgba(2, 6, 23, 0.72);
   --term-text: #cbd5e1;
   --term-dim: #64748b;
   --term-border: rgba(148, 163, 184, 0.14);
+  --term-accent: #38bdf8;
+  --term-ok: #34d399;
+  --term-warn: #fbbf24;
+  --term-err: #ef4444;
 }
 
 /* ---------- 主题 aurora · 极光 翠绿 + 青蓝 ---------- */
