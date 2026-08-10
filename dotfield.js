@@ -63,6 +63,7 @@ export function mountDotField(container, options = {}) {
   // 光晕：SVG 径向渐变（底色同色的“暗斑”），跟随鼠标、按互动强度淡入
   let glowEl = null;
   let glowStop = null;
+  let glowStopEnd = null;
   let svg = null;
   if (props.glow && finePointer && !reducedMotion) {
     const NS = "http://www.w3.org/2000/svg";
@@ -74,11 +75,13 @@ export function mountDotField(container, options = {}) {
     grad.setAttribute("id", gradId);
     glowStop = document.createElementNS(NS, "stop");
     glowStop.setAttribute("offset", "0%");
-    const stop1 = document.createElementNS(NS, "stop");
-    stop1.setAttribute("offset", "100%");
-    stop1.setAttribute("stop-color", "transparent");
+    glowStopEnd = document.createElementNS(NS, "stop");
+    glowStopEnd.setAttribute("offset", "100%");
+    // 终点必须是「同色 + 透明度 0」——transparent 关键字是透明黑，
+    // 插值中段会出现半透明灰，浅色模式下成一圈灰晕
+    glowStopEnd.setAttribute("stop-opacity", "0");
     grad.appendChild(glowStop);
-    grad.appendChild(stop1);
+    grad.appendChild(glowStopEnd);
     defs.appendChild(grad);
     svg.appendChild(defs);
     glowEl = document.createElementNS(NS, "circle");
@@ -121,6 +124,7 @@ export function mountDotField(container, options = {}) {
       }
     }
     if (glowStop) glowStop.setAttribute("stop-color", glow);
+    if (glowStopEnd) glowStopEnd.setAttribute("stop-color", glow);
     if (reducedMotion) drawStatic();
   }
 
