@@ -60,20 +60,37 @@ z-index 50  .overlay    弹层遮罩（Portal 挂 body，避开 transform 包含
 - `prefers-reduced-motion` 时画一帧静态点阵，不进动画循环
 - 取色自 `--df-from/--df-to/--df-glow`，主题/明暗切换自动换色（MutationObserver + matchMedia）
 
-## 5. hover 光斑（.spot）
+## 5. 明暗切换按钮（.scheme-toggle）
+
+常驻右上角（fixed，z-index 45——高于 sticky 顶栏、低于弹层）。
+点击循环 `auto → light → dark`，图标 🌗/☀️/🌙；auto 态右下角加一枚 accent 小圆点，
+让「跟随系统」与「手动固定」一眼可分。
+
+`mountSchemeToggle()` 来自 `@szyyw/design/scheme`，同模块还提供
+`setScheme` / `cycleScheme` / `onSchemeChange`（供设置页等处双向同步）。
+
+两个必须知道的点：
+- **持久化用 cookie**（SSR 项目服务端要读它，才能首屏就渲染对，不闪白）。
+  纯静态页可传 `persist: "localStorage"`。
+- **theme-color 同步读的是 `body` 的 computed backgroundColor，不是 `--bg`**：
+  自定义属性不做条件求值，直读只会拿到未展开的 `light-dark(...)` 字面量。
+
+页面需为它留出右上角空间（顶栏/内容区加 padding-right），否则会盖住那里的操作按钮。
+
+## 6. hover 光斑（.spot）
 
 卡片 hover 时一团 accent 色的柔光跟随指针（radial-gradient at `--mx/--my`）。
 `attachSpot()` 事件委托一次挂载，动态元素自动覆盖；触摸设备与 reduced-motion 下不启用。
 与 `.lift`（上浮 + 描边）可叠加：`class="glass lift spot"`。
 
-## 6. 字体与数字
+## 7. 字体与数字
 
 - 正文 Inter + 中文回退（PingFang SC / Hiragino / 雅黑）；15px 基准
 - 等宽 SF Mono / JetBrains Mono——终端窗、日志、代码
 - **所有数字加 `.num`**（tabular-nums），金额列才对得齐
 - 输入件字号 ≥16px：iOS 聚焦小于 16px 会触发页面缩放
 
-## 7. 交互约定
+## 8. 交互约定
 
 - 破坏性操作：二次确认（首点变红「再点一次确认」+ 展开影响范围警告），
   桌面弹层底栏里破坏性按钮靠左隔离（`.sheet-foot .danger { margin-right: auto }`）
@@ -81,7 +98,7 @@ z-index 50  .overlay    弹层遮罩（Portal 挂 body，避开 transform 包含
 - 动画终帧必须 `transform: none`——fill-mode 残留 transform 会困住子孙 fixed 弹层
 - 空状态：居中 emoji + 一句引导文案（`.empty`）
 
-## 8. 终端窗（日志回放）
+## 9. 终端窗（日志回放）
 
 刻意保持深色（真实终端的样子），浅色模式也不变——用独立的 `--term-*` token。
 等宽字体、分级着色（debug 暗 / info 青 / warn 黄 / error 红）、按级别过滤、

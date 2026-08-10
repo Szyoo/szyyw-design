@@ -146,6 +146,51 @@ a {
 
 .spot:hover::after { opacity: 1; }
 
+/* ---------- 明暗切换按钮（常驻右上角） ---------- */
+
+.scheme-toggle {
+  position: fixed;
+  top: calc(10px + env(safe-area-inset-top, 0px));
+  right: calc(12px + env(safe-area-inset-right, 0px));
+  /* 高于 sticky 顶栏(30)，低于弹层(50)——弹开的 sheet 不该被它盖住 */
+  z-index: 45;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  appearance: none;
+  font-size: 16px;
+  line-height: 1;
+  border-radius: 11px;
+  cursor: pointer;
+  color: var(--text);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: transform 0.15s var(--ease), border-color 0.15s var(--ease), background 0.15s var(--ease);
+}
+
+.scheme-toggle:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.scheme-toggle:active { transform: scale(0.94); }
+
+/* auto 模式加一枚小角标，跟固定模式区分开 */
+.scheme-toggle[data-scheme="auto"]::after {
+  content: "";
+  position: absolute;
+  right: 5px;
+  bottom: 5px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
 /* ---------- 文本 ---------- */
 
 .grad-text {

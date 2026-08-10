@@ -21,6 +21,11 @@ import "@szyyw/design/components.css";
 import { mountDotField, attachSpot } from "@szyyw/design/dotfield";
 const field = mountDotField(document.querySelector(".bg-layer"));
 attachSpot();
+
+// 明暗模式：常驻右上角切换按钮（auto → light → dark）
+import { configureScheme, mountSchemeToggle } from "@szyyw/design/scheme";
+configureScheme({ persist: "cookie", storageKey: "app_scheme" });
+mountSchemeToggle({ labels: { auto: "跟随系统", light: "浅色", dark: "深色" } });
 ```
 
 非 React 项目（Flask/静态页）直接 `<link>` 两个 css、`<script type="module">` 引 dotfield.js。
