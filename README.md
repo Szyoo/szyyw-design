@@ -28,10 +28,11 @@ attachSpot();
 ## 主题与明暗
 
 ```html
-<html data-theme="nebula" data-scheme="auto">
+<html data-theme="nebula" data-palette="aurora" data-scheme="auto">
 ```
 
-- `data-theme`: `nebula`（缺省，深空青紫）| `aurora`（极光翠青）
+- `data-theme`: 主题（一整套：背景/动效/光效/配色族）。目前唯一 `nebula`（深空）
+- `data-palette`: 主题的附属配色。nebula 缺省青紫，可选 `aurora`（极光翠青）
 - `data-scheme`: `dark`（缺省）| `light` | `auto`（跟随系统，靠 `color-scheme` + `light-dark()`，无 JS）
 
 规范与参数详见 [DESIGN.md](DESIGN.md)。

@@ -1,10 +1,14 @@
 /* ============================================================
    @szyyw/design · tokens.css
-   两条轴：
-     主题（palette）  html[data-theme="nebula" | "aurora"]，缺省 nebula
-     明暗（scheme）   html[data-scheme="dark" | "light" | "auto"]，缺省 dark
+   三层结构：
+     主题（theme）    html[data-theme]，一整套：背景效果 + 动效 + 光效 + 配色族。
+                      目前唯一主题 "nebula"（深空：DotField 点阵 + 毛玻璃 + 光晕/光斑）。
+                      新主题 = 新 token 块 + （可选）新的背景/光效模块。
+     配色（palette）  html[data-palette]，主题的附属色彩变体，只覆盖 hue 相关 token。
+                      nebula 缺省配色为青紫；附属配色 "aurora"（极光翠青）。
+     明暗（scheme）   html[data-scheme="dark" | "light" | "auto"]，缺省 dark。
 
-   每个 token 用 light-dark() 同时给出两套值，由 color-scheme 决定取哪套：
+   每个颜色 token 用 light-dark() 同时给出两套值，由 color-scheme 决定取哪套：
      dark  → color-scheme: dark        （始终深色）
      light → color-scheme: light      （始终浅色）
      auto  → color-scheme: light dark（跟随系统设置）
@@ -21,7 +25,7 @@
   color-scheme: light dark;
 }
 
-/* ---------- 主题 nebula（缺省）· 深空底色 + 青紫渐变 ---------- */
+/* ---------- 主题 nebula（唯一主题）· 深空 —— 缺省配色 青紫 ---------- */
 
 :root {
   /* 基底 */
@@ -63,7 +67,9 @@
   --tint-cyan-bg: light-dark(rgba(3, 105, 161, 0.11), rgba(56, 189, 248, 0.14));
   --tint-violet-bg: light-dark(rgba(126, 34, 206, 0.11), rgba(168, 85, 247, 0.16));
 
-  /* 点阵背景（DotField 从这里取色） */
+  /* 点阵背景（DotField 从这里取色与取参——主题级效果旋钮） */
+  --df-sparkle: 1;
+  --df-wave: 2.5;
   --df-from: light-dark(rgba(3, 105, 161, 0.4), rgba(56, 189, 248, 0.5));
   --df-to: light-dark(rgba(126, 34, 206, 0.32), rgba(168, 85, 247, 0.4));
   --df-glow: light-dark(#eef1f8, #0b1020);
@@ -84,9 +90,9 @@
   --term-err: #ef4444;
 }
 
-/* ---------- 主题 aurora · 极光 翠绿 + 青蓝 ---------- */
+/* ---------- nebula 附属配色 aurora · 极光 翠绿 + 青蓝（只覆盖 hue） ---------- */
 
-:root[data-theme="aurora"] {
+:root[data-palette="aurora"] {
   --bg: light-dark(#edf6f2, #081412);
   --accent: light-dark(#047857, #34d399);
   --accent2: light-dark(#0369a1, #38bdf8);
