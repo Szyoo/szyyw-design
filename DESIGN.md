@@ -78,6 +78,10 @@ z-index 50  .overlay         弹层遮罩（Portal 挂 body，避开 transform �
 小的在左：明暗切换 10、背景参数 20。项目自己的按钮用 `mountCornerTool(el, { order })`
 插进同一条，别再各自 fixed 一个——两个 fixed 会叠在一起。
 
+排列方向是 token 旋钮 `--corner-tools-dir`，缺省 `row`（横向）。
+紧凑布局要纵向堆叠（finance-ledger 那种）就在自己的 `:root` 里设 `column`，
+别用同权重 CSS 去覆盖整条规则。`order` 与按钮的挂载逻辑在两个方向下同样生效。
+
 页面需为这条留出右上角空间（顶栏/内容区加 padding-right），否则会盖住那里的操作按钮。
 
 ### 明暗切换（.scheme-toggle）

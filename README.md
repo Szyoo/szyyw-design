@@ -8,7 +8,7 @@ szyyw.xyz 设计语言的共享实现：design tokens、玻璃组件层、交互
 ```jsonc
 // package.json
 "dependencies": {
-  "@szyyw/design": "github:Szyoo/szyyw-design#v0.5.0"
+  "@szyyw/design": "github:Szyoo/szyyw-design#v0.6.0"
 }
 ```
 
