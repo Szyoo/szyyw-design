@@ -1,6 +1,6 @@
 {
   "name": "@szyyw/design",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "szyyw.xyz design language — tokens, glass components, interactive dot-field background. Framework-agnostic CSS/JS, no build step.",
   "type": "module",
   "license": "MIT",
@@ -15,6 +15,14 @@
     "./scheme": {
       "types": "./scheme.d.ts",
       "default": "./scheme.js"
+    },
+    "./settings": {
+      "types": "./settings.d.ts",
+      "default": "./settings.js"
+    },
+    "./corner": {
+      "types": "./corner.d.ts",
+      "default": "./corner.js"
     }
   },
   "files": [
@@ -24,6 +32,10 @@
     "dotfield.d.ts",
     "scheme.js",
     "scheme.d.ts",
+    "settings.js",
+    "settings.d.ts",
+    "corner.js",
+    "corner.d.ts",
     "DESIGN.md"
   ]
 }

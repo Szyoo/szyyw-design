@@ -18,12 +18,14 @@ export function getScheme(): Scheme;
 export function setScheme(next: Scheme, options?: { persist?: boolean }): Scheme;
 /** auto → light → dark → auto */
 export function cycleScheme(): Scheme;
-/** 配置持久化并对齐初始状态；返回当前模式 */
+/** 配置持久化并对齐初始状态；返回当前模式。重复调用不会叠加系统监听 */
 export function configureScheme(options?: SchemeConfig): Scheme;
+/** 解绑系统明暗监听（SPA 卸载时用） */
+export function destroyScheme(): void;
 /** 订阅变化，返回解绑函数 */
 export function onSchemeChange(handler: (scheme: Scheme) => void): () => void;
-/** 挂载常驻切换按钮（默认右上角固定） */
+/** 挂载常驻切换按钮（缺省进右上角工具位；给了 container 就挂到那里） */
 export function mountSchemeToggle(options?: {
-  container?: HTMLElement;
+  container?: HTMLElement | null;
   labels?: Record<Scheme, string>;
 }): SchemeToggleHandle;
