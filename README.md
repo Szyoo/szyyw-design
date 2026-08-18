@@ -8,7 +8,7 @@ szyyw.xyz 设计语言的共享实现：design tokens、玻璃组件层、交互
 ```jsonc
 // package.json
 "dependencies": {
-  "@szyyw/design": "github:Szyoo/szyyw-design#v0.6.0"
+  "@szyyw/design": "github:Szyoo/szyyw-design#v0.6.1"
 }
 ```
 
@@ -28,8 +28,8 @@ import { configureScheme, mountSchemeToggle } from "@szyyw/design/scheme";
 configureScheme({ persist: "cookie", storageKey: "app_scheme" });
 mountSchemeToggle({ labels: { auto: "跟随系统", light: "浅色", dark: "深色" } });
 
-// 背景参数面板：齿轮排在明暗切换右边，实时调点阵。
-// 面板底部自带版本检测（GitHub tags，6h 缓存）；有新版时齿轮亮角标。
+// 背景参数面板：调色板排在明暗切换右边，实时调点阵。
+// 面板底部自带版本检测（GitHub tags，6h 缓存）；有新版时调色板亮角标。
 // 缺省动作是「复制升级命令」；有服务端的项目接 onUpdate 才是真·一键更新：
 mountDotFieldSettings({
   field,

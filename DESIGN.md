@@ -35,7 +35,7 @@ z-index 30  侧栏 / 顶栏（sticky/fixed + backdrop-blur）
 z-index 40  底部导航
 z-index 43  .panel-backdrop  抽屉遮罩
 z-index 44  .settings-panel  背景参数抽屉
-z-index 45  .corner-tools    右上角工具位（抽屉开着时齿轮仍要能点）
+z-index 45  .corner-tools    右上角工具位（抽屉开着时调色板仍要能点）
 z-index 50  .overlay         弹层遮罩（Portal 挂 body，避开 transform 包含块陷阱）
 ```
 
@@ -82,6 +82,11 @@ z-index 50  .overlay         弹层遮罩（Portal 挂 body，避开 transform �
 紧凑布局要纵向堆叠（finance-ledger 那种）就在自己的 `:root` 里设 `column`，
 别用同权重 CSS 去覆盖整条规则。`order` 与按钮的挂载逻辑在两个方向下同样生效。
 
+工具位把自己的实测高度发布成 `--corner-rail-h`（corner.js 里的 ResizeObserver），
+需要「让开这条」的浮层读它算偏移。背景参数抽屉的顶端就是这么来的——
+纵排时整叠按钮有 76px 高，写死一枚按钮的高度会让调色板压在抽屉上。
+自己加浮层同理，别再抄一遍魔数。
+
 页面需为这条留出右上角空间（顶栏/内容区加 padding-right），否则会盖住那里的操作按钮。
 
 ### 明暗切换（.scheme-toggle）
@@ -100,8 +105,10 @@ z-index 50  .overlay         弹层遮罩（Portal 挂 body，避开 transform �
 
 ### 背景参数（.settings-toggle → .settings-panel）
 
-齿轮排在明暗切换右边，点开右侧抽屉实时调点阵。抽屉顶端从工具位下方起，
+调色板排在明暗切换右边，点开右侧抽屉实时调点阵。抽屉顶端从工具位下方起，
 开着时两枚按钮仍露在外面、还能点。来自 `@szyyw/design/settings`。
+
+图标用调色板不用齿轮：这里调的是外观/主题，齿轮会被读成系统设置。
 
 参数分两路走，面板上看不出区别，底下各归各家：
 
@@ -120,7 +127,7 @@ z-index 50  .overlay         弹层遮罩（Portal 挂 body，避开 transform �
 
 **版本检测**：面板底部显示当前版本（来自 version.js，vendored 场景也随行），
 静默比对上游最新 tag（匿名 GitHub API，60 次/时/IP，所以结果缓存 6h，
-「检查更新」按钮才强制刷新）。有新版时齿轮亮一枚 warn 色角标，
+「检查更新」按钮才强制刷新）。有新版时调色板亮一枚 warn 色角标，
 面板里给出 compare 链接。更新动作分两档，诚实地对应两种部署形态：
 
 - **缺省：复制升级命令**。包是构建期依赖，浏览器改不了服务器上的
