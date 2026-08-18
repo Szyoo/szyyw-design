@@ -8,7 +8,7 @@ szyyw.xyz 设计语言的共享实现：design tokens、玻璃组件层、交互
 ```jsonc
 // package.json
 "dependencies": {
-  "@szyyw/design": "github:Szyoo/szyyw-design#v0.4.0"
+  "@szyyw/design": "github:Szyoo/szyyw-design#v0.5.0"
 }
 ```
 
@@ -28,8 +28,16 @@ import { configureScheme, mountSchemeToggle } from "@szyyw/design/scheme";
 configureScheme({ persist: "cookie", storageKey: "app_scheme" });
 mountSchemeToggle({ labels: { auto: "跟随系统", light: "浅色", dark: "深色" } });
 
-// 背景参数面板：齿轮排在明暗切换右边，实时调点阵
-mountDotFieldSettings({ field, note: "仅本地预览" });
+// 背景参数面板：齿轮排在明暗切换右边，实时调点阵。
+// 面板底部自带版本检测（GitHub tags，6h 缓存）；有新版时齿轮亮角标。
+// 缺省动作是「复制升级命令」；有服务端的项目接 onUpdate 才是真·一键更新：
+mountDotFieldSettings({
+  field,
+  note: "仅本地预览",
+  update: {
+    // onUpdate: (r) => fetch("/api/design/update", { method: "POST", body: JSON.stringify(r) })
+  }
+});
 ```
 
 非 React 项目（Flask/静态页）直接 `<link>` 两个 css、`<script type="module">` 引 dotfield.js。
@@ -51,7 +59,11 @@ mountDotFieldSettings({ field, note: "仅本地预览" });
 
 ## 升级流程
 
-改动 → 升 `version` → 打 tag（`git tag v0.x.y && git push --tags`）→ 各项目改依赖引用后 `npm install`。
+改动 → 升版本（**package.json 与 version.js 两处同步改**，检测更新读的是后者）→
+打 tag（`git tag v0.x.y && git push --tags`）→ 各项目改依赖引用后 `npm install`。
+
+vendored 项目（jppost-tracker 那种）拷文件清单：tokens.css / components.css /
+dotfield.js / scheme.js / corner.js / settings.js / version.js。
 
 ### v0.4.0 破坏性变更
 

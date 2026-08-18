@@ -10,9 +10,39 @@ export interface DotFieldSettings extends DotFieldOptions {
 export interface DotFieldSettingsHandle {
   open(): void;
   close(): void;
+  /** 手动触发一次强制检查（绕过缓存）；update: false 时是 no-op */
+  checkUpdate(): Promise<void> | undefined;
   /** 外部改了参数后让面板跟上 */
   sync(): void;
   destroy(): void;
+}
+
+export interface UpdateResult {
+  current: string;
+  latest: string;
+  hasUpdate: boolean;
+  /** GitHub compare 页：v当前...v最新 */
+  compareUrl: string;
+}
+
+/**
+ * 查上游最新 tag 并与当前 VERSION 比对。
+ * 匿名 GitHub API + localStorage 缓存（缺省 6h），force 绕过缓存。
+ */
+export function checkDesignUpdate(options?: {
+  repo?: string;
+  cacheHours?: number;
+  force?: boolean;
+  cacheKey?: string;
+}): Promise<UpdateResult>;
+
+export interface UpdateConfig {
+  repo?: string;
+  cacheHours?: number;
+  /** 复制给用户的升级命令；vendored 项目传自己的 cp 流程 */
+  command?: (latest: string) => string;
+  /** 接了才显示真·一键更新按钮（消费方服务端完成更新）；抛错即算失败 */
+  onUpdate?: (result: UpdateResult) => void | Promise<void>;
 }
 
 /**
@@ -35,5 +65,14 @@ export function mountDotFieldSettings(options: {
   onSave?: (values: DotFieldSettings) => void | Promise<void>;
   /** 没有 onSave 时的页脚说明，如「访客模式 · 仅本地预览」 */
   note?: string;
-  labels?: Partial<Record<"open" | "close" | "reset" | "save" | "saving" | "saved" | "error", string>>;
+  /** 版本检测；false 关闭 */
+  update?: false | UpdateConfig;
+  labels?: Partial<
+    Record<
+      | "open" | "close" | "reset" | "save" | "saving" | "saved" | "error"
+      | "version" | "check" | "checking" | "upToDate" | "updateAvailable" | "viewChanges"
+      | "copyCommand" | "copied" | "updateNow" | "updating" | "updated" | "updateFailed" | "checkFailed",
+      string
+    >
+  >;
 }): DotFieldSettingsHandle;

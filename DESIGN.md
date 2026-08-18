@@ -114,6 +114,18 @@ z-index 50  .overlay         弹层遮罩（Portal 挂 body，避开 transform �
 `onSave` 传了才显示「保存」按钮（存服务端用），存的是同一份「改动过的键」；
 没传就显示 `note`（如「访客模式 · 仅本地预览」）。
 
+**版本检测**：面板底部显示当前版本（来自 version.js，vendored 场景也随行），
+静默比对上游最新 tag（匿名 GitHub API，60 次/时/IP，所以结果缓存 6h，
+「检查更新」按钮才强制刷新）。有新版时齿轮亮一枚 warn 色角标，
+面板里给出 compare 链接。更新动作分两档，诚实地对应两种部署形态：
+
+- **缺省：复制升级命令**。包是构建期依赖，浏览器改不了服务器上的
+  node_modules / vendored 文件——假装能改只会做出一个骗人的按钮。
+  命令可传 `command(latest)` 定制（vendored 项目传自己的 cp 流程）。
+- **接了 `onUpdate` 才是真·一键更新**：由消费方服务端完成拉取/部署
+  （如 portal 的 admin 端点），按钮态 更新中…→已更新 ✓，失败可重试。
+  成功后按钮不复位——更新是部署动作，等页面刷新收尾。
+
 ## 6. hover 光斑（.spot）
 
 卡片 hover 时一团 accent 色的柔光跟随指针（radial-gradient at `--mx/--my`）。
