@@ -11,6 +11,7 @@
 
 import { mountCornerTool, CORNER_ORDER } from "./corner.js";
 import { DEFAULTS, resolveTokenColor } from "./dotfield.js";
+import { VERSION, REPO } from "./version.js";
 
 const SLIDERS = [
   { key: "dotRadius", label: "点大小", min: 0.5, max: 4, step: 0.1 },
@@ -59,6 +60,73 @@ function el(tag, className, text) {
   if (className) node.className = className;
   if (text !== undefined) node.textContent = text;
   return node;
+}
+
+/* ---------- 版本检测 ---------- */
+
+const UPDATE_CACHE_KEY = "szyyw:design-update";
+
+function parseVer(text) {
+  const m = /^v?(\d+)\.(\d+)\.(\d+)$/.exec((text || "").trim());
+  return m ? [+m[1], +m[2], +m[3]] : null;
+}
+
+function newerThan(a, b) {
+  for (let i = 0; i < 3; i++) {
+    if (a[i] !== b[i]) return a[i] > b[i];
+  }
+  return false;
+}
+
+function toResult(latestTag, repo) {
+  const cur = parseVer(VERSION);
+  const lat = parseVer(latestTag);
+  return {
+    current: VERSION,
+    latest: latestTag.replace(/^v/, ""),
+    hasUpdate: !!(cur && lat && newerThan(lat, cur)),
+    compareUrl: `https://github.com/${repo}/compare/v${VERSION}...${latestTag}`
+  };
+}
+
+/**
+ * 查上游最新 tag 并与当前 VERSION 比对。
+ * 匿名走 GitHub API（限流 60 次/时/IP），结果按 cacheHours 缓存在 localStorage，
+ * force 才绕过缓存。tags 接口不保证顺序，自己按 semver 挑最大。
+ */
+export async function checkDesignUpdate({
+  repo = REPO,
+  cacheHours = 6,
+  force = false,
+  cacheKey = UPDATE_CACHE_KEY
+} = {}) {
+  if (!force) {
+    try {
+      const c = JSON.parse(localStorage.getItem(cacheKey) || "null");
+      if (c?.repo === repo && c.latest && Date.now() - c.at < cacheHours * 3600e3) {
+        return toResult(c.latest, repo);
+      }
+    } catch {
+      // 坏缓存当没有
+    }
+  }
+  const res = await fetch(`https://api.github.com/repos/${repo}/tags?per_page=100`, {
+    headers: { Accept: "application/vnd.github+json" }
+  });
+  if (!res.ok) throw new Error(`GitHub API ${res.status}`);
+  const tags = await res.json();
+  let latest = null;
+  for (const t of tags) {
+    const ver = parseVer(t?.name);
+    if (ver && (!latest || newerThan(ver, latest.ver))) latest = { ver, name: t.name };
+  }
+  if (!latest) throw new Error("no semver tags");
+  try {
+    localStorage.setItem(cacheKey, JSON.stringify({ at: Date.now(), repo, latest: latest.name }));
+  } catch {
+    // 存不了就每次现查
+  }
+  return toResult(latest.name, repo);
 }
 
 /** 滑杆右侧的读数：按 step 定小数位，免得 0.30000000000000004 */
@@ -112,6 +180,8 @@ export function restoreDotFieldSettings({ storageKey = "szyyw:dotfield" } = {}) 
  * @param onSave     传了才显示「保存」按钮（存服务端用）；异步，抛错即算失败
  * @param note       没有 onSave 时显示在页脚的说明，如「访客模式 · 仅本地预览」
  * @param persist    "localStorage"（缺省，改完即存）| "none"
+ * @param update     版本检测。false 关闭；{ onUpdate } 接了服务端更新端点才是真·一键更新，
+ *                   没接则退化为「复制升级命令」（浏览器改不了服务器上的依赖）
  */
 export function mountDotFieldSettings({
   field,
@@ -121,6 +191,7 @@ export function mountDotFieldSettings({
   order = CORNER_ORDER.settings,
   onSave = null,
   note = "",
+  update = {},
   labels = {}
 } = {}) {
   if (!field?.setOptions) throw new Error("mountDotFieldSettings 需要 mountDotField() 返回的实例");
@@ -133,6 +204,19 @@ export function mountDotFieldSettings({
     saving: "保存中…",
     saved: "已保存 ✓",
     error: "失败，重试",
+    version: "版本",
+    check: "检查更新",
+    checking: "检查中…",
+    upToDate: "已是最新 ✓",
+    updateAvailable: "有新版",
+    viewChanges: "查看变更",
+    copyCommand: "复制升级命令",
+    copied: "已复制 ✓",
+    updateNow: "更新到",
+    updating: "更新中…",
+    updated: "已更新 ✓",
+    updateFailed: "更新失败，重试",
+    checkFailed: "检查失败（网络或限流）",
     ...labels
   };
 
@@ -259,6 +343,105 @@ export function mountDotFieldSettings({
     });
   }
 
+  /* ---------- 版本与更新 ---------- */
+
+  let runCheck = null;
+
+  if (update !== false) {
+    const cfg = {
+      repo: REPO,
+      cacheHours: 6,
+      /** 复制给用户的升级命令；vendored 项目传自己的 cp 流程 */
+      command: (v) => `npm i github:${cfg.repo}#v${v}`,
+      /** 接了才显示真按钮：由消费方的服务端完成更新（如 portal 的 admin 端点） */
+      onUpdate: null,
+      ...update
+    };
+
+    body.append(el("hr", "divider"));
+    const section = el("div", "ctl");
+    const line = el("div", "ctl-row");
+    const label = el("span", "ctl-label");
+    label.append(text.version + " ", el("span", "num", "v" + VERSION));
+    const checkBtn = el("button", "btn btn-ghost btn-small", text.check);
+    checkBtn.type = "button";
+    line.append(label, checkBtn);
+    const status = el("span", "ctl-hint");
+    const actions = el("div", "update-actions");
+    actions.hidden = true;
+    section.append(line, status, actions);
+    body.append(section);
+
+    const renderResult = (r) => {
+      btn.dataset.update = r.hasUpdate ? "1" : "";
+      actions.hidden = !r.hasUpdate;
+      actions.textContent = "";
+      status.textContent = "";
+      if (!r.hasUpdate) {
+        status.textContent = text.upToDate;
+        return;
+      }
+      status.append(`${text.updateAvailable} v${r.latest} · `);
+      const link = el("a", "update-link", text.viewChanges);
+      link.href = r.compareUrl;
+      link.target = "_blank";
+      link.rel = "noreferrer";
+      status.append(link);
+
+      if (cfg.onUpdate) {
+        const upBtn = el("button", "btn btn-small", `${text.updateNow} v${r.latest}`);
+        upBtn.type = "button";
+        upBtn.addEventListener("click", async () => {
+          upBtn.disabled = true;
+          upBtn.textContent = text.updating;
+          try {
+            await cfg.onUpdate(r);
+            // 成功后不复位——更新是部署动作，等消费方刷新页面收尾
+            upBtn.textContent = text.updated;
+          } catch {
+            upBtn.disabled = false;
+            upBtn.textContent = text.updateFailed;
+          }
+        });
+        actions.append(upBtn);
+      } else {
+        const copyBtn = el("button", "btn btn-small", text.copyCommand);
+        copyBtn.type = "button";
+        copyBtn.addEventListener("click", async () => {
+          const cmd = cfg.command(r.latest);
+          try {
+            await navigator.clipboard.writeText(cmd);
+            copyBtn.textContent = text.copied;
+          } catch {
+            // 剪贴板被拒（非安全上下文/无手势）——退化成弹窗手动复制
+            window.prompt(text.copyCommand, cmd);
+            copyBtn.textContent = text.copyCommand;
+            return;
+          }
+          setTimeout(() => {
+            copyBtn.textContent = text.copyCommand;
+          }, 1600);
+        });
+        actions.append(copyBtn);
+      }
+    };
+
+    runCheck = async (force) => {
+      checkBtn.disabled = true;
+      status.textContent = text.checking;
+      try {
+        renderResult(await checkDesignUpdate({ repo: cfg.repo, cacheHours: cfg.cacheHours, force }));
+      } catch {
+        status.textContent = text.checkFailed;
+      }
+      checkBtn.disabled = false;
+    };
+
+    checkBtn.addEventListener("click", () => runCheck(true));
+    // 挂载后静默查一次（走缓存，至多 6h 一次网络请求），有新版就点亮齿轮角标
+    setTimeout(() => runCheck(false), 800);
+  }
+
   /* ---------- 页脚 ---------- */
 
   const resetBtn = el("button", "btn btn-ghost", text.reset);
@@ -356,6 +539,8 @@ export function mountDotFieldSettings({
   return {
     open: () => setOpen(true),
     close: () => setOpen(false),
+    /** 手动触发一次强制检查（绕过缓存） */
+    checkUpdate: () => runCheck?.(true),
     /** 外部改了参数后让面板跟上（比如从服务端拉到设置） */
     sync() {
       Object.assign(values, field.getOptions());

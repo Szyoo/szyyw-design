@@ -206,6 +206,18 @@ a {
   border-color: color-mix(in srgb, var(--accent) 45%, transparent);
 }
 
+/* 有新版时齿轮加一枚 warn 色小角标（跟 scheme 的 auto 角标同一位置语言） */
+.settings-toggle[data-update="1"]::after {
+  content: "";
+  position: absolute;
+  right: 5px;
+  bottom: 5px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--warn);
+}
+
 /* ---------- 背景参数抽屉 ---------- */
 
 .panel-backdrop {
@@ -293,6 +305,12 @@ a {
 .ctl-label { font-size: 13px; color: var(--text); }
 .ctl-hint { display: block; font-size: 11px; color: var(--text-dim); margin-top: 2px; }
 .ctl-value { font-size: 12px; color: var(--accent); }
+
+/* 版本检测区：变更链接与动作按钮 */
+.update-link { color: var(--accent); text-decoration: none; }
+.update-link:hover { text-decoration: underline; }
+.update-actions { display: flex; gap: 8px; }
+.update-actions .btn { flex: 1; }
 
 .ctl-toggle {
   flex-direction: row;
