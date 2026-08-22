@@ -59,6 +59,11 @@ z-index 50  .overlay         弹层遮罩（Portal 挂 body，避开 transform �
 **两种指针模型**（`bulgeOnly`）：关＝常驻斥力，点被推开、离开后回弹，鼠标停着也保持位移；
 开＝凹陷，位移乘 engagement（鼠标速度的平滑值），停下就回填，二次衰减让坑边缘不出硬边。
 
+出处：原型是 [React Bits](https://reactbits.dev) 的 DotField（portal 用它替掉 Dashy，
+分支 `vps/portal-reactbits`）。上游是 React 组件、mousemove 用 pageX/pageY、
+光晕终点写 `stop-color="transparent"`；本实现改成框架无关 ESM、颜色量化缓存、
+token 取色，并修掉了那个 transparent 灰晕。取用上游素材见 README。
+
 工程要点（都是踩过的坑）：
 - 颜色量化缓存（渐变 12 档 × 透明度 8 档），避免每帧上万次字符串分配
 - 真实时间驱动相位，rAF 被节流后平滑续接，不跳变闪烁

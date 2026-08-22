@@ -8,7 +8,7 @@ szyyw.xyz 设计语言的共享实现：design tokens、玻璃组件层、交互
 ```jsonc
 // package.json
 "dependencies": {
-  "@szyyw/design": "github:Szyoo/szyyw-design#v0.6.1"
+  "@szyyw/design": "github:Szyoo/szyyw-design#v0.6.2"
 }
 ```
 
@@ -56,6 +56,25 @@ mountDotFieldSettings({
 - `data-scheme`: `dark`（缺省）| `light` | `auto`（跟随系统，靠 `color-scheme` + `light-dark()`，无 JS）
 
 规范与参数详见 [DESIGN.md](DESIGN.md)。
+
+## React Bits 素材（可选）
+
+点阵背景 DotField 最早就来自 [React Bits](https://reactbits.dev)（portal 用它替掉 Dashy，
+再演化成本仓库的框架无关实现）。上游 166 个组件可以通过 shadcn MCP 随时取用：
+
+- **MCP server 配在用户级**（`~/.claude.json`），开发工具而已，不属于这个包
+- **registry 配在本仓库** [components.json](components.json)：`@react-bits` → `https://reactbits.dev/r/{name}.json`
+- 组件落到 `reference/reactbits/`——已 gitignore，且不在 package.json 的 `files` 白名单里，
+  **不会随包分发**
+
+```bash
+npx shadcn@latest add @react-bits/DotField-TS-CSS   # 变体：{名字}-{JS|TS}-{CSS|TW}
+```
+
+用途是**素材与参考，不是依赖**。本包是纯 CSS/JS、零依赖、Flask 也能 vendored，
+而 React Bits 是 React 组件（多数还要 ogl / three / gsap / motion）。
+看上某个效果就照 DotField 的路子移植成框架无关实现，别直接塞进分发。
+没装 Tailwind 的项目选 `-CSS` 变体即可。
 
 ## 升级流程
 
