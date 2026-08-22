@@ -1,0 +1,4 @@
+# React Bits 素材：随时能从 registry 重新拉，不进仓库也不进分发
+reference/
+node_modules/
+*.tgz
