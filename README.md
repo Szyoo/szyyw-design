@@ -8,7 +8,7 @@ szyyw.xyz 设计语言的共享实现：design tokens、玻璃组件层、交互
 ```jsonc
 // package.json
 "dependencies": {
-  "@szyyw/design": "github:Szyoo/szyyw-design#v0.7.0"
+  "@szyyw/design": "github:Szyoo/szyyw-design#v0.8.0"
 }
 ```
 
@@ -33,6 +33,11 @@ mountSchemeToggle({ labels: { auto: "跟随系统", light: "浅色", dark: "深�
 import { mountAppSwitcher } from "@szyyw/design/switcher";
 mountAppSwitcher({ portal: "https://szyyw.xyz" });
 
+// 账户菜单：切换器右边。未登录是「登录」（弹 portal 登录小窗），登录后是首字头像，
+// 点开有角色、账户设置、登出。也可从 "@szyyw/design/account" 引入（同一实现）。
+import { mountAccountMenu } from "@szyyw/design/switcher";
+mountAccountMenu({ portal: "https://szyyw.xyz", onChange: (d) => console.log("logged in", d) });
+
 // 背景参数面板：调色板排在明暗切换右边，实时调点阵。
 // 面板底部自带版本检测（GitHub tags，6h 缓存）；有新版时调色板亮角标。
 // 缺省动作是「复制升级命令」；有服务端的项目接 onUpdate 才是真·一键更新：
@@ -51,13 +56,27 @@ vendoring 用上游的 `sync.sh`，**各项目不要自己写同步脚本**（�
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Szyoo/szyyw-design/main/sync.sh \
-  | sh -s -- ./static/vendor/szyyw-design v0.7.0
+  | sh -s -- ./static/vendor/szyyw-design v0.8.0
 ```
 
-它拷贝 8 个运行时文件并写 `VENDORED.md` 记录版本；`--local` 代替 tag 可从本机 clone 同步未发版改动。
+它拷贝 9 个运行时文件并写 `VENDORED.md` 记录版本；`--local` 代替 tag 可从本机 clone 同步未发版改动。
 
 右上角是一条共用工具位（`.corner-tools`），项目自己的全局按钮用
 `mountCornerTool(el, { order })` 插进同一条，别各自 fixed。
+
+## 账户菜单（v0.8.0）
+
+```js
+import { mountAppSwitcher, mountAccountMenu } from "@szyyw/design/switcher"; // 或 "@szyyw/design/account"
+const portal = "https://szyyw.xyz";
+mountAppSwitcher({ portal });                       // order 5
+mountAccountMenu({ portal, onChange: (d) => {} });  // order 6，登录成功后自动 reload
+```
+
+依赖 portal 侧：`GET /api/me`（200 `{id,user,role}` / 401）、`POST /api/logout`、
+`/login?popup=1` 成功后对 `window.opener` 发 `{ type: "szyyw-portal:login", ... }`、
+`/?account=1` 打开账户抽屉；跨源接口回 `Access-Control-Allow-Origin: <origin>` + `Allow-Credentials: true`。
+切换器与账户面板经 `claimCornerPanel()`（corner.js）互斥，同一时刻只开一个。
 
 ## 主题与明暗
 
@@ -96,7 +115,7 @@ npx shadcn@latest add @react-bits/DotField-TS-CSS   # 变体：{名字}-{JS|TS}-
 打 tag（`git tag v0.x.y && git push --tags`）→ 各项目改依赖引用后 `npm install`。
 
 vendored 项目（jppost-tracker 那种）拷文件清单：tokens.css / components.css /
-dotfield.js / scheme.js / corner.js / settings.js / version.js。
+dotfield.js / scheme.js / corner.js / settings.js / switcher.js / account.js / version.js（以 `sync.sh` 的 `FILES` 为准）。
 
 ### v0.4.0 破坏性变更
 

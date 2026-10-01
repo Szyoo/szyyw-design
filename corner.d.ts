@@ -9,3 +9,9 @@ export function mountCornerTool(el: HTMLElement, options?: { order?: number }): 
 
 /** 立刻重新实测并发布工具位高度（--corner-rail-h）；浮层弹出前调用 */
 export function syncCornerRail(): void;
+
+/**
+ * 工具位下方弹出面板的互斥：打开前调用，先关掉当前开着的别的面板；
+ * 返回 release，本面板关闭时调用。
+ */
+export function claimCornerPanel(close: () => void): () => void;

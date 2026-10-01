@@ -26,3 +26,6 @@ export function mountAppSwitcher(options?: {
   cacheMs?: number;
   labels?: Partial<Record<"open" | "portal" | "loading" | "empty" | "unauth" | "error", string>>;
 }): AppSwitcherHandle;
+
+export { mountAccountMenu, ACCOUNT_ORDER } from "./account";
+export type { AccountMenuHandle, PortalMe, PortalLoginMessage } from "./account";
