@@ -8,7 +8,7 @@ szyyw.xyz 设计语言的共享实现：design tokens、玻璃组件层、交互
 ```jsonc
 // package.json
 "dependencies": {
-  "@szyyw/design": "github:Szyoo/szyyw-design#v0.6.2"
+  "@szyyw/design": "github:Szyoo/szyyw-design#v0.7.0"
 }
 ```
 
@@ -28,6 +28,11 @@ import { configureScheme, mountSchemeToggle } from "@szyyw/design/scheme";
 configureScheme({ persist: "cookie", storageKey: "app_scheme" });
 mountSchemeToggle({ labels: { auto: "跟随系统", light: "浅色", dark: "深色" } });
 
+// 应用切换器：右上角最左边的九宫格，列出当前账号能进的站点 + 回到门户。
+// 列表来自 portal 的 /api/apps（portal 的权限矩阵决定给谁看什么）。
+import { mountAppSwitcher } from "@szyyw/design/switcher";
+mountAppSwitcher({ portal: "https://szyyw.xyz" });
+
 // 背景参数面板：调色板排在明暗切换右边，实时调点阵。
 // 面板底部自带版本检测（GitHub tags，6h 缓存）；有新版时调色板亮角标。
 // 缺省动作是「复制升级命令」；有服务端的项目接 onUpdate 才是真·一键更新：
@@ -41,6 +46,15 @@ mountDotFieldSettings({
 ```
 
 非 React 项目（Flask/静态页）直接 `<link>` 两个 css、`<script type="module">` 引 dotfield.js。
+
+vendoring 用上游的 `sync.sh`，**各项目不要自己写同步脚本**（那是版本漂移的来源）：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Szyoo/szyyw-design/main/sync.sh \
+  | sh -s -- ./static/vendor/szyyw-design v0.7.0
+```
+
+它拷贝 8 个运行时文件并写 `VENDORED.md` 记录版本；`--local` 代替 tag 可从本机 clone 同步未发版改动。
 
 右上角是一条共用工具位（`.corner-tools`），项目自己的全局按钮用
 `mountCornerTool(el, { order })` 插进同一条，别各自 fixed。

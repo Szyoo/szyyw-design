@@ -1,6 +1,6 @@
 {
   "name": "@szyyw/design",
-  "version": "0.6.2",
+  "version": "0.7.0",
   "description": "szyyw.xyz design language — tokens, glass components, interactive dot-field background. Framework-agnostic CSS/JS, no build step.",
   "type": "module",
   "license": "MIT",
@@ -27,6 +27,10 @@
     "./version": {
       "types": "./version.d.ts",
       "default": "./version.js"
+    },
+    "./switcher": {
+      "types": "./switcher.d.ts",
+      "default": "./switcher.js"
     }
   },
   "files": [
@@ -42,6 +46,9 @@
     "corner.d.ts",
     "version.js",
     "version.d.ts",
-    "DESIGN.md"
+    "DESIGN.md",
+    "switcher.js",
+    "switcher.d.ts",
+    "sync.sh"
   ]
 }
