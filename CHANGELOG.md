@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.10.0 — 2026-10-07
+
+纯新增，旧 API（`mountDotFieldSettings` / `configureScheme` / `mountSchemeToggle` / `mountAccountMenu` / `mountAppSwitcher` …）签名、行为、DOM、class、存储键一律不变。
+
+- **新增 `appearance-data.js`（导出路径 `./appearance-data`）**：主题 / 配色 / 明暗的选项表与纯函数——`THEMES` / `PALETTES`（含 `bg.dark` / `bg.light`）/ `SCHEMES` / `DEFAULT_APPEARANCE` / `APPEARANCE_COOKIES` / `normalizeAppearance` / `themeColorFor` / `readAppearanceFromCookies` / `appearanceAttrs`。零 DOM、零 import，服务端可直接 import（SSR 读 cookie 铺 `<html>`、算 theme-color）。
+- **新增 `appearance.js`（导出路径 `./appearance`）**：`getAppearance` / `setAppearance` / `onAppearanceChange` / `configureAppearance` / `mountAppearancePanel` / `openAppearancePanel`。
+  - `mountAppearancePanel`：统一「外观」弹层（配色 / 明暗 / 折叠的背景参数 / 版本行），是 `mountDotFieldSettings` 的上位替代——**两者二选一**（同一枚调色板按钮、同 order 20、同一份 `szyyw:dotfield`）。
+  - 🌗 改明暗也会广播 `szyyw:appearancechange`（`changed = ["scheme"]`），应用只在 `onChange` 一处存账号级偏好。
+  - `openAppearancePanel()`：打开最近一次挂出的外观弹层（设置页「打开外观」按钮用），没挂返回 false。
+- `scheme.js` 新导出 `refreshThemeColor()`：换配色后重算 `<meta name="theme-color">`，不必整页刷新。
+- `settings.js` 内部重构：控件 / 版本行 / 按钮 / 骨架 / 开合拆成 `@internal` 导出（`.d.ts` 不声明）供外观弹层复用；`mountDotFieldSettings` 的 DOM 与行为逐字节不变（旧版与新版逐步对比 outerHTML / localStorage 一致）。
+- `components.css` 新增 `.appearance-panel` / `.appearance-advanced*` 少量布局规则，视觉沿用 `.settings-panel` / `.chip` / `.ctl`。
+- `sync.sh` 文件清单加入 `appearance.js` / `appearance-data.js`（现为 11 个运行时文件）。
+- 新增 `scripts/check-tokens.mjs`（断言 `PALETTES` 与 tokens.css 的 `--bg` 一致）与 `demo/appearance.html`（静态手测页），均不进 `files`。
+- DESIGN.md 新节 §2.1「外观的持久化与首屏」；§5「背景参数」小节扩写为「外观」；§3 层级表修正 v0.9.0 遗留（删已不存在的 `.panel-backdrop`，`.settings-panel` 44 → `.corner-panel` 46）。
+
 ## v0.9.0 — 2026-10-05
 
 - **工具位弹层统一为 `.corner-panel`**：背景参数、应用切换器、账户菜单同一种位置、底色、开合与动效（DESIGN.md §5「工具位弹层」）。

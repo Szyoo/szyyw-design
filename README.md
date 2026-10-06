@@ -8,7 +8,7 @@ szyyw.xyz 设计语言的共享实现：design tokens、玻璃组件层、交互
 ```jsonc
 // package.json
 "dependencies": {
-  "@szyyw/design": "github:Szyoo/szyyw-design#v0.8.0"
+  "@szyyw/design": "github:Szyoo/szyyw-design#v0.10.0"
 }
 ```
 
@@ -38,7 +38,18 @@ mountAppSwitcher({ portal: "https://szyyw.xyz" });
 import { mountAccountMenu } from "@szyyw/design/switcher";
 mountAccountMenu({ portal: "https://szyyw.xyz", onChange: (d) => console.log("logged in", d) });
 
-// 背景参数面板：调色板排在明暗切换右边，实时调点阵。
+// 外观弹层（v0.10.0，推荐）：调色板排在明暗切换右边——配色 / 明暗 / 折叠的「背景参数」/ 版本行。
+// 与下面的 mountDotFieldSettings 二选一（同一枚按钮、同一个 order、同一份存储）。
+import { configureAppearance, mountAppearancePanel } from "@szyyw/design/appearance";
+configureAppearance({ persist: "cookie", storageKeys: { theme: "app_theme", palette: "app_palette" } });
+mountAppearancePanel({
+  field,
+  labels: { palettes: { default: "青紫", aurora: "极光翠青" } },  // 包不内置语言，缺省显示 id
+  dotField: { note: "仅本地预览" },                                // 背景参数段 / 版本行，与旧面板同名同义
+  onChange: (a, changed) => savePrefs(a)                          // 账号级持久化；🌗 改明暗也会走这里
+});
+
+// 旧：只有背景参数的面板（仍可用，行为不变）。
 // 面板底部自带版本检测（GitHub tags，6h 缓存）；有新版时调色板亮角标。
 // 缺省动作是「复制升级命令」；有服务端的项目接 onUpdate 才是真·一键更新：
 mountDotFieldSettings({
@@ -50,16 +61,27 @@ mountDotFieldSettings({
 });
 ```
 
+SSR 首屏不闪（服务端，零 DOM 的 `appearance-data` 可在 server component 里 import）：
+
+```ts
+import { readAppearanceFromCookies, appearanceAttrs, themeColorFor } from "@szyyw/design/appearance-data";
+const a = readAppearanceFromCookies((n) => cookies().get(n)?.value, { theme: "app_theme", palette: "app_palette", scheme: "app_scheme" });
+// <html {...appearanceAttrs(a)}>；theme-color = themeColorFor(a.palette, a.scheme)（auto 时返回 { dark, light }）
+```
+
+细则（静态页内联脚本、账号级持久化）见 DESIGN.md §2.1；手测页 `demo/appearance.html`
+（仓库根目录 `python3 -m http.server 8080` 后打开 `/demo/appearance.html`）。
+
 非 React 项目（Flask/静态页）直接 `<link>` 两个 css、`<script type="module">` 引 dotfield.js。
 
 vendoring 用上游的 `sync.sh`，**各项目不要自己写同步脚本**（那是版本漂移的来源）：
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Szyoo/szyyw-design/main/sync.sh \
-  | sh -s -- ./static/vendor/szyyw-design v0.8.0
+  | sh -s -- ./static/vendor/szyyw-design v0.10.0
 ```
 
-它拷贝 9 个运行时文件并写 `VENDORED.md` 记录版本；`--local` 代替 tag 可从本机 clone 同步未发版改动。
+它拷贝 11 个运行时文件并写 `VENDORED.md` 记录版本；`--local` 代替 tag 可从本机 clone 同步未发版改动。
 
 右上角是一条共用工具位（`.corner-tools`），项目自己的全局按钮用
 `mountCornerTool(el, { order })` 插进同一条，别各自 fixed。
@@ -114,8 +136,12 @@ npx shadcn@latest add @react-bits/DotField-TS-CSS   # 变体：{名字}-{JS|TS}-
 改动 → 升版本（**package.json 与 version.js 两处同步改**，检测更新读的是后者）→
 打 tag（`git tag v0.x.y && git push --tags`）→ 各项目改依赖引用后 `npm install`。
 
+**改 tokens.css 的配色块（`:root` 主块或 `:root[data-palette=…]`）必须同步 `appearance-data.js` 的 `PALETTES`，
+并跑 `node scripts/check-tokens.mjs`**——JS 不能 import CSS，服务端算 theme-color 用的是 JS 那份。
+
 vendored 项目（jppost-tracker 那种）拷文件清单：tokens.css / components.css /
-dotfield.js / scheme.js / corner.js / settings.js / switcher.js / account.js / version.js（以 `sync.sh` 的 `FILES` 为准）。
+dotfield.js / scheme.js / corner.js / settings.js / switcher.js / account.js / version.js /
+appearance.js / appearance-data.js（以 `sync.sh` 的 `FILES` 为准）。
 
 ### v0.4.0 破坏性变更
 
