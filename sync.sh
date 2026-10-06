@@ -3,11 +3,11 @@
 # 这是 vendoring 的唯一来源；各项目不要再各写一份。
 #
 #   sh sync.sh <dest-dir>              拉 GitHub 最新 tag
-#   sh sync.sh <dest-dir> v0.8.0       拉指定 tag
+#   sh sync.sh <dest-dir> v0.10.0      拉指定 tag
 #   sh sync.sh <dest-dir> --local      从本机 clone 的工作区同步（调试未发版改动用）
 #
 # 一行引用（项目里不必保存脚本）：
-#   curl -fsSL https://raw.githubusercontent.com/Szyoo/szyyw-design/main/sync.sh | sh -s -- ./static/vendor/szyyw-design v0.8.0
+#   curl -fsSL https://raw.githubusercontent.com/Szyoo/szyyw-design/main/sync.sh | sh -s -- ./static/vendor/szyyw-design v0.10.0
 #
 # 同步后会写/更新 <dest>/VENDORED.md 记录版本；本脚本之外不要手改 vendor 目录。
 set -eu
@@ -15,7 +15,7 @@ set -eu
 DEST=${1:?usage: sync.sh <dest-dir> [tag|--local]}
 REF=${2:-latest}
 REPO=Szyoo/szyyw-design
-FILES="tokens.css components.css dotfield.js scheme.js corner.js settings.js switcher.js account.js version.js"
+FILES="tokens.css components.css dotfield.js scheme.js corner.js settings.js switcher.js account.js version.js appearance.js appearance-data.js"
 
 if [ "$REF" = "--local" ]; then
   SRC=${DESIGN_UPSTREAM:-$HOME/Documents/GitHub/szyyw-design}

@@ -26,6 +26,49 @@
 新颜色一律先进 tokens.css。渐变到透明必须用「同色 + 0 透明度」，
 `transparent` 关键字是透明黑，插值中段会发灰。
 
+### 2.1 外观的持久化与首屏
+
+三层的**选项表**与**纯函数**在 `@szyyw/design/appearance-data`（零 DOM、零 import，服务端可直接 import）：
+`THEMES` / `PALETTES`（含每个配色 `--bg` 的 `bg.dark` / `bg.light`）/ `SCHEMES` / `DEFAULT_APPEARANCE` /
+`normalizeAppearance` / `themeColorFor` / `readAppearanceFromCookies` / `appearanceAttrs`。
+客户端状态与「外观」弹层在 `@szyyw/design/appearance`。状态的唯一真相仍是 `<html>` 上的三个属性。
+
+1. **SSR 项目（Next 等）**：服务端读 cookie → 铺到 `<html>`，theme-color 也在服务端算，首屏不闪。
+
+   ```ts
+   import { readAppearanceFromCookies, appearanceAttrs, themeColorFor } from "@szyyw/design/appearance-data";
+   const COOKIES = { theme: "fl_theme", palette: "fl_palette", scheme: "fl_scheme" };
+   const a = readAppearanceFromCookies((n) => jar.get(n)?.value, COOKIES);
+   // <html lang="zh" {...appearanceAttrs(a)}>      —— palette 为 default 时不写 data-palette
+   // theme-color：themeColorFor(a.palette, a.scheme)；auto 返回 { dark, light }，各配一条 media 查询
+   ```
+
+2. **客户端对齐**：`configureScheme({ persist: "cookie", storageKey: "fl_scheme" })` +
+   `configureAppearance({ persist: "cookie", storageKeys: { theme: "fl_theme", palette: "fl_palette" } })`。
+   两者都是「`<html>` 上已有合法属性的项不覆盖，没有的才从存储恢复」。
+3. **静态页（无服务端）**：`<head>` 里、样式表之前内联一段同步脚本，从 localStorage 读三个键写到 `<html>`，
+   然后用 `persist: "localStorage"`（完整示例见 `demo/appearance.html`）：
+
+   ```html
+   <script>
+     (function () {
+       var d = document.documentElement;
+       try {
+         var t = localStorage.getItem("app:theme"), p = localStorage.getItem("app:palette"), s = localStorage.getItem("app:scheme");
+         if (t) d.setAttribute("data-theme", t);
+         if (p && p !== "default") d.setAttribute("data-palette", p);
+         if (s === "auto" || s === "dark" || s === "light") d.setAttribute("data-scheme", s);
+       } catch (e) {}
+     })();
+   </script>
+   ```
+
+4. **账号级持久化**归应用：`mountAppearancePanel({ onChange })` 里存库（🌗 改明暗也走这一个回调，别再另外订阅
+   `onSchemeChange` 存一遍）；登录后把库里的值写回 cookie，换设备不用重设。
+5. **文案**：包不内置语言，`labels` 全部由应用注入；配色名缺省显示 id。
+6. **配色色值手工双写**：JS 不能 import CSS，`PALETTES[].bg` 与 tokens.css 的 `--bg: light-dark(L, D)` 各写一份。
+   改 tokens.css 的配色块必须同步 appearance-data.js，并跑 `node scripts/check-tokens.mjs`（不一致退出码 1）。
+
 ## 3. 层级模型
 
 ```
@@ -33,9 +76,8 @@ z-index 0   .bg-layer        点阵背景（fixed，独立合成层）
 z-index 1   .app-frame       内容层
 z-index 30  侧栏 / 顶栏（sticky/fixed + backdrop-blur）
 z-index 40  底部导航
-z-index 43  .panel-backdrop  抽屉遮罩
-z-index 44  .settings-panel  背景参数抽屉
-z-index 45  .corner-tools    右上角工具位（抽屉开着时调色板仍要能点）
+z-index 45  .corner-tools    右上角工具位
+z-index 46  .corner-panel    工具位弹层（外观 / 背景参数、应用切换器、账户菜单；无遮罩）
 z-index 50  .overlay         弹层遮罩（Portal 挂 body，避开 transform 包含块陷阱）
 ```
 
@@ -80,7 +122,7 @@ token 取色，并修掉了那个 transparent 灰晕。取用上游素材见 REA
 ## 5. 右上角工具位（.corner-tools）
 
 全局开关都挂这里，容器管定位、按钮只管长相。CSS `order` 决定左右，
-小的在左：明暗切换 10、背景参数 20。项目自己的按钮用 `mountCornerTool(el, { order })`
+小的在左：明暗切换 10、外观（或旧的背景参数）20。项目自己的按钮用 `mountCornerTool(el, { order })`
 插进同一条，别再各自 fixed 一个——两个 fixed 会叠在一起。
 
 排列方向是 token 旋钮 `--corner-tools-dir`，缺省 `row`（横向）。
@@ -89,7 +131,7 @@ token 取色，并修掉了那个 transparent 灰晕。取用上游素材见 REA
 
 ### 工具位弹层（.corner-panel）
 
-工具位按钮点开的面板**只有一种**：背景参数、应用切换器、账户菜单，以及项目自己挂进工具位的按钮
+工具位按钮点开的面板**只有一种**：外观 / 背景参数、应用切换器、账户菜单，以及项目自己挂进工具位的按钮
 （finance-ledger 的通知）都挂 `.glass.corner-panel`，打开时调 `claimCornerPanel(close)`。规则：
 
 - **位置由 corner.js 实测发布**：`--corner-panel-top` / `--corner-panel-right`。横排贴在工具位下方、右缘对齐；
@@ -112,7 +154,8 @@ token 取色，并修掉了那个 transparent 灰晕。取用上游素材见 REA
 让「跟随系统」与「手动固定」一眼可分。
 
 `mountSchemeToggle()` 来自 `@szyyw/design/scheme`，同模块还提供
-`setScheme` / `cycleScheme` / `onSchemeChange`（供设置页等处双向同步）。
+`setScheme` / `cycleScheme` / `onSchemeChange`（供设置页等处双向同步），
+以及 `refreshThemeColor()`（换配色等改了 `--bg` 的操作之后重算 theme-color）。
 
 两个必须知道的点：
 - **持久化用 cookie**（SSR 项目服务端要读它，才能首屏就渲染对，不闪白）。
@@ -120,12 +163,32 @@ token 取色，并修掉了那个 transparent 灰晕。取用上游素材见 REA
 - **theme-color 同步读的是 `body` 的 computed backgroundColor，不是 `--bg`**：
   自定义属性不做条件求值，直读只会拿到未展开的 `light-dark(...)` 字面量。
 
-### 背景参数（.settings-toggle → .settings-panel）
+### 外观（.settings-toggle → .appearance-panel）
 
-调色板排在明暗切换右边，点开工具位弹层（见上「工具位弹层」）实时调点阵。来自 `@szyyw/design/settings`。
-v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一成和其余弹层一样。
+调色板排在明暗切换右边，点开工具位弹层（见上「工具位弹层」）。来自 `@szyyw/design/appearance` 的
+`mountAppearancePanel()`（v0.10.0），面板根节点 `glass corner-panel settings-panel appearance-panel`，
+宽度与 ≥720px 两列网格沿用 `.settings-panel`。从上到下：
+
+- **配色行**：当前主题下的配色 chip（`.chip` / `.chip-row`）。主题只有一个时**不渲染主题行**，别为唯一主题留空行
+- **明暗行**：跟随系统 / 深色 / 浅色。与 🌗 并列——🌗 是一键循环的快捷入口，弹层是完整设置；
+  两者经 scheme.js 的事件互相同步
+- **背景参数**（传了 `field` 才有）：`<details class="appearance-advanced">` 折叠段，`summary` 用 `.ctl-label`；
+  内容就是下面「背景参数」的全部控件与语义（同一份代码），「恢复默认 / 保存」在折叠段底部
+- **版本行**（`dotField.update !== false`）：同下「版本检测」
+
+改配色后 `setAppearance` 会调 `refreshThemeColor()`（scheme.js）重算 `<meta name="theme-color">`，不需要整页刷新。
+
+**与 `mountDotFieldSettings` 二选一，推荐 `mountAppearancePanel`**：两者是同一枚 `.settings-toggle` 按钮、
+同一个 order 20、同一份 `szyyw:dotfield` 存储，同时挂会出两枚调色板。旧 API 保留不变，
+换新只需把 `mountDotFieldSettings({ field, ... })` 换成 `mountAppearancePanel({ field, dotField: { ... } })`。
+设置页想放「打开外观」按钮时调 `openAppearancePanel()`（打开最近一次挂出的面板，没挂返回 false）。
 
 图标用调色板不用齿轮：这里调的是外观/主题，齿轮会被读成系统设置。
+
+#### 背景参数（.settings-panel，`mountDotFieldSettings` 或外观弹层的折叠段）
+
+实时调点阵，来自 `@szyyw/design/settings`。
+v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一成和其余弹层一样。
 
 参数分两路走，面板上看不出区别，底下各归各家：
 

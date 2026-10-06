@@ -16,6 +16,11 @@ export interface SchemeToggleHandle {
 
 export function getScheme(): Scheme;
 export function setScheme(next: Scheme, options?: { persist?: boolean }): Scheme;
+/**
+ * 按当前实际底色重算 <meta name="theme-color">（读 body 的 computed backgroundColor）。
+ * setScheme 已自动调用；换配色等其它改 --bg 的操作后手动调一次。configureScheme({ themeColor: false }) 时 no-op
+ */
+export function refreshThemeColor(): void;
 /** auto → light → dark → auto */
 export function cycleScheme(): Scheme;
 /** 配置持久化并对齐初始状态；返回当前模式。重复调用不会叠加系统监听 */

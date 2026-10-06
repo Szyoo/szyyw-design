@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>外观弹层 · 手测</title>
+<!--
+  @szyyw/design 外观弹层的静态手测页（不进 package files）。
+  ES module 不能 file:// 直开：在仓库根目录 `python3 -m http.server 8080`，
+  打开 http://localhost:8080/demo/appearance.html
+-->
+<script>
+  // 首屏不闪（静态页写法，见 DESIGN.md「外观的持久化与首屏」）：
+  // 在样式生效前同步把 localStorage 里的三个键写到 <html>，再由 configureScheme / configureAppearance 接手
+  (function () {
+    var d = document.documentElement;
+    try {
+      var t = localStorage.getItem("demo:theme");
+      var p = localStorage.getItem("demo:palette");
+      var s = localStorage.getItem("demo:scheme");
+      if (t) d.setAttribute("data-theme", t);
+      if (p && p !== "default") d.setAttribute("data-palette", p);
+      if (s === "auto" || s === "dark" || s === "light") d.setAttribute("data-scheme", s);
+    } catch (e) {
+      // 隐私模式：用缺省
+    }
+  })();
+</script>
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../components.css">
+<style>
+  .demo { max-width: 760px; margin: 0 auto; padding: 72px 20px 48px; }
+  .demo .glass { padding: 20px 22px; margin-bottom: 16px; }
+  .demo dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 0; font-size: 13px; }
+  .demo dt { color: var(--text-dim); }
+  .demo dd { margin: 0; }
+  .demo ol { margin: 0; padding-left: 20px; font-size: 13px; color: var(--text-dim); }
+  .demo .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+  .demo #log { margin: 0; font-size: 12px; max-height: 160px; overflow: auto; color: var(--text-dim); }
+</style>
+</head>
+<body>
+<div class="bg-layer"></div>
+<main class="app-frame">
+  <div class="demo">
+    <h1 class="page-title">外观弹层 · 手测</h1>
+    <p class="page-sub">右上角 🌗 = mountSchemeToggle，调色板 = mountAppearancePanel；持久化走 localStorage（demo:*）。</p>
+
+    <section class="glass">
+      <dl class="mono">
+        <dt>data-theme</dt><dd id="s-theme"></dd>
+        <dt>data-palette</dt><dd id="s-palette"></dd>
+        <dt>data-scheme</dt><dd id="s-scheme"></dd>
+        <dt>theme-color</dt><dd id="s-color"></dd>
+        <dt>localStorage</dt><dd id="s-store"></dd>
+      </dl>
+      <div class="actions">
+        <button class="btn btn-small" type="button" id="open">打开外观（openAppearancePanel）</button>
+        <button class="btn btn-ghost btn-small" type="button" id="clear">清空 demo 存储并刷新</button>
+      </div>
+    </section>
+
+    <section class="glass">
+      <ol>
+        <li>切配色 → data-palette 与 theme-color 变、点阵换色</li>
+        <li>切明暗 → 🌗 图标与弹层选中态同步；点 🌗 → 弹层选中态跟着变</li>
+        <li>刷新 → 保持；「背景参数」折叠段：滑杆实时生效、只存动过的键、恢复默认交还主题</li>
+        <li>Esc / 点外面关闭</li>
+      </ol>
+    </section>
+
+    <section class="glass">
+      <pre id="log" class="mono"></pre>
+    </section>
+  </div>
+</main>
+
+<script type="module">
+  import { mountDotField, attachSpot } from "../dotfield.js";
+  import { restoreDotFieldSettings } from "../settings.js";
+  import { configureScheme, mountSchemeToggle } from "../scheme.js";
+  import {
+    configureAppearance,
+    mountAppearancePanel,
+    openAppearancePanel,
+    onAppearanceChange
+  } from "../appearance.js";
+
+  configureScheme({ persist: "localStorage", storageKey: "demo:scheme" });
+  configureAppearance({ persist: "localStorage", storageKeys: { theme: "demo:theme", palette: "demo:palette" } });
+
+  const field = mountDotField(document.querySelector(".bg-layer"), restoreDotFieldSettings());
+  attachSpot();
+
+  mountSchemeToggle({ labels: { auto: "跟随系统", light: "浅色", dark: "深色" } });
+
+  const logEl = document.getElementById("log");
+  const log = (line) => {
+    logEl.textContent = `${new Date().toLocaleTimeString()}  ${line}\n` + logEl.textContent;
+  };
+  window.__changes = [];
+
+  window.__panel = mountAppearancePanel({
+    field,
+    labels: { palettes: { default: "青紫（默认）", aurora: "极光翠青" } },
+    dotField: { note: "仅本地预览" },
+    onChange: (a, changed) => {
+      window.__changes.push({ a, changed });
+      log(`onChange ${JSON.stringify(changed)} → ${JSON.stringify(a)}`);
+    }
+  });
+
+  const $ = (id) => document.getElementById(id);
+  function renderState() {
+    const d = document.documentElement;
+    $("s-theme").textContent = d.getAttribute("data-theme") ?? "（无）";
+    $("s-palette").textContent = d.getAttribute("data-palette") ?? "（无 = default）";
+    $("s-scheme").textContent = d.getAttribute("data-scheme") ?? "（无）";
+    $("s-color").textContent = document.querySelector('meta[name="theme-color"]')?.content ?? "（无）";
+    const keys = ["demo:theme", "demo:palette", "demo:scheme", "szyyw:dotfield"];
+    $("s-store").textContent = keys.map((k) => `${k}=${localStorage.getItem(k)}`).join("  ");
+  }
+  onAppearanceChange(renderState);
+  renderState();
+  setInterval(renderState, 1000);
+
+  $("open").addEventListener("click", () => openAppearancePanel());
+  $("clear").addEventListener("click", () => {
+    for (const k of ["demo:theme", "demo:palette", "demo:scheme", "szyyw:dotfield"]) localStorage.removeItem(k);
+    location.reload();
+  });
+</script>
+</body>
+</html>
