@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.11.0 — 2026-10-08
+
+修「输入框和按钮粘在一起」。现有标记不改代码升级不会出现新的布局破坏：新增类是纯新增，`.form-row` 兜底只在原来贴死（0px）的地方补间距。
+
+- **新增 `.field-row`**：输入框 + 按钮（或多个小控件）一行——flex、`gap: 8px`、居中对齐、放不下就换行；`.field` 吃剩余宽度（基准 12rem），`.btn` / `.btn-ghost` / `button` / `.pill` / `.chip` 不伸缩，行内 `<label>` 去掉块级下边距。可与 `.form-row` 叠加（`class="form-row field-row"`）。
+- **`.form-row` 兜底**：`.form-row` 仍是块级、不排版（label + 控件 + 提示的现有用法逐像素不变）；只在它的直接子级「控件后面紧跟按钮 / 另一个控件」时给后者 `margin-top: 8px`（之前 100% 宽的输入框把按钮挤到下一行后上下贴死）。叠了 `.field-row` 的不生效；规则全在 `:where()` 里，特异性 0。
+  - 没有加全局的 `.field + .btn` 相邻规则：多数这类组合在 `.row` / 自有 flex 容器里已有 gap，外边距会叠成双倍、并在横排里把按钮顶歪。
+- **`.btn:disabled` 改为实底「熄灭」态**（`--inner-bg` 底 + `--text-dim` 字 + inset 描边），不再是 0.45 透明度的渐变——半透明紫挨着输入框边界看不清，像粘连（cosme 报过，并已自行这样覆写）。描边用 inset 阴影，尺寸不变、切换不跳。项目自己的 `.btn.xxx { background }` 变体请写成 `:not(:disabled)`。
+- DESIGN.md 新增 §10「表单排版」（`.form-row` / `.field-row` / `.stack` 各管什么、示例）与 §11「公开类与内部类」（`.settings-panel` / `.panel-body` / `.ctl*` / `.appearance-*` 等是组件内部实现，项目不要借用；项目自有样式不要重名公开类）。
+- 新增 `demo/forms.html` 手测页（不进 `files`）。
+
 ## v0.10.0 — 2026-10-07
 
 纯新增，旧 API（`mountDotFieldSettings` / `configureScheme` / `mountSchemeToggle` / `mountAccountMenu` / `mountAppSwitcher` …）签名、行为、DOM、class、存储键一律不变。

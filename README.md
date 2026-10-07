@@ -8,7 +8,7 @@ szyyw.xyz 设计语言的共享实现：design tokens、玻璃组件层、交互
 ```jsonc
 // package.json
 "dependencies": {
-  "@szyyw/design": "github:Szyoo/szyyw-design#v0.10.0"
+  "@szyyw/design": "github:Szyoo/szyyw-design#v0.11.0"
 }
 ```
 
@@ -72,13 +72,24 @@ const a = readAppearanceFromCookies((n) => cookies().get(n)?.value, { theme: "ap
 细则（静态页内联脚本、账号级持久化）见 DESIGN.md §2.1；手测页 `demo/appearance.html`
 （仓库根目录 `python3 -m http.server 8080` 后打开 `/demo/appearance.html`）。
 
+表单排版（DESIGN.md §10）：一个字段用 `.form-row`（label + 控件），**输入框 + 按钮同一行用 `.field-row`**
+（v0.11.0，可与 `.form-row` 叠加），纵向一串用 `.stack`。哪些类是公开 API、哪些是组件内部实现不要借用，见 §11。
+手测页 `demo/forms.html`。
+
+```html
+<div class="form-row field-row">
+  <input class="field" placeholder="新用户名">
+  <button class="btn btn-small">新增</button>
+</div>
+```
+
 非 React 项目（Flask/静态页）直接 `<link>` 两个 css、`<script type="module">` 引 dotfield.js。
 
 vendoring 用上游的 `sync.sh`，**各项目不要自己写同步脚本**（那是版本漂移的来源）：
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Szyoo/szyyw-design/main/sync.sh \
-  | sh -s -- ./static/vendor/szyyw-design v0.10.0
+  | sh -s -- ./static/vendor/szyyw-design v0.11.0
 ```
 
 它拷贝 11 个运行时文件并写 `VENDORED.md` 记录版本；`--local` 代替 tag 可从本机 clone 同步未发版改动。

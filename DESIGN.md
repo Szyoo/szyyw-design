@@ -249,3 +249,68 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
 
 行为归各项目自己接：按级别过滤、自动跟随滚动（用户上翻时暂停）、
 复制后给 `.term-copy` 加 `.copied` 再撤掉。**着色用类，别再内联 `style`**。
+
+## 10. 表单排版
+
+`.field` 是 `width: 100%` 的输入件，**自己不留外边距**；间距一律由容器给。三种容器各管一件事：
+
+| 类 | 管什么 | 样子 |
+|---|---|---|
+| `.form-row` | 一个字段：`<label>` + 控件 + 可选提示 | 块级，块底 14px；**不排版子元素** |
+| `.field-row`（v0.11.0） | 一行里的「输入框 + 按钮」/ 多个小控件 | flex、`gap: 8px`、居中对齐、放不下就换行；`.field` 吃剩余宽度（基准 12rem），按钮 / `.pill` / `.chip` 不伸缩 |
+| `.stack` | 纵向一串控件（无 label 的紧凑表单） | flex 纵向、`gap: 10px` |
+
+```html
+<!-- 一个字段 -->
+<div class="form-row">
+  <label for="name">名称</label>
+  <input id="name" class="field">
+</div>
+
+<!-- 输入框 + 按钮一行（可与 .form-row 叠加，保留块底 14px） -->
+<div class="form-row field-row">
+  <input class="field" placeholder="新用户名">
+  <button class="btn btn-small">新增</button>
+</div>
+
+<!-- 带标签的一行：标签在行内时自动去掉块级 + 下边距 -->
+<div class="field-row">
+  <label for="q">筛选</label>
+  <input id="q" class="field">
+  <button class="btn-ghost btn-small">清除</button>
+</div>
+```
+
+- **别把按钮直接放进只有 `.form-row` 的块里当「同一行」**——`.form-row` 不是 flex，
+  100% 宽的输入框会把按钮挤到下一行。v0.11.0 起这种写法会自动在两者之间补 8px（不再贴死），
+  但要同一行就加 `.field-row`。`.form-row` 里两个控件上下相邻同理补 8px。
+- `.row`（`gap: 10px`，不换行）/ `.row.wrap` / `.spread` 仍可用于一般横排；输入框 + 按钮优先 `.field-row`，
+  它额外处理了伸缩与行内 `label`。
+- 一排同级操作按钮用 `.actions`（`margin-top: 16px`、`gap: 10px`、换行）。
+- 禁用的 `.btn` 是实底「熄灭」态（`--inner-bg` + 描边），不是半透明渐变——半透明紫挨着输入框看着像粘连。
+  项目给 `.btn` 加了自己的底色变体（如 `.btn.danger { background: … }`）时写成 `:not(:disabled)`，
+  否则禁用态会被盖成可点的样子。
+
+## 11. 公开类与内部类
+
+**公开 API**（项目可以直接写在自己的标记里，跨版本保持语义；改动会进 CHANGELOG 并按 semver 处理）：
+
+- 布局：`.app-frame` `.bg-layer` `.row` `.spread` `.stack` `.wrap` `.field-row` `.actions` `.divider` `.section` `.section-name`
+- 容器：`.glass` `.panel` `.inner` `.lift` `.sheet` `.sheet-head` `.sheet-title` `.sheet-body` `.sheet-foot` `.overlay` `.close-x`
+- 表单：`.field` `.form-row` `.form-grid` `.chip` `.chip-row` `.switch` `.err-text` `.ok-text`
+- 按钮：`.btn` `.btn-ghost` `.btn-small` `.danger`
+- 文本 / 数据：`.page-title` `.page-sub` `.panel-title` `.panel-head` `.grad-text` `.muted` `.small` `.tiny` `.num` `.mono`
+  `.pill`（+ 色）`.amt-*` `.stat-*` `.bar` `.bar-fill` `.tbl` `.table-wrap` `.empty` `.term*`
+- 动效：`.rise` `.stagger` `.shake` `.spot`
+- 工具位：`.corner-panel`（项目自己的工具位弹层挂它 + `claimCornerPanel`，见 §5）
+
+**内部实现**（只给包里的 JS 组件用，结构和定位随版本变，**项目不要借用这些类名去套自己的元素**，
+也不要在自己的 CSS 里覆写）：
+
+- `.settings-panel` `.settings-toggle` `.appearance-*` `.panel-body` `.panel-foot` `.ctl*` `.update-*`
+  （外观 / 背景参数弹层；v0.9.0 把 `.settings-panel` 的定位挪给 `.corner-panel`，借用它的门户抽屉因此摊到了页面底部）
+- `.corner-tools` `.corner-tool` `.scheme-toggle` `.app-switcher*` `.account-*` `.guest-note`
+
+项目自有样式**别重名**公开类（例如自己的页面容器叫 `.wrap`、自己的 `.form-row` 写成 flex）：
+同名规则会和包里的规则叠加，包一升级就可能出现意料外的布局。要改公开类的样子，用自己的修饰类
+（`.form-row.my-inline`）或包一层自己的容器类，不要整条重写。
