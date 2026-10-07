@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>表单排版 · 手测</title>
+<!--
+  @szyyw/design 表单排版的静态手测页（不进 package files），对应 DESIGN.md §10。
+  仓库根目录 `python3 -m http.server 8080`，打开 http://localhost:8080/demo/forms.html
+  缩窄窗口看 .field-row 的换行；🌗 切明暗看禁用按钮。
+-->
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../components.css">
+<style>
+  .demo { max-width: 760px; margin: 0 auto; padding: 72px 20px 48px; }
+  .demo .glass { padding: 20px 22px; margin-bottom: 16px; }
+  .demo h2 { margin: 0 0 4px; font-size: 15px; }
+  .demo .note { margin: 0 0 14px; font-size: 12px; color: var(--text-dim); }
+  .demo code { font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="bg-layer" aria-hidden="true"></div>
+<main class="app-frame demo">
+  <h1 class="page-title grad-text">表单排版</h1>
+  <p class="page-sub">DESIGN.md §10 —— <code>.form-row</code> / <code>.field-row</code> / <code>.stack</code></p>
+
+  <section class="glass">
+    <h2><code>.form-row</code>：一个字段</h2>
+    <p class="note">label + 控件 + 提示，块底 14px。</p>
+    <div class="form-row">
+      <label for="d-name">名称</label>
+      <input id="d-name" class="field" placeholder="例如：主账户">
+    </div>
+    <div class="form-row">
+      <label for="d-kind">类型</label>
+      <select id="d-kind" class="field"><option>借记</option><option>信用</option></select>
+      <p class="tiny muted" style="margin: 4px 0 0">提示文字紧跟控件。</p>
+    </div>
+  </section>
+
+  <section class="glass">
+    <h2><code>.form-row.field-row</code>：输入框 + 按钮同一行</h2>
+    <p class="note">输入框吃剩余宽度，按钮不伸缩；窄屏按钮换行，仍有 8px。</p>
+    <div class="form-row field-row">
+      <input class="field" placeholder="新用户名">
+      <button class="btn btn-small" type="button">新增</button>
+    </div>
+    <div class="form-row field-row">
+      <label for="d-q">筛选</label>
+      <input id="d-q" class="field" placeholder="关键词">
+      <select class="field" style="flex: 0 1 9rem"><option>全部</option><option>未读</option></select>
+      <button class="btn-ghost btn-small" type="button">清除</button>
+    </div>
+    <div class="field-row">
+      <input class="field" placeholder="禁用态按钮：实底熄灭，边界清楚">
+      <button class="btn btn-small" type="button" disabled>新增</button>
+      <button class="btn" type="button" disabled>保存</button>
+    </div>
+  </section>
+
+  <section class="glass">
+    <h2>兜底：只有 <code>.form-row</code>、按钮直接跟在输入框后</h2>
+    <p class="note">旧写法（门户「管理 › 用户」曾这样）。v0.11.0 前上下贴死，现在补 8px；要同一行请加 <code>.field-row</code>。</p>
+    <div class="form-row">
+      <input class="field" placeholder="新用户名">
+      <button class="btn btn-small" type="button">新增</button>
+    </div>
+    <div class="form-row">
+      <input class="field" placeholder="两个控件上下相邻">
+      <input class="field" placeholder="同样补 8px">
+    </div>
+  </section>
+
+  <section class="glass">
+    <h2><code>.stack</code>：纵向一串</h2>
+    <form class="stack" onsubmit="return false">
+      <input class="field" placeholder="邮箱">
+      <input class="field" type="password" placeholder="密码">
+      <button class="btn" type="submit">登录</button>
+    </form>
+  </section>
+</main>
+<script type="module">
+  import { mountDotField } from "../dotfield.js";
+  import { configureScheme, mountSchemeToggle } from "../scheme.js";
+  mountDotField(document.querySelector(".bg-layer"));
+  configureScheme({ storageKey: "demo:scheme" });
+  mountSchemeToggle();
+</script>
+</body>
+</html>

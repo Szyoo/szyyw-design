@@ -3,11 +3,11 @@
 # 这是 vendoring 的唯一来源；各项目不要再各写一份。
 #
 #   sh sync.sh <dest-dir>              拉 GitHub 最新 tag
-#   sh sync.sh <dest-dir> v0.10.0      拉指定 tag
+#   sh sync.sh <dest-dir> v0.11.0      拉指定 tag
 #   sh sync.sh <dest-dir> --local      从本机 clone 的工作区同步（调试未发版改动用）
 #
 # 一行引用（项目里不必保存脚本）：
-#   curl -fsSL https://raw.githubusercontent.com/Szyoo/szyyw-design/main/sync.sh | sh -s -- ./static/vendor/szyyw-design v0.10.0
+#   curl -fsSL https://raw.githubusercontent.com/Szyoo/szyyw-design/main/sync.sh | sh -s -- ./static/vendor/szyyw-design v0.11.0
 #
 # 同步后会写/更新 <dest>/VENDORED.md 记录版本；本脚本之外不要手改 vendor 目录。
 set -eu
