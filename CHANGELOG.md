@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.14.2 — 2026-10-09
+
+- **毛玻璃在 Next.js 应用的 Chrome / Android 上失效**：`components.css` 里 7 处都是先写 `backdrop-filter` 再写 `-webkit-backdrop-filter`，Next.js 的 CSS 处理（lightningcss）会把这种顺序里的标准属性吞掉，只留带前缀的那条，Chrome 算出 `none`——`.glass` / `.overlay` / `.sheet` / `.corner-panel` / `.menu` / `.drawer` 全都没有模糊（手机弹层「透字」就是这个）。改为先 `-webkit-` 后标准，两条都会保留。Safari 与不经构建直接引用（vendored）的应用本来就正常。cosme 定位。`corner.css` 已重新生成。
+
 ## v0.14.1 — 2026-10-09
 
 - **`[hidden]` 永远隐藏**：`components.css` 加全局 `[hidden] { display: none !important }`。之前 `.overlay`（flex）、`.stack`、`.callout`、`.row` 等自带 `display` 的类会盖掉 `hidden` 属性（ashare 迁移时复盘页一块空表单因此一直露着），应用只能各补 `.x[hidden]` 兜底——现在可以删掉这些兜底。可见变化：只影响「写了 `hidden` 却被类的 display 显示出来」的元素，它们现在按本意隐藏。`corner.css` 不含全局规则，不变。
