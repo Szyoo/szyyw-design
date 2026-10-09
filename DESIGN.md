@@ -357,6 +357,8 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
   `.app-header` `.app-brand` `.app-title` `.app-sub` `.app-actions`；token `--chart-1…6` `--pop-shadow` `--on-err` `--corner-gap`
 - v0.14.0 新增：`.sheet.wide`、无标题 `.sheet-head`（只含 `.close-x`）、`.term-lvl:disabled` `.term-copy:disabled`、`.pill.slate` `.pill.pink`；
   token `--slate` `--pink` `--tint-slate-bg` `--tint-pink-bg`
+- v0.15.0 新增（§14）：JS `./techtext`（`mountTechText` `enhanceTechText` `DEFAULTS`）、`mountChrome({ techText })` 与 `handle.techText`；
+  类 `.tech-text`（JS 加在被增强的元素上，可用来写选中色等外观）。`.tech-text-canvas` 是内部实现，别套用
 
 **内部实现**（只给包里的 JS 组件用，结构和定位随版本变，**项目不要借用这些类名去套自己的元素**，
 也不要在自己的 CSS 里覆写）：
@@ -424,3 +426,73 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
 `--sheet-bg` 未改：375 宽、背后密集文字实测，遮罩模糊 + 92%/94% 底色下弹层空白区的亮度起伏只有约 2/255，
 背后文字不可辨。只有 `backdrop-filter` 失效时（不支持、或弹层被放进另一个带 `backdrop-filter` / `filter` 的祖先里，
 遮罩模糊作用不到）起伏升到约 8/255、能看出字形——弹层务必按 §3 用 Portal 挂到 body 下、配 `.overlay`。
+
+## 14. TechText 字标（v0.15.0）
+
+`./techtext`：把已有标题（通常左上角 `.app-title`）渐进增强成 canvas 字标，行为对齐 React Bits 官方演示：
+**一次只揭示一个字母**——光标（或无指针时自动往复的扫描点）下的那个字母换成虚线描边（只留字形外侧那半条描边），
+配选框、四角、闪烁 specks 与尺寸标注；没有指针时扫描点按上游的 cos 轨迹在文字上左右往复，选框因此**一个字一个字地跳**。
+字母可以拖离基线，松手弹簧回位（拖走时原位留一个虚线影子与连线，标注显示位移）。手测页 `demo/techtext.html`。
+
+```js
+import { enhanceTechText, mountTechText } from "@szyyw/design/techtext";
+mountChrome({ /* … */, techText: true });          // 一站式：等价 enhanceTechText(".app-title")
+enhanceTechText(".app-title", { specks: 6 });       // → handle[]
+const h = mountTechText(el, options);               // → { refresh(), destroy() }；同一元素重复调用返回同一个 handle
+```
+
+`mountChrome` 的 `techText` 缺省 **不开**（semver 兼容）：`true` / 选择器字符串 / `{ selector, ...选项 }`；
+`handle.techText` 是 handle 数组，`chrome.destroy()` 一并销毁。
+
+**选项**（上游参数基本保留，缺省值与官方演示一致，尺寸类参数按字号缩放）：
+
+| 选项 | 缺省 | 说明 |
+|---|---|---|
+| `reveal` | `"letter"` | `"letter"` 只揭示光标 / 扫描点下的那个字母（官方）· `"area"` 圆形区域揭示虚线 · `"off"` |
+| `sweep` / `speed` | `"loop"` / 1 | `"loop"` = 官方行为，无指针时一直逐字往复；`true` = 挂载后扫一遍就停；`false` |
+| `selection` / `labels` / `specks` | true / true / 15 | 选框、标注、specks 数量（0 关）；标注色缺省 = accent × 0.62（官方） |
+| `minLabelFont` | 18 | 字号小于它时不画标注（14–16px 的小字标注会糊成一团） |
+| `draggable` | true | 鼠标与触屏都能拖；元素加 `touch-action: pan-y`，纵向滑动照常滚页面 |
+| `reach` / `softness` | 约 2.1 × 字号 / 0.7 | 仅 `reveal: "area"`：揭示半径与边缘柔和度 |
+| `dashLength` / `dashGap` / `strokeWidth` | 按字号 | 约 0.1 / 0.065 / 0.04 × 字号，夹在 1.4–4 / 1–2 / 0.6–1.5px |
+| `lineStyle` | `"dashed"` | `"solid"` = 实线描边 |
+| `fill` / `stroke` | `"auto"` | 缺省逐段取元素自己的样子：渐变字（`background-clip: text`，含子元素如 `<span class="grad-text">`）按它的 `background-image` 原样画，否则取文字色 |
+| `accent` / `labelColor` | `--accent` / `"accent"` | 选框 / specks 与标注色；token 名或 CSS 颜色 |
+
+**布局约定**（启用前后零位移）：
+
+- 文字、字体、每个字的位置都从 DOM 量（`Range` 逐字素取矩形，`Intl.Segmenter` 拆字，中日文 / emoji 都行），
+  canvas 按同一位置逐字绘制——左对齐 / 居中 / 换行 / letter-spacing / 字距都和原文字重合，**不用**上游的「居中 + 缩放到 90%」。
+  基线 = 文字片段矩形顶 + 主字体 ascent 比例。混排（`szyyw<span class="grad-text">.xyz</span>`）逐段取色。
+- canvas 绝对定位叠在元素上（元素是 `static` 时 JS 补 `position: relative`），比内容盒四周多出约 1.1 × 字号给拖拽与标注，
+  横向夹在视口内（不产生横向滚动）；`pointer-events: none`，事件挂在元素本身。
+- 渐变按 CSS 规则映射到（带渐变的那个元素的）padding box（角度、色标位置都照算），与原来一模一样。
+
+**渲染时序**（v0.15.0 发布前修过的坑）：layout + 静态帧在挂载 / 失效时**同步**画（失效合并到一个微任务），
+不依赖 rAF 或可见性；原文字只在画布第一次画成功之后才变透明。早期实现把文字同步设透明、第一帧却等 rAF，且 rAF 只在
+`visibilityState === "visible"` 时才排——页面在后台标签 / 隐藏的预览窗格里加载时画布一直是默认 300×150、整段空白。
+
+**可访问性与行为约定**：
+
+- 原文字留在 DOM 与无障碍树里，只设 `-webkit-text-fill-color: transparent`（渐变字再去掉 `background-image`）；canvas `aria-hidden`。
+  选中 / 复制的是原文字；`.tech-text::selection` 用 `--accent` 24% 的选中底色。
+- 鼠标按住字母时 `preventDefault`，不会开始选字，也不会触发原生链接拖拽；拖拽后紧跟的 click 被吞掉（标题在链接里不误跳转），
+  普通点击照常。
+- 悬停揭示只在 `(hover: hover) and (pointer: fine)`；触屏只有拖拽与自动扫描。
+- `prefers-reduced-motion`：不扫描、没有 specks，静态显示；悬停揭示 / 选框直接到位，松手立即回位。
+- `forced-colors: active` 与打印时整段不启用（还原原文字）。
+- 性能：所有实例共用**一个** rAF；没有指针交互时限 30fps；元素离开视口（IntersectionObserver）就停，回来先同步补画；
+  隐藏标签由浏览器暂停 rAF，切回时同步补画；不扫描、没有交互、没有收敛中的过渡时不跑 rAF。
+- 自动重排：文字变化（MutationObserver；应用 `textContent = …` 会连 canvas 一起删掉，自动挂回）、元素尺寸（ResizeObserver）、
+  窗口宽度、字体加载完成；主题 / 配色 / 明暗变化（`<html>` 的 `data-*` / `style` / `class` + `prefers-color-scheme`）只换色。
+- `destroy()` 移除 canvas、事件与观察者，行内样式还原到挂载前；React 里在 `useEffect` 的清理函数里调用。
+
+**什么时候用**：每个应用左上角的品牌标题（`.app-title`），以及门户里展示站点字标 / 域名的地方。不要用在正文、按钮、
+表格等需要频繁读的文字上（每个实例一块 canvas + 每字两张小位图）。
+
+**出处与许可**：移植自 [React Bits](https://reactbits.dev/text-animations/tech-text) 的 TechText（Copyright (c) 2026 David Haz），
+上游许可是 **MIT + Commons Clause License Condition v1.0**。参考件原样存在 `reference/reactbits/TechText.{tsx,css}`
+（与 `LICENSE.md` 一起；`reference/` 被 .gitignore，不进仓库与分发）。改动：框架无关 ESM、基于已有元素的渐进增强与 DOM 逐字定位、
+逐段取色、按字号缩放、共享 rAF / 30fps / 离屏暂停、同步首帧、触屏拖拽、reduced-motion / forced-colors / 打印处理。
+Commons Clause 一节写的是「可以作为应用 / 网站的一部分使用（含商用），但不得出售、再许可或再分发组件本身」；
+包作者知情，决定把移植版随本包（个人站点的设计包）发布、供自己的站点使用。其他使用者请自行评估上游许可。

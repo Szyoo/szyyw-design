@@ -1522,6 +1522,15 @@ select.field.small { padding-right: 30px; }
   .app-title { font-size: 22px; }
 }
 
+/* ---------- TechText 字标（v0.15.0，techtext.js）----------
+   mountTechText / enhanceTechText / mountChrome({ techText: true }) 给元素加 .tech-text，
+   在元素里叠一块 canvas.tech-text-canvas（aria-hidden）。原文字保留（字形填充透明），读屏 / 复制照常；
+   定位、透明填充、touch-action 由 JS 写行内样式（不依赖本文件），这里只管外观细节。 */
+.tech-text { -webkit-tap-highlight-color: transparent; }
+.tech-text::selection,
+.tech-text *::selection { background: color-mix(in srgb, var(--accent) 24%, transparent); }
+.tech-text-canvas { pointer-events: none; }
+
 /* v0.13.0 新组件的减少动效 */
 @media (prefers-reduced-motion: reduce) {
   .toast, .toast.leaving, .menu, .drawer { animation: none; }
