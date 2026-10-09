@@ -388,6 +388,5 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
 - `.menu` 纯 CSS 版本只适合不在滚动容器 / 玻璃卡里的场景；表格行操作一律 `attachMenu`。
 - `.tbl .num` 不改对齐（已有表格用 `.num` 标日期等，改了会跳）——数字列右对齐用 `.col-num`。
 - `.spinner` 的旋转是匀速 `linear`，是唯一不走 `--ease` 的动效（等待语义）。
-- `--lift-shadow` 是把整条阴影塞进 `light-dark()` 写的；`light-dark()` 只接受颜色，实测 Chrome 计算为 `none`——
-  `.lift:hover` 的阴影其实从未生效。修它会改变现有外观，本版不动（另行决定）。
-  新的 `--pop-shadow` 拆成「颜色 token + 固定几何」，浮层用它。
+- 阴影 token 一律拆成「颜色 token（`light-dark()`）+ 固定几何」：`light-dark()` 只接受颜色，整条阴影塞进去会算成 `none`
+  （v0.13.0 及之前 `--lift-shadow` 就是这样，`.lift:hover` 的投影从未生效，v0.13.1 修正）。浮层用 `--pop-shadow`。

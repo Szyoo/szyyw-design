@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.13.1 — 2026-10-09
+
+- 修 `--lift-shadow`：之前把整条阴影写进 `light-dark()`（它只接受颜色），浏览器算成 `none`，`.lift:hover` 的投影从未生效。改为 `--lift-shadow-color: light-dark(…)` + `--lift-shadow: 0 10px 32px var(--lift-shadow-color)`。可见变化：`.lift` 卡片悬停时出现设计稿里本来就有的投影。
+
 ## v0.13.0 — 2026-10-09
 
 补齐各应用自写 / 借用内部类的缺口（审计了 portal、jppost-tracker、payroll、ashare-ai-lab、exit-console、claude-bridge、cosme-vault、finance-ledger）。
