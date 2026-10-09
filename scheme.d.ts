@@ -32,5 +32,8 @@ export function onSchemeChange(handler: (scheme: Scheme) => void): () => void;
 /** 挂载常驻切换按钮（缺省进右上角工具位；给了 container 就挂到那里） */
 export function mountSchemeToggle(options?: {
   container?: HTMLElement | null;
-  labels?: Record<Scheme, string>;
+  /** 覆盖个别文案；与 locale 都不传时是英文缺省 */
+  labels?: Partial<Record<Scheme, string>> | null;
+  /** v0.12.0：用内置 zh / ja / en 文案 */
+  locale?: string | null;
 }): SchemeToggleHandle;

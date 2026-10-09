@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.12.0 — 2026-10-09
+
+外观文案与接线收进包里，应用不再各抄一份。旧 API 签名不变；可见变化只有三处：外观弹层不传 labels 时配色名显示中文名而不是 id、版本行的「版本」改叫「设计包版本」、「复制升级命令」改为 tarball 形式。
+
+- **新增 `appearance-text.js`（导出路径 `./appearance-text`）**：外观弹层 / 🌗 / 背景参数控件的内置 zh / ja / en 文案，`appearanceText(locale, overrides)`（"ja-JP" 也认，不认识回退中文，缺键按中文补齐）。零 DOM。
+- **各 mount 函数加 `locale`**：`mountAppearancePanel`（缺省 "zh"）、`mountSchemeToggle`、`mountDotFieldSettings`（后两者不传仍是旧缺省）。`labels` 照旧逐键覆盖，新增 `labels.controls` 覆盖背景参数控件名——控件名之前写死中文。
+- **新增 `mountAppearance()`**（`./appearance`）：一个调用挂齐 configureScheme + configureAppearance + 点阵背景 / 光斑 + 🌗 + 外观弹层，`cookiePrefix` 统一三项存储键，`handle.setLocale()` 切语言只重挂按钮与弹层、画布不重建。
+- **新增 `appearanceCookieNames(prefix)`**（`./appearance-data`）：服务端 `readAppearanceFromCookies` 与客户端用同一个前缀。
+- 版本行缺省升级命令改为 `npm i "https://codeload.github.com/<repo>/tar.gz/refs/tags/v<x>"`（node:alpine 构建镜像不带 git，`github:` 形式装不上）；vendored 项目照旧传自己的 `command`。
+- `sync.sh` 文件清单加入 `appearance-text.js`（现为 12 个运行时文件）。
+- `demo/appearance.html` 改用 `mountAppearance` 并加语言切换。
+
 ## v0.11.0 — 2026-10-08
 
 修「输入框和按钮粘在一起」。现有标记不改代码升级不会出现新的布局破坏：新增类是纯新增，`.form-row` 兜底只在原来贴死（0px）的地方补间距。

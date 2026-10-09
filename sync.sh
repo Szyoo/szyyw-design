@@ -15,7 +15,7 @@ set -eu
 DEST=${1:?usage: sync.sh <dest-dir> [tag|--local]}
 REF=${2:-latest}
 REPO=Szyoo/szyyw-design
-FILES="tokens.css components.css dotfield.js scheme.js corner.js settings.js switcher.js account.js version.js appearance.js appearance-data.js"
+FILES="tokens.css components.css dotfield.js scheme.js corner.js settings.js switcher.js account.js version.js appearance.js appearance-data.js appearance-text.js"
 
 if [ "$REF" = "--local" ]; then
   SRC=${DESIGN_UPSTREAM:-$HOME/Documents/GitHub/szyyw-design}

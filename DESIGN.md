@@ -65,7 +65,8 @@
 
 4. **账号级持久化**归应用：`mountAppearancePanel({ onChange })` 里存库（🌗 改明暗也走这一个回调，别再另外订阅
    `onSchemeChange` 存一遍）；登录后把库里的值写回 cookie，换设备不用重设。
-5. **文案**：包不内置语言，`labels` 全部由应用注入；配色名缺省显示 id。
+5. **文案**（v0.12.0 起）：包内置 zh / ja / en（`appearance-text.js`），应用只传 `locale`，
+   不要再在应用的 i18n 里抄一份外观文案；个别词要改用 `labels` 逐键覆盖（`controls` 管背景参数控件名）。
 6. **配色色值手工双写**：JS 不能 import CSS，`PALETTES[].bg` 与 tokens.css 的 `--bg: light-dark(L, D)` 各写一份。
    改 tokens.css 的配色块必须同步 appearance-data.js，并跑 `node scripts/check-tokens.mjs`（不一致退出码 1）。
 
@@ -182,6 +183,11 @@ token 取色，并修掉了那个 transparent 灰晕。取用上游素材见 REA
 同一个 order 20、同一份 `szyyw:dotfield` 存储，同时挂会出两枚调色板。旧 API 保留不变，
 换新只需把 `mountDotFieldSettings({ field, ... })` 换成 `mountAppearancePanel({ field, dotField: { ... } })`。
 设置页想放「打开外观」按钮时调 `openAppearancePanel()`（打开最近一次挂出的面板，没挂返回 false）。
+外观只在工具位这一处调整，应用设置页**不再单设「外观」分组**（语言这类应用自有偏好放应用的账号设置里）。
+
+**一站式接入 `mountAppearance()`（v0.12.0，新项目首选）**：一个调用挂齐明暗持久化、🌗、主题 / 配色持久化、
+点阵背景与光斑、外观弹层，`cookiePrefix` 决定三项存储键（`appearanceCookieNames(prefix)`，服务端用同一个前缀读），
+`locale` 决定内置文案；切语言调 `handle.setLocale()`，只重挂按钮与弹层，画布不重建。
 
 图标用调色板不用齿轮：这里调的是外观/主题，齿轮会被读成系统设置。
 
