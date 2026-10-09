@@ -399,7 +399,7 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
 
 几条注意：
 
-- **`.overlay` 带 `display: flex`，`hidden` 属性压不住**——遮罩按开合渲染 / 移除（React 条件渲染），别靠 `hidden`。
+- v0.14.1 起 `components.css` 带全局 `[hidden] { display: none !important }`：`.overlay` / `.stack` / `.callout` 等自带 `display` 的类加 `hidden` 也会隐藏，应用不必再逐个补兜底（只挂 `corner.css` 的应用不含这条，工具位组件各自处理了 `[hidden]`）。
 - 抽屉想让右上角工具位露出来：`--drawer-top: calc(10px + var(--corner-rail-h, 34px) + 12px)`。
 - `.menu` 纯 CSS 版本只适合不在滚动容器 / 玻璃卡里的场景；表格行操作一律 `attachMenu`。
 - `.tbl .num` 不改对齐（已有表格用 `.num` 标日期等，改了会跳）——数字列右对齐用 `.col-num`。

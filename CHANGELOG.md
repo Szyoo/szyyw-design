@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.14.1 — 2026-10-09
+
+- **`[hidden]` 永远隐藏**：`components.css` 加全局 `[hidden] { display: none !important }`。之前 `.overlay`（flex）、`.stack`、`.callout`、`.row` 等自带 `display` 的类会盖掉 `hidden` 属性（ashare 迁移时复盘页一块空表单因此一直露着），应用只能各补 `.x[hidden]` 兜底——现在可以删掉这些兜底。可见变化：只影响「写了 `hidden` 却被类的 display 显示出来」的元素，它们现在按本意隐藏。`corner.css` 不含全局规则，不变。
+
 ## v0.14.0 — 2026-10-09
 
 各应用迁到设计包时发现的缺口（cosme-vault 迁移为主）。**纯新增、向后兼容**：v0.13.1 的 `demo/appearance.html`、`demo/forms.html`、
