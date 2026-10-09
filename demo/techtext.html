@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TechText · 手测</title>
+<!--
+  @szyyw/design v0.15.0 TechText 字标的静态手测页（不进 package files）。
+  仓库根目录 `python3 -m http.server 8080`，打开 http://localhost:8080/demo/techtext.html
+    ?off            不增强（对照原 .app-title）
+  覆盖：页头 .app-title（mountChrome techText: true）、20 / 28 / 40px、中英文、文字动态变化、
+  「全部域名」字标列表（28–36px，带点号的英文域名）、light / dark × default / aurora（工具位切换）。
+  鼠标悬停看揭示；按住字母拖走再松手看回弹；触屏横向拖字母、纵向照常滚动。
+-->
+<script>
+  (function () {
+    var d = document.documentElement;
+    try {
+      var p = localStorage.getItem("demo15:palette"), s = localStorage.getItem("demo15:scheme");
+      if (p && p !== "default") d.setAttribute("data-palette", p);
+      if (s === "auto" || s === "dark" || s === "light") d.setAttribute("data-scheme", s);
+    } catch (e) {}
+  })();
+</script>
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../components.css">
+<style>
+  .demo { max-width: 860px; margin: 0 auto; padding: 8px 20px 64px; }
+  .demo > section { padding: 20px 22px; margin-bottom: 16px; }
+  .demo h2 { margin: 0 0 4px; font-size: 15px; }
+  .demo .note { margin: 0 0 14px; font-size: 12px; color: var(--text-dim); }
+  .sizes { display: grid; gap: 14px; }
+  .sizes .app-title.s20 { font-size: 20px; }
+  .sizes .app-title.s28 { font-size: 28px; }
+  .sizes .app-title.s40 { font-size: 40px; }
+  .domains { display: grid; gap: 6px; }
+  .domains .app-title { font-size: clamp(28px, 6vw, 36px); letter-spacing: -0.01em; }
+  .plain-title { margin: 0; font-size: 28px; font-weight: 700; color: var(--text); }
+</style>
+</head>
+<body>
+<div class="bg-layer" aria-hidden="true"></div>
+<div class="app-frame">
+  <header class="app-header">
+    <div class="app-brand">
+      <h1 class="app-title" id="brand-title">股票看板</h1>
+      <span class="app-sub">szyyw design v0.15.0 · techtext</span>
+    </div>
+  </header>
+
+  <main class="demo">
+    <section class="glass">
+      <h2>尺寸 · 20 / 28 / 40px</h2>
+      <p class="note">悬停看虚线揭示与选框标注；按住字母拖走、松手回弹。参数按字号缩放。</p>
+      <div class="sizes">
+        <h2 class="app-title s20">记账本 Ledger</h2>
+        <h2 class="app-title s28">日本邮政快递追踪</h2>
+        <h2 class="app-title s40">Claude Bridge</h2>
+        <h2 class="app-title s28">ブログ · 持仓 2026</h2>
+      </div>
+    </section>
+
+    <section class="glass">
+      <h2>文字动态变化</h2>
+      <p class="note">应用 JS 改 textContent（ashare 的 #brand-title、bridge 的 #who）会自动重排；页头标题也一起变。</p>
+      <h2 class="app-title s28" id="dyn" style="font-size: 28px">用户</h2>
+      <div class="actions" style="margin-top: 10px">
+        <button class="btn btn-small" type="button" id="swap">换文字</button>
+        <button class="btn-ghost btn-small" type="button" id="toggle">关 / 开增强</button>
+      </div>
+    </section>
+
+    <section class="glass">
+      <h2>非渐变字（文字色）</h2>
+      <p class="note">元素没有渐变字时，填充 / 描边取它自己的 color。</p>
+      <h2 class="plain-title" id="plain">exit-console 回国出口</h2>
+    </section>
+
+    <section class="glass">
+      <h2>全部域名</h2>
+      <p class="note">门户「全部站点」预览：每行一个域名字标（28–36px）。</p>
+      <div class="domains" id="domains"></div>
+    </section>
+  </main>
+</div>
+
+<script type="module">
+  import { mountChrome } from "../chrome.js";
+  import { enhanceTechText, mountTechText } from "../techtext.js";
+
+  const off = new URLSearchParams(location.search).has("off");
+  const DOMAINS = [
+    "szyyw.xyz",
+    "ashare.szyyw.xyz",
+    "bark.szyyw.xyz",
+    "claude.szyyw.xyz",
+    "cosme.szyyw.xyz",
+    "exit.szyyw.xyz",
+    "jppost.szyyw.xyz",
+    "ledger.szyyw.xyz",
+    "payroll.szyyw.xyz"
+  ];
+  const list = document.getElementById("domains");
+  for (const d of DOMAINS) {
+    const el = document.createElement("div");
+    el.className = "app-title";
+    el.textContent = d;
+    list.append(el);
+  }
+
+  const chrome = mountChrome({
+    background: document.querySelector(".bg-layer"),
+    persist: "localStorage",
+    cookiePrefix: "demo15:",
+    locale: "zh",
+    portal: null,
+    techText: off ? false : true
+  });
+  window.__chrome = chrome;
+  if (!off) window.__plain = mountTechText(document.getElementById("plain"));
+
+  const titles = ["用户", "管理员 admin", "szyyw", "持仓看板 · 复盘"];
+  let i = 0;
+  document.getElementById("swap").addEventListener("click", () => {
+    i = (i + 1) % titles.length;
+    document.getElementById("dyn").textContent = titles[i];
+    document.getElementById("brand-title").textContent = i % 2 ? "复盘" : "股票看板";
+  });
+  let on = !off;
+  document.getElementById("toggle").addEventListener("click", () => {
+    if (on) {
+      for (const t of chrome.techText) t.destroy();
+      chrome.techText = [];
+    } else {
+      chrome.techText = enhanceTechText(".app-title");
+    }
+    on = !on;
+  });
+</script>
+</body>
+</html>

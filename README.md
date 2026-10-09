@@ -8,7 +8,7 @@ szyyw.xyz 设计语言的共享实现：design tokens、玻璃组件层、交互
 ```jsonc
 // package.json
 "dependencies": {
-  "@szyyw/design": "github:Szyoo/szyyw-design#v0.14.2"
+  "@szyyw/design": "github:Szyoo/szyyw-design#v0.15.0"
 }
 ```
 
@@ -25,7 +25,8 @@ const chrome = mountChrome({
   locale: "zh",                                     // "zh" | "ja" | "en"：工具位全部文案内置
   portal: "https://szyyw.xyz",                      // SSO 站点；非 SSO 应用传 null（不挂切换器与账户菜单）
   appearance: { onChange: (a) => savePrefs(a) },    // 账号级外观偏好
-  localeToggle: { locales: ["zh", "ja", "en"], onChange: (l) => setAppLocale(l) }  // 可省
+  localeToggle: { locales: ["zh", "ja", "en"], onChange: (l) => setAppLocale(l) },  // 可省
+  techText: true                                    // v0.15.0：左上角 .app-title 变 TechText 字标（缺省不开）
 });
 // 应用自己换语言时：chrome.setLocale("ja")——切换器 / 账户菜单 / 🌗 / 外观 / 语言按钮一起换，画布不重建
 ```
@@ -46,6 +47,15 @@ import { toast } from "@szyyw/design/toast";
 toast("已保存", { tone: "ok" });                   // ok | err | warn | info，timeout 缺省 3000（0 = 不自动消失）
 import { attachMenu } from "@szyyw/design/menu";  // .menu-wrap > button + .menu > .menu-item
 attachMenu(button, button.nextElementSibling);
+```
+
+TechText 字标（v0.15.0）：`techText: true` 等价 `enhanceTechText(".app-title")`，也可传选择器或 `{ selector, ...选项 }`；
+单独用见下。光标（无指针时自动往复的扫描点）下的那个字母变虚线描边、选框逐字跳，字母可拖离基线回弹；启用前后布局零位移，原文字留给读屏。详见 DESIGN.md §14，手测页 `demo/techtext.html`。
+
+```js
+import { enhanceTechText, mountTechText } from "@szyyw/design/techtext";
+const titles = enhanceTechText(".app-title");               // → handle 数组；handle.destroy() 还原
+const h = mountTechText(el, { specks: 6, sweep: true });     // 单个元素；sweep: true = 挂载后扫一遍就停（缺省 "loop"）
 ```
 
 有自己样式体系、不加载 `components.css` 的应用（claude-bridge）：只挂 `tokens.css` + `corner.css`（工具位及弹层，
@@ -145,8 +155,8 @@ const a = readAppearanceFromCookies((n) => cookies().get(n)?.value, { theme: "ap
 vendoring 用上游的 `sync.sh`，**各项目不要自己写同步脚本**（那是版本漂移的来源）：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Szyoo/szyyw-design/v0.14.2/sync.sh \
-  | sh -s -- ./static/vendor/szyyw-design v0.14.2
+curl -fsSL https://raw.githubusercontent.com/Szyoo/szyyw-design/v0.15.0/sync.sh \
+  | sh -s -- ./static/vendor/szyyw-design v0.15.0
 ```
 
 脚本从**目标 tag** 取（文件清单与那个版本一致，不用 main 上的）。它拷贝 18 个运行时文件并写 `VENDORED.md`
@@ -199,6 +209,28 @@ npx shadcn@latest add @react-bits/DotField-TS-CSS   # 变体：{名字}-{JS|TS}-
 而 React Bits 是 React 组件（多数还要 ogl / three / gsap / motion）。
 看上某个效果就照 DotField 的路子移植成框架无关实现，别直接塞进分发。
 没装 Tailwind 的项目选 `-CSS` 变体即可。
+
+## CDN 引用（design.szyyw.xyz）
+
+每个 `vX.Y.Z` tag 推上 GitHub 后 ≤10 分钟（平台的 autodeploy 一轮；急用 `ssh szyyw-lighthouse /opt/ingress/deploy/deploy-app.sh design`）
+整包出现在 `https://design.szyyw.xyz/vX.Y.Z/`，内容就是该 tag 的 `git archive`，**发布后永不改写**
+（`Cache-Control: immutable` 一年；CORS `*`，任何站点可跨域加载）。没有构建步骤的项目（Flask/静态页）直接引用，不再 vendoring：
+
+```html
+<link rel="stylesheet" href="https://design.szyyw.xyz/v0.15.0/tokens.css">
+<link rel="stylesheet" href="https://design.szyyw.xyz/v0.15.0/components.css">
+<script type="module">
+  import { mountChrome } from "https://design.szyyw.xyz/v0.15.0/chrome.js";
+  mountChrome({ /* … */ });
+</script>
+```
+
+- **钉死版本**：URL 里写完整的 `vX.Y.Z`，一页里所有文件同一个版本（模块之间是相对 import，混版本会各加载一份）。
+  升级 = 改这个版本号（建议集中成模板变量 `DESIGN_VERSION`）。
+- **不得引用 `/latest/`**：那只是给人浏览的软链，随时跳版本、只缓存 5 分钟。
+- 目录不可列出（`/vX.Y.Z/` 是 404），文件名以 package.json 的 `files` / `exports` 为准；`/` 是一段说明。
+- npm 项目（门户等）照旧装 tag tarball；CDN 只为免去 vendoring。
+- 只挂工具位、不要全局样式的项目（如 claude-bridge 的嵌入场景）用 `tokens.css` + `corner.css` 代替 `components.css`。
 
 ## 升级流程
 

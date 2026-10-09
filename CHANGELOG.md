@@ -1,5 +1,26 @@
 # Changelog
 
+## v0.15.0 — 2026-10-09
+
+**新增 TechText 字标**（`./techtext`，新文件 `techtext.js` / `techtext.d.ts`，已进 `exports` / `files` 与 `sync.sh` 清单）。纯新增、缺省不开，向后兼容：
+v0.14.2 的 `demo/appearance.html`、`demo/forms.html`、`demo/components-v013.html`、`demo/components-v014.html`（dark / light × 1024 / 375）逐元素计算样式与位置零差异。
+
+- `mountTechText(el, options?)` → `{ refresh(), destroy() }`；`enhanceTechText(selectorOrRoot = ".app-title", options?)` → handle 数组。
+  把已有标题渐进增强为 canvas 字标，缺省与 React Bits 官方演示一致：`reveal: "letter"`（只揭示光标下的那个字母，配选框 / 四角 / specks / 标注）、
+  `sweep: "loop"`（无指针时扫描点在文字上往复，选框逐字跳）、`specks: 15`；字母可拖离基线、松手弹簧回位。
+  文字 / 字体 / 逐字位置都取自 DOM，启用前后布局零位移；原文字留在无障碍树（填充透明），canvas `aria-hidden`；
+  渐变字逐段按元素自己的 `background-image` 原样画（含 `<span class="grad-text">` 混排），主题 / 配色 / 明暗变化只换色不重建。
+  参数按字号缩放，字号 < `minLabelFont`（18）不画标注；悬停只在 `pointer: fine`；拖拽鼠标 / 触屏都可用（`touch-action: pan-y`），
+  拖拽后的 click 与原生链接拖拽被拦下（元素在 `<a>` 里不误跳转）；reduced-motion 静态显示；forced-colors 与打印不启用。
+  性能：所有实例共用一个 rAF，无交互时限 30fps，离开视口 / 隐藏标签暂停。
+  首帧同步绘制、画成功后才隐藏原文字（修掉了预发布版本在后台标签 / 隐藏窗格里加载时整段空白、画布停在 300×150 的问题）。
+- `mountChrome({ techText })`：`true` = `enhanceTechText(".app-title")`，也可传选择器或 `{ selector, ...选项 }`；缺省不开。`handle.techText` 为 handle 数组，`destroy()` 一并销毁。
+- `components.css`：`.tech-text` 选中色、`.tech-text-canvas`（定位等由 JS 写行内样式，不加载 components.css 的应用也能用）。`corner.css` 不变。
+- DESIGN.md §14（出处、许可、API、使用场合、可访问性约定），§11 公开 API 清单；新增 `demo/techtext.html`（尺寸 20 / 28 / 40、中英日、文字动态变化、
+  非渐变字、「全部域名」字标列表）。
+- 出处：React Bits「TechText」（Copyright (c) 2026 David Haz），许可 MIT + Commons Clause License Condition v1.0；参考件在 `reference/reactbits/`（gitignored）。
+  Commons Clause 限制再分发组件本身；包作者知情并决定随本包发布供自己的站点使用，见 DESIGN.md §14。
+
 ## v0.14.2 — 2026-10-09
 
 - **毛玻璃在 Next.js 应用的 Chrome / Android 上失效**：`components.css` 里 7 处都是先写 `backdrop-filter` 再写 `-webkit-backdrop-filter`，Next.js 的 CSS 处理（lightningcss）会把这种顺序里的标准属性吞掉，只留带前缀的那条，Chrome 算出 `none`——`.glass` / `.overlay` / `.sheet` / `.corner-panel` / `.menu` / `.drawer` 全都没有模糊（手机弹层「透字」就是这个）。改为先 `-webkit-` 后标准，两条都会保留。Safari 与不经构建直接引用（vendored）的应用本来就正常。cosme 定位。`corner.css` 已重新生成。

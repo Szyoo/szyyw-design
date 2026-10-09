@@ -12,6 +12,7 @@ import { mountAppearance } from "./appearance.js";
 import { mountAppSwitcher } from "./switcher.js";
 import { mountAccountMenu } from "./account.js";
 import { mountLocaleToggle } from "./locale-toggle.js";
+import { enhanceTechText } from "./techtext.js";
 
 const DEFAULT_PORTAL = "https://szyyw.xyz";
 
@@ -26,6 +27,8 @@ const DEFAULT_PORTAL = "https://szyyw.xyz";
  * @param {object|false} options.switcher 透传给 mountAppSwitcher（labels / order / current / …）；false = 不挂
  * @param {object|false} options.account  透传给 mountAccountMenu（labels / order / onChange）；false = 不挂
  * @param {object}  options.localeToggle  { locales, onChange?, order?, labels? }；给了 locales 才挂语言切换
+ * @param {boolean|string|object} options.techText  v0.15.0：左上角标题的 TechText 字标。缺省不开；
+ *        true = enhanceTechText(".app-title")；字符串 = 选择器；对象 = { selector?, ...TechText 选项 }
  */
 export function mountChrome({
   background = null,
@@ -36,7 +39,8 @@ export function mountChrome({
   appearance: appearanceOpts = {},
   switcher: switcherOpts = {},
   account: accountOpts = {},
-  localeToggle: localeOpts = null
+  localeToggle: localeOpts = null,
+  techText: techTextOpts = false
 } = {}) {
   let current = locale;
 
@@ -58,6 +62,7 @@ export function mountChrome({
     switcher,
     account,
     localeToggle: null,
+    techText: [],
     get locale() {
       return current;
     },
@@ -71,6 +76,8 @@ export function mountChrome({
       localeToggle?.set(next);
     },
     destroy() {
+      for (const t of handle.techText) t.destroy();
+      handle.techText = [];
       localeToggle?.destroy();
       account?.destroy();
       switcher?.destroy();
@@ -89,6 +96,14 @@ export function mountChrome({
       }
     });
     handle.localeToggle = localeToggle;
+  }
+
+  if (techTextOpts) {
+    let selector = ".app-title";
+    let opts = {};
+    if (typeof techTextOpts === "string") selector = techTextOpts;
+    else if (typeof techTextOpts === "object") ({ selector = ".app-title", ...opts } = techTextOpts);
+    handle.techText = enhanceTechText(selector, opts);
   }
 
   return handle;
