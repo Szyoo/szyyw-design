@@ -1,6 +1,6 @@
 {
   "name": "@szyyw/design",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "description": "szyyw.xyz design language — tokens, glass components, interactive dot-field background. Framework-agnostic CSS/JS, no build step.",
   "type": "module",
   "license": "MIT",
@@ -8,6 +8,7 @@
   "exports": {
     "./tokens.css": "./tokens.css",
     "./components.css": "./components.css",
+    "./corner.css": "./corner.css",
     "./dotfield": {
       "types": "./dotfield.d.ts",
       "default": "./dotfield.js"
@@ -47,11 +48,32 @@
     "./appearance-text": {
       "types": "./appearance-text.d.ts",
       "default": "./appearance-text.js"
+    },
+    "./chrome-text": {
+      "types": "./chrome-text.d.ts",
+      "default": "./chrome-text.js"
+    },
+    "./locale-toggle": {
+      "types": "./locale-toggle.d.ts",
+      "default": "./locale-toggle.js"
+    },
+    "./chrome": {
+      "types": "./chrome.d.ts",
+      "default": "./chrome.js"
+    },
+    "./toast": {
+      "types": "./toast.d.ts",
+      "default": "./toast.js"
+    },
+    "./menu": {
+      "types": "./menu.d.ts",
+      "default": "./menu.js"
     }
   },
   "files": [
     "tokens.css",
     "components.css",
+    "corner.css",
     "dotfield.js",
     "dotfield.d.ts",
     "scheme.js",
@@ -73,6 +95,16 @@
     "appearance-data.d.ts",
     "sync.sh",
     "appearance-text.js",
-    "appearance-text.d.ts"
+    "appearance-text.d.ts",
+    "chrome-text.js",
+    "chrome-text.d.ts",
+    "locale-toggle.js",
+    "locale-toggle.d.ts",
+    "chrome.js",
+    "chrome.d.ts",
+    "toast.js",
+    "toast.d.ts",
+    "menu.js",
+    "menu.d.ts"
   ]
 }

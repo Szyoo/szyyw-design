@@ -67,6 +67,7 @@
    `onSchemeChange` 存一遍）；登录后把库里的值写回 cookie，换设备不用重设。
 5. **文案**（v0.12.0 起）：包内置 zh / ja / en（`appearance-text.js`），应用只传 `locale`，
    不要再在应用的 i18n 里抄一份外观文案；个别词要改用 `labels` 逐键覆盖（`controls` 管背景参数控件名）。
+   v0.13.0 起应用切换器 / 账户菜单 / 语言切换的文案也内置（`chrome-text.js`，同一套规则：未知语言回退中文、缺键按中文补齐）。
 6. **配色色值手工双写**：JS 不能 import CSS，`PALETTES[].bg` 与 tokens.css 的 `--bg: light-dark(L, D)` 各写一份。
    改 tokens.css 的配色块必须同步 appearance-data.js，并跑 `node scripts/check-tokens.mjs`（不一致退出码 1）。
 
@@ -78,8 +79,11 @@ z-index 1   .app-frame       内容层
 z-index 30  侧栏 / 顶栏（sticky/fixed + backdrop-blur）
 z-index 40  底部导航
 z-index 45  .corner-tools    右上角工具位
-z-index 46  .corner-panel    工具位弹层（外观 / 背景参数、应用切换器、账户菜单；无遮罩）
+z-index 46  .corner-panel    工具位弹层（外观 / 背景参数、应用切换器、账户菜单、语言；无遮罩）
 z-index 50  .overlay         弹层遮罩（Portal 挂 body，避开 transform 包含块陷阱）
+z-index 51  .drawer          侧边抽屉（v0.13.0；要遮罩就配一个兄弟 .overlay）
+z-index 55  .menu            锚定下拉菜单（v0.13.0；抽屉 / 弹层里的 ⋯ 也要盖得住）
+z-index 60  .toast-region    操作反馈（v0.13.0；压在一切之上，不拦点击）
 ```
 
 玻璃三级：`--glass-bg`（卡片）→ `--inner-bg`（卡内嵌套）→ `--field-bg`（输入件）。
@@ -123,8 +127,25 @@ token 取色，并修掉了那个 transparent 灰晕。取用上游素材见 REA
 ## 5. 右上角工具位（.corner-tools）
 
 全局开关都挂这里，容器管定位、按钮只管长相。CSS `order` 决定左右，
-小的在左：明暗切换 10、外观（或旧的背景参数）20。项目自己的按钮用 `mountCornerTool(el, { order })`
-插进同一条，别再各自 fixed 一个——两个 fixed 会叠在一起。
+小的在左：应用切换器 5、账户 6、明暗切换 10、语言 15（v0.13.0）、外观（或旧的背景参数）20。
+项目自己的按钮用 `createCornerButton({ icon, label, order, onClick | href, badge })`（v0.13.0，缺省 order 50）
+插进同一条，别再各自 fixed 一个——两个 fixed 会叠在一起；也别照 `.corner-tool` 抄一份按钮样式。
+它返回 `{ el, setBadge(n | true | null), destroy() }`：角标 `.corner-badge` 无数字是小圆点、有数字是计数（>99 显示 99+）、
+0 / null 隐藏，计数同时并进 aria-label。只想塞现成元素时仍可 `mountCornerTool(el, { order })`。
+
+**一站式 `mountChrome()`（v0.13.0，新项目首选）**：`mountAppearance` +（`portal` 非空时）`mountAppSwitcher` + `mountAccountMenu`
++（给了 `localeToggle.locales`）`mountLocaleToggle`，同一个 `locale`。`handle.setLocale(l)` 同步全部子件（画布不重建）；
+用户在语言按钮里选了新语言时，`mountChrome` 先自己 `setLocale`，再调 `localeToggle.onChange` 让应用换自己的文案 / 存偏好。
+非 SSO 应用传 `portal: null`。`switcher: false` / `account: false` 可单独不挂。
+
+**语言切换 `mountLocaleToggle({ locales, current, onChange, order = 15, labels })`**：按钮显示当前语言短名
+（中 / 日 / EN），点开 `.glass.corner-panel` 列表，各语言用自己的写法列出（中文 / 日本語 / English），
+同下「工具位弹层」规则。`handle.set(l)` 只同步显示、不触发 onChange。
+
+**单独挂工具位：`corner.css`**（v0.13.0）。有自己样式体系、不加载 `components.css` 的应用（claude-bridge）
+挂 `tokens.css` + `corner.css`：只含工具位、角标、`.corner-clear` 与全部工具位弹层（及弹层里用到的按钮 / chip / 开关等，
+已限定在工具位与弹层内部），不含 `*` / `html` / `body` / `a` / `button` 等全局规则。它由 `scripts/build-corner-css.mjs`
+从 components.css 的 `@corner:begin … @corner:end` 段落生成，`--check` 防过期。
 
 排列方向是 token 旋钮 `--corner-tools-dir`，缺省 `row`（横向）。
 紧凑布局要纵向堆叠（finance-ledger 那种）就在自己的 `:root` 里设 `column`，
@@ -147,7 +168,13 @@ token 取色，并修掉了那个 transparent 灰晕。取用上游素材见 REA
 
 `--corner-rail-h`（工具位实测高度）仍然发布，给需要「让开这条」的其他浮层用。
 
-页面需为这条留出右上角空间（顶栏/内容区加 padding-right），否则会盖住那里的操作按钮。
+### 给工具位让位（`--corner-rail-w` / `.corner-clear`，v0.13.0）
+
+页面需为这条留出右上角空间，否则会盖住那里的操作按钮。corner.js 发布 `--corner-rail-w` = 视口右缘到工具位左缘的距离
+（横排 / 纵排、未登录时更宽的「登录」、按钮增减、窗口缩放都实测重算；工具位不存在时不发布）。
+全宽顶栏加 `.corner-clear`（`padding-right: calc(var(--corner-rail-w, 0px) + var(--corner-gap))`，`--corner-gap` 缺省 12px），
+或直接用 `.app-header`（已内置）。**不要再写死 `padding-right: 160px` 一类的值**。
+居中定宽、够不到右上角的内容列不需要让位。
 
 ### 明暗切换（.scheme-toggle）
 
@@ -308,15 +335,59 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
 - 文本 / 数据：`.page-title` `.page-sub` `.panel-title` `.panel-head` `.grad-text` `.muted` `.small` `.tiny` `.num` `.mono`
   `.pill`（+ 色）`.amt-*` `.stat-*` `.bar` `.bar-fill` `.tbl` `.table-wrap` `.empty` `.term*`
 - 动效：`.rise` `.stagger` `.shake` `.spot`
-- 工具位：`.corner-panel`（项目自己的工具位弹层挂它 + `claimCornerPanel`，见 §5）
+- 工具位：`.corner-panel`（项目自己的工具位弹层挂它 + `claimCornerPanel`，见 §5）；
+  v0.13.0 起 `.corner-tool`（工具位按钮外观）、`.corner-badge`（角标）、`.corner-clear`（让位）也是公开 API
+- v0.13.0 新增（§12）：`.warn-text` `.hint` `.callout`（`.ok/.warn/.err/.info`）`.tabs` `.tab`（`.compact` `.scroll`）`.seg`
+  `.toast-region` `.toast` `.field.small` `.spinner`（`.lg`）`.tbl.sticky` `.tbl.hover` `th[aria-sort]` `th.sorted` `.col-num`
+  `.menu-wrap` `.menu`（`.start` `.up`）`.menu-item` `.menu-sep` `.kv` `.drawer`（`.left`）`.drawer-head` `.drawer-body` `.drawer-foot`
+  `.app-header` `.app-brand` `.app-title` `.app-sub` `.app-actions`；token `--chart-1…6` `--pop-shadow` `--on-err` `--corner-gap`
 
 **内部实现**（只给包里的 JS 组件用，结构和定位随版本变，**项目不要借用这些类名去套自己的元素**，
 也不要在自己的 CSS 里覆写）：
 
 - `.settings-panel` `.settings-toggle` `.appearance-*` `.panel-body` `.panel-foot` `.ctl*` `.update-*`
   （外观 / 背景参数弹层；v0.9.0 把 `.settings-panel` 的定位挪给 `.corner-panel`，借用它的门户抽屉因此摊到了页面底部）
-- `.corner-tools` `.corner-tool` `.scheme-toggle` `.app-switcher*` `.account-*` `.guest-note`
+- `.corner-tools` `.scheme-toggle` `.locale-toggle` `.locale-menu*` `.app-switcher*` `.account-*` `.guest-note`
+  （`.corner-tools` 容器由 corner.js 管，别手写；按钮用 `createCornerButton`）
 
 项目自有样式**别重名**公开类（例如自己的页面容器叫 `.wrap`、自己的 `.form-row` 写成 flex）：
 同名规则会和包里的规则叠加，包一升级就可能出现意料外的布局。要改公开类的样子，用自己的修饰类
 （`.form-row.my-inline`）或包一层自己的容器类，不要整条重写。
+
+## 12. v0.13.0 公开组件
+
+全部是新类 / 新属性，旧标记不受影响。手测页 `demo/components-v013.html`（light / dark、zh / ja / en、375 宽）。
+下面「替代」一栏是应用里现有的自写实现，迁移时删掉自写、换成包里的。
+
+| 组件 | 用法 | 替代 |
+|---|---|---|
+| `.warn-text` | 与 `.ok-text` / `.err-text` 同一族（13px、`--warn`） | cosme / payroll 自写 `.warn-text` |
+| `.hint` | 字段下方提示：12px、`--text-dim`、上边距 6px | jppost / payroll 自写 `.hint`、内联 `tiny muted` |
+| `.callout` + `.ok/.warn/.err/.info` | 提示条：tint 底 + 同色描边；首个 `<strong>` 着语义色；info 跟 accent | 各处内联 style 的提示块 |
+| `.tabs > .tab` | 选中 `.active` 或 `[aria-selected="true"]`；`.tabs.compact` 紧凑；`.tabs.scroll` 不换行横滚 | jppost / ashare `.nav-tabs .tab`（样子一致）、portal `.tab-bar .tab-btn` |
+| `.seg > button` | 分段控件，选中 `.active` 或 `aria-pressed="true"` | ashare `.mode-switch`、portal `.lay-seg`、cosme `.acct-seg` |
+| `toast()`（toast.js） | `toast(msg, { tone, timeout })`，底部居中堆叠、点击关闭、aria-live；有底部导航时设 `--toast-offset` | portal `toast.jsx`、exit-console / ashare `.toast` |
+| `.field.small` | 紧凑输入（14px、6px 10px）；触屏 / ≤640px 仍 16px 防 iOS 缩放 | portal `.field-small`、ashare `select.field.small` |
+| `.field:disabled` / `.switch:disabled` | 熄灭态 | — |
+| `.spinner`（`.lg`） | 跟随文字色与字号；减少动效时停转但可见 | 各自的「加载中…」文字 / 自写转圈 |
+| `.tbl.sticky` | 表头吸顶；放在 `.table-wrap` 里，wrap 自动限高 `--table-max-h`（缺省 70vh）并纵向滚动 | — |
+| `.tbl.hover` | 行悬停着色 | — |
+| `th[aria-sort]` / `th.sorted` | 可排序列箭头（none ↕ / ascending ↑ / descending ↓），`.sorted` 高亮 | 自写排序箭头 |
+| `.col-num` | 数字列：右对齐 + 等宽数字（th、td 都加） | ashare `.r.num`、finance `.data-tbl .num` |
+| `.menu-wrap > .menu > .menu-item`（+ `attachMenu`） | 行操作 ⋯。在 `.table-wrap` / `.glass` 里必须用 menu.js 的 `attachMenu`（打开时搬到 body 下 fixed，不被裁切） | ashare `.menu` + 自写定位 |
+| `dl.kv` | 键值列表；≤520px 上下排 | cosme `.kv`、ashare `#set-status .kv` |
+| `.drawer` | 右侧抽屉（`.drawer-head/.drawer-body/.drawer-foot`），开合用 `hidden`；手机全宽；旋钮 `--drawer-w` / `--drawer-top` | portal `.portal-drawer` + `.drawer-body/.drawer-foot` |
+| `.app-header` | 页头：`.app-brand`（`.app-title` + `.app-sub`）+ `.app-actions`，右侧自动让位工具位、可换行 | 四个应用自写的 `.brand-title` / `.brand-sub` / 顶栏 padding |
+| `--chart-1…6` | 图表分类色，随配色与明暗 | 应用里写死的图表色板 |
+| `--pop-shadow` | 浮层阴影（菜单 / 抽屉 / toast） | 硬编码 rgba 阴影 |
+
+几条注意：
+
+- **`.overlay` 带 `display: flex`，`hidden` 属性压不住**——遮罩按开合渲染 / 移除（React 条件渲染），别靠 `hidden`。
+- 抽屉想让右上角工具位露出来：`--drawer-top: calc(10px + var(--corner-rail-h, 34px) + 12px)`。
+- `.menu` 纯 CSS 版本只适合不在滚动容器 / 玻璃卡里的场景；表格行操作一律 `attachMenu`。
+- `.tbl .num` 不改对齐（已有表格用 `.num` 标日期等，改了会跳）——数字列右对齐用 `.col-num`。
+- `.spinner` 的旋转是匀速 `linear`，是唯一不走 `--ease` 的动效（等待语义）。
+- `--lift-shadow` 是把整条阴影塞进 `light-dark()` 写的；`light-dark()` 只接受颜色，实测 Chrome 计算为 `none`——
+  `.lift:hover` 的阴影其实从未生效。修它会改变现有外观，本版不动（另行决定）。
+  新的 `--pop-shadow` 拆成「颜色 token + 固定几何」，浮层用它。

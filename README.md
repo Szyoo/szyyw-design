@@ -8,9 +8,53 @@ szyyw.xyz 设计语言的共享实现：design tokens、玻璃组件层、交互
 ```jsonc
 // package.json
 "dependencies": {
-  "@szyyw/design": "github:Szyoo/szyyw-design#v0.12.0"
+  "@szyyw/design": "github:Szyoo/szyyw-design#v0.13.0"
 }
 ```
+
+### 新项目首选：`mountChrome`（v0.13.0）一次挂齐右上角整条
+
+```ts
+import "@szyyw/design/tokens.css";
+import "@szyyw/design/components.css";
+import { mountChrome } from "@szyyw/design/chrome";
+
+const chrome = mountChrome({
+  background: document.querySelector(".bg-layer"),  // 点阵背景（可省）
+  cookiePrefix: "app_",                             // 外观三项存储键 → app_theme / app_palette / app_scheme
+  locale: "zh",                                     // "zh" | "ja" | "en"：工具位全部文案内置
+  portal: "https://szyyw.xyz",                      // SSO 站点；非 SSO 应用传 null（不挂切换器与账户菜单）
+  appearance: { onChange: (a) => savePrefs(a) },    // 账号级外观偏好
+  localeToggle: { locales: ["zh", "ja", "en"], onChange: (l) => setAppLocale(l) }  // 可省
+});
+// 应用自己换语言时：chrome.setLocale("ja")——切换器 / 账户菜单 / 🌗 / 外观 / 语言按钮一起换，画布不重建
+```
+
+工具位从左到右：应用切换器 5 · 账户 6 · 🌗 10 · 语言 15 · 外观 20 · 项目按钮（`createCornerButton`，缺省 50）。
+顶栏用 `.app-header`（或给自己的顶栏加 `.corner-clear`）给工具位让位，不要写死 `padding-right`。
+
+```js
+import { createCornerButton } from "@szyyw/design/corner";
+const bell = createCornerButton({ icon: BELL_SVG, label: "通知", order: 30, onClick: openInbox });
+bell.setBadge(3);      // true = 小圆点；0 / null = 隐藏
+```
+
+操作反馈与行菜单（v0.13.0）：
+
+```js
+import { toast } from "@szyyw/design/toast";
+toast("已保存", { tone: "ok" });                   // ok | err | warn | info，timeout 缺省 3000（0 = 不自动消失）
+import { attachMenu } from "@szyyw/design/menu";  // .menu-wrap > button + .menu > .menu-item
+attachMenu(button, button.nextElementSibling);
+```
+
+有自己样式体系、不加载 `components.css` 的应用（claude-bridge）：只挂 `tokens.css` + `corner.css`（工具位及弹层，
+不含任何全局规则），JS 照常 `mountChrome` / `mountAppSwitcher` 等。
+
+新组件一览（提示条 / 标签页 / 分段 / toast / 紧凑输入 / 转圈 / 表格吸顶排序 / 下拉菜单 / 键值列表 / 侧边抽屉 / 页头 / 图表色）
+见 DESIGN.md §12，手测页 `demo/components-v013.html`。
+
+### 分开挂（细调或旧项目）
 
 ```ts
 // 入口（Next.js: app/layout.tsx）
@@ -37,8 +81,10 @@ mountAppSwitcher({ portal: "https://szyyw.xyz" });
 // 点开有角色、账户设置、登出。也可从 "@szyyw/design/account" 引入（同一实现）。
 import { mountAccountMenu } from "@szyyw/design/switcher";
 mountAccountMenu({ portal: "https://szyyw.xyz", onChange: (d) => console.log("logged in", d) });
+// v0.13.0：两者都收 locale（"zh" | "ja" | "en"，缺省中文、与旧版逐字相同），handle.setLocale() 切语言；
+// 账户菜单的 labels 可覆盖角色名 roles: { admin: "…" }。语言切换按钮：mountLocaleToggle（"@szyyw/design/locale-toggle"）
 
-// 一站式（v0.12.0，新项目首选）：明暗 🌗 + 外观弹层 + 点阵背景 + 持久化，文案按 locale 内置（zh / ja / en）。
+// 外观一站式（v0.12.0；mountChrome 内部就是它）：明暗 🌗 + 外观弹层 + 点阵背景 + 持久化，文案按 locale 内置（zh / ja / en）。
 // 等价于下面 configureScheme / configureAppearance / mountDotField / mountSchemeToggle / mountAppearancePanel 的组合。
 import { mountAppearance } from "@szyyw/design/appearance";
 const appearance = mountAppearance({
@@ -99,14 +145,15 @@ const a = readAppearanceFromCookies((n) => cookies().get(n)?.value, { theme: "ap
 vendoring 用上游的 `sync.sh`，**各项目不要自己写同步脚本**（那是版本漂移的来源）：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Szyoo/szyyw-design/main/sync.sh \
-  | sh -s -- ./static/vendor/szyyw-design v0.12.0
+curl -fsSL https://raw.githubusercontent.com/Szyoo/szyyw-design/v0.13.0/sync.sh \
+  | sh -s -- ./static/vendor/szyyw-design v0.13.0
 ```
 
-它拷贝 12 个运行时文件并写 `VENDORED.md` 记录版本；`--local` 代替 tag 可从本机 clone 同步未发版改动。
+脚本从**目标 tag** 取（文件清单与那个版本一致，不用 main 上的）。它拷贝 18 个运行时文件并写 `VENDORED.md`
+（已有时刷新版本行与文件清单行）；`--local` 代替 tag 可从本机 clone 同步未发版改动。
 
 右上角是一条共用工具位（`.corner-tools`），项目自己的全局按钮用
-`mountCornerTool(el, { order })` 插进同一条，别各自 fixed。
+`createCornerButton({ icon, label, order })`（v0.13.0，带角标）或 `mountCornerTool(el, { order })` 插进同一条，别各自 fixed。
 
 ## 账户菜单（v0.8.0）
 
@@ -161,9 +208,13 @@ npx shadcn@latest add @react-bits/DotField-TS-CSS   # 变体：{名字}-{JS|TS}-
 **改 tokens.css 的配色块（`:root` 主块或 `:root[data-palette=…]`）必须同步 `appearance-data.js` 的 `PALETTES`，
 并跑 `node scripts/check-tokens.mjs`**——JS 不能 import CSS，服务端算 theme-color 用的是 JS 那份。
 
-vendored 项目（jppost-tracker 那种）拷文件清单：tokens.css / components.css /
+vendored 项目（jppost-tracker 那种）拷文件清单：tokens.css / components.css / corner.css /
 dotfield.js / scheme.js / corner.js / settings.js / switcher.js / account.js / version.js /
-appearance.js / appearance-data.js（以 `sync.sh` 的 `FILES` 为准）。
+appearance.js / appearance-data.js / appearance-text.js / chrome-text.js / locale-toggle.js / chrome.js / toast.js / menu.js
+（以 `sync.sh` 的 `FILES` 为准）。
+
+**改 components.css 的 `@corner:begin` … `@corner:end` 段落、或弹层里用到的公开类（.btn / .chip / .switch …）后
+必须跑 `node scripts/build-corner-css.mjs` 重新生成 corner.css**；发版前跑 `node scripts/build-corner-css.mjs --check`（过期退出码 1）。
 
 ### v0.4.0 破坏性变更
 

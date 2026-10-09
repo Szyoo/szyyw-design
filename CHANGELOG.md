@@ -1,5 +1,39 @@
 # Changelog
 
+## v0.13.0 — 2026-10-09
+
+补齐各应用自写 / 借用内部类的缺口（审计了 portal、jppost-tracker、payroll、ashare-ai-lab、exit-console、claude-bridge、cosme-vault、finance-ledger）。
+**纯新增、向后兼容**：既有类 / 函数 / DOM / 存储键对现有标记不变——v0.12.0 的 `demo/appearance.html`、`demo/forms.html`
+（dark / light × 1024 / 375 × 外观弹层开合）逐元素计算样式与位置零差异；切换器 / 账户菜单不传 locale 时 DOM 逐字节相同。
+例外（规格明确要求、会影响已有标记的三处）：已禁用的 `.field` 现在显示熄灭态（之前与可用态无区别）、`.switch:disabled` 同理、
+写了 `class="field small"` 的元素变紧凑（ashare 唯一用处有自己更高特异性的覆盖，实际无变化）。
+
+- **工具位按钮公开化**（给 portal 的管理 / 账户 / 退出、finance-ledger 的通知等）：`.corner-tool` 移入公开 API（样式不变）；
+  新增 `.corner-badge` 角标（空 = 小圆点 / 数字 = 计数 / hidden）；corner.js 新增 `createCornerButton({ icon, label, order, onClick, href, badge })`
+  → `{ el, setBadge, destroy }`。替代 portal 照抄的 `.pf-tool` 与各自拼的角标。外观按钮的「有新版」角标仍是原来的 `::after` 小点，未改。
+- **`--corner-rail-w` + `.corner-clear`**：corner.js 再发布「视口右缘 → 工具位左缘」的实测宽度（横排 / 纵排、按钮增减、resize 都重算，
+  MutationObserver 兜底项目直接 append 的按钮）；`.corner-clear` 给顶栏让位。替代各应用顶栏写死的 `padding-right`。新 token `--corner-gap`（12px）。
+- **切换器 / 账户菜单多语言**：新 `chrome-text.js`（`./chrome-text`，零 DOM）内置 zh / ja / en；`mountAppSwitcher({ locale })`、
+  `mountAccountMenu({ locale, labels })`（含角色名，未知角色原样），两者 handle 加 `setLocale()`。不传 locale = 旧中文文案。替代应用 i18n 里各抄的一份。
+- **语言切换 `mountLocaleToggle()`**（新 `locale-toggle.js`，`./locale-toggle`）：工具位 order 15，短名按钮 + `.corner-panel` 列表，
+  `claimCornerPanel` 互斥。`CORNER_ORDER.locale = 15`。替代应用自写的语言切换控件。
+- **一站式 `mountChrome()`**（新 `chrome.js`，`./chrome`，新项目首选）：外观 + 切换器 + 账户 + 语言一次挂齐，`setLocale` 同步全部、画布不重建；
+  `portal: null` = 非 SSO。替代每个应用入口里那一串 mount 调用与语言联动胶水。
+- **`corner.css`**（`./corner.css`）：只含工具位及其弹层，零全局规则，给 claude-bridge 这类自有样式体系的应用配 tokens.css 单独挂。
+  由新脚本 `scripts/build-corner-css.mjs` 从 components.css 的 `@corner:begin/end` 段落 + 弹层依赖的公开类（限定到工具位内部）生成，`--check` 防过期。
+  实测 corner.css 独立挂载与 components.css 下的工具位 / 四种弹层计算样式零差异。
+- **新公开组件**（components.css，DESIGN.md §12 有「替代谁」对照表）：`.warn-text` `.hint` `.callout`(+ok/warn/err/info)
+  `.tabs/.tab`（与 jppost / ashare 自写的 `.tab` 同外观）`.seg` toast（新 `toast.js`，`./toast`：`toast(msg, { tone, timeout })` / `clearToasts()`）
+  `.field.small` `.field:disabled` `.switch:disabled` `.spinner` `.tbl.sticky` `.tbl.hover` `th[aria-sort]` `th.sorted` `.col-num`
+  `.menu/.menu-item`（新 `menu.js`，`./menu`：`attachMenu()` 打开时搬到 body 下 fixed 定位，表格里不被裁）`dl.kv` `.drawer`（z 51）`.app-header/.app-brand/.app-title/.app-sub/.app-actions`。
+- **tokens**：`--chart-1…6`（default / aurora 各一套，light-dark）、`--pop-shadow`（+ `--pop-shadow-color`）、`--on-err`、`--corner-gap`。
+  `check-tokens.mjs` 照旧通过。
+- `.tbl .num` **没有**改成右对齐（finance-ledger / exit-console 的表格用 `.num` 标日期与计数，改了会跳）；数字列右对齐用新的 `.col-num`。
+- `sync.sh`：文件清单加入 corner.css / chrome-text.js / locale-toggle.js / chrome.js / toast.js / menu.js（现为 18 个运行时文件）；
+  已有 `VENDORED.md` 时连「同步到此目录的文件」一行一起刷新（没有就补上）；README / 脚本头部的一行用法改为从目标 tag 取 sync.sh。
+- 新增 `demo/components-v013.html`（不进 `files`）。
+- 记录：`--lift-shadow` 把阴影整条写进 `light-dark()`，实测计算为 `none`（`.lift:hover` 阴影从未生效）；修它会改外观，本版未动。
+
 ## v0.12.0 — 2026-10-09
 
 外观文案与接线收进包里，应用不再各抄一份。旧 API 签名不变；可见变化只有三处：外观弹层不传 labels 时配色名显示中文名而不是 id、版本行的「版本」改叫「设计包版本」、「复制升级命令」改为 tarball 形式。
