@@ -44,7 +44,7 @@
 <main class="app-frame">
   <div class="demo">
     <h1 class="page-title">外观弹层 · 手测</h1>
-    <p class="page-sub">右上角 🌗 = mountSchemeToggle，调色板 = mountAppearancePanel；持久化走 localStorage（demo:*）。</p>
+    <p class="page-sub">一次 mountAppearance 挂齐：右上角 🌗 + 调色板外观弹层 + 点阵背景；持久化走 localStorage（demo:*）。</p>
 
     <section class="glass">
       <dl class="mono">
@@ -57,6 +57,11 @@
       <div class="actions">
         <button class="btn btn-small" type="button" id="open">打开外观（openAppearancePanel）</button>
         <button class="btn btn-ghost btn-small" type="button" id="clear">清空 demo 存储并刷新</button>
+        <span class="chip-row" id="locales">
+          <button class="chip active" type="button" data-locale="zh">中文</button>
+          <button class="chip" type="button" data-locale="ja">日本語</button>
+          <button class="chip" type="button" data-locale="en">English</button>
+        </span>
       </div>
     </section>
 
@@ -66,6 +71,7 @@
         <li>切明暗 → 🌗 图标与弹层选中态同步；点 🌗 → 弹层选中态跟着变</li>
         <li>刷新 → 保持；「背景参数」折叠段：滑杆实时生效、只存动过的键、恢复默认交还主题</li>
         <li>Esc / 点外面关闭</li>
+        <li>切语言 → 🌗 提示、弹层全部文字（含背景参数控件名）换语言，点阵不重建</li>
       </ol>
     </section>
 
@@ -76,33 +82,18 @@
 </main>
 
 <script type="module">
-  import { mountDotField, attachSpot } from "../dotfield.js";
-  import { restoreDotFieldSettings } from "../settings.js";
-  import { configureScheme, mountSchemeToggle } from "../scheme.js";
-  import {
-    configureAppearance,
-    mountAppearancePanel,
-    openAppearancePanel,
-    onAppearanceChange
-  } from "../appearance.js";
-
-  configureScheme({ persist: "localStorage", storageKey: "demo:scheme" });
-  configureAppearance({ persist: "localStorage", storageKeys: { theme: "demo:theme", palette: "demo:palette" } });
-
-  const field = mountDotField(document.querySelector(".bg-layer"), restoreDotFieldSettings());
-  attachSpot();
-
-  mountSchemeToggle({ labels: { auto: "跟随系统", light: "浅色", dark: "深色" } });
-
+  import { openAppearancePanel, onAppearanceChange, mountAppearance } from "../appearance.js";
   const logEl = document.getElementById("log");
   const log = (line) => {
     logEl.textContent = `${new Date().toLocaleTimeString()}  ${line}\n` + logEl.textContent;
   };
   window.__changes = [];
 
-  window.__panel = mountAppearancePanel({
-    field,
-    labels: { palettes: { default: "青紫（默认）", aurora: "极光翠青" } },
+  window.__appearance = mountAppearance({
+    background: document.querySelector(".bg-layer"),
+    persist: "localStorage",
+    cookiePrefix: "demo:",
+    locale: "zh",
     dotField: { note: "仅本地预览" },
     onChange: (a, changed) => {
       window.__changes.push({ a, changed });
@@ -123,6 +114,13 @@
   onAppearanceChange(renderState);
   renderState();
   setInterval(renderState, 1000);
+
+  for (const b of document.querySelectorAll("#locales .chip")) {
+    b.addEventListener("click", () => {
+      window.__appearance.setLocale(b.dataset.locale);
+      for (const o of document.querySelectorAll("#locales .chip")) o.classList.toggle("active", o === b);
+    });
+  }
 
   $("open").addEventListener("click", () => openAppearancePanel());
   $("clear").addEventListener("click", () => {

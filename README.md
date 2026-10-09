@@ -8,7 +8,7 @@ szyyw.xyz 设计语言的共享实现：design tokens、玻璃组件层、交互
 ```jsonc
 // package.json
 "dependencies": {
-  "@szyyw/design": "github:Szyoo/szyyw-design#v0.11.0"
+  "@szyyw/design": "github:Szyoo/szyyw-design#v0.12.0"
 }
 ```
 
@@ -38,7 +38,18 @@ mountAppSwitcher({ portal: "https://szyyw.xyz" });
 import { mountAccountMenu } from "@szyyw/design/switcher";
 mountAccountMenu({ portal: "https://szyyw.xyz", onChange: (d) => console.log("logged in", d) });
 
-// 外观弹层（v0.10.0，推荐）：调色板排在明暗切换右边——配色 / 明暗 / 折叠的「背景参数」/ 版本行。
+// 一站式（v0.12.0，新项目首选）：明暗 🌗 + 外观弹层 + 点阵背景 + 持久化，文案按 locale 内置（zh / ja / en）。
+// 等价于下面 configureScheme / configureAppearance / mountDotField / mountSchemeToggle / mountAppearancePanel 的组合。
+import { mountAppearance } from "@szyyw/design/appearance";
+const appearance = mountAppearance({
+  background: document.querySelector(".bg-layer"),
+  cookiePrefix: "app_",              // → app_theme / app_palette / app_scheme
+  locale: "zh",
+  onChange: (a) => savePrefs(a)       // 账号级持久化
+});
+// 切语言：appearance.setLocale("ja")（画布不重建）；服务端读：appearanceCookieNames("app_")
+
+// 外观弹层（v0.10.0）：调色板排在明暗切换右边——配色 / 明暗 / 折叠的「背景参数」/ 版本行。
 // 与下面的 mountDotFieldSettings 二选一（同一枚按钮、同一个 order、同一份存储）。
 import { configureAppearance, mountAppearancePanel } from "@szyyw/design/appearance";
 configureAppearance({ persist: "cookie", storageKeys: { theme: "app_theme", palette: "app_palette" } });
@@ -89,10 +100,10 @@ vendoring 用上游的 `sync.sh`，**各项目不要自己写同步脚本**（�
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Szyoo/szyyw-design/main/sync.sh \
-  | sh -s -- ./static/vendor/szyyw-design v0.11.0
+  | sh -s -- ./static/vendor/szyyw-design v0.12.0
 ```
 
-它拷贝 11 个运行时文件并写 `VENDORED.md` 记录版本；`--local` 代替 tag 可从本机 clone 同步未发版改动。
+它拷贝 12 个运行时文件并写 `VENDORED.md` 记录版本；`--local` 代替 tag 可从本机 clone 同步未发版改动。
 
 右上角是一条共用工具位（`.corner-tools`），项目自己的全局按钮用
 `mountCornerTool(el, { order })` 插进同一条，别各自 fixed。

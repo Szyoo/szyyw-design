@@ -39,6 +39,9 @@ export const DEFAULT_APPEARANCE: Readonly<Appearance>;
 /** 缺省键名 { theme: "theme", palette: "palette", scheme: "scheme" } */
 export const APPEARANCE_COOKIES: Readonly<AppearanceCookieNames>;
 
+/** 按前缀生成三项存储键：appearanceCookieNames("fl_") → { theme: "fl_theme", palette: "fl_palette", scheme: "fl_scheme" }（v0.12.0） */
+export function appearanceCookieNames(prefix?: string): AppearanceCookieNames;
+
 /** 任意输入 → 合法三元组（非法 / 缺省回退到 DEFAULT_APPEARANCE） */
 export function normalizeAppearance(raw?: {
   theme?: string | null;

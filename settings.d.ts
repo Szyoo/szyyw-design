@@ -1,3 +1,4 @@
+import type { DotFieldControlLabels } from "./appearance-text";
 import type { DotFieldHandle, DotFieldOptions } from "./dotfield";
 
 /** 面板里的一整套取值：行为参数 + 三个颜色 */
@@ -74,5 +75,7 @@ export function mountDotFieldSettings(options: {
       | "copyCommand" | "copied" | "updateNow" | "updating" | "updated" | "updateFailed" | "checkFailed",
       string
     >
-  >;
+  > & { controls?: DotFieldControlLabels };
+  /** v0.12.0：用内置 zh / ja / en 文案（含控件名）；不传保持旧的中文缺省 */
+  locale?: string | null;
 }): DotFieldSettingsHandle;
