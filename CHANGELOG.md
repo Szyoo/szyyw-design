@@ -1,5 +1,26 @@
 # Changelog
 
+## v0.14.0 — 2026-10-09
+
+各应用迁到设计包时发现的缺口（cosme-vault 迁移为主）。**纯新增、向后兼容**：v0.13.1 的 `demo/appearance.html`、`demo/forms.html`、
+`demo/components-v013.html`（dark / light × 1024 / 375 × 外观弹层开合）逐元素计算样式与位置零差异。
+唯一会影响已有标记的一处：`.sheet-head` 里**只有**一枚 `.close-x`（没有标题）时，✕ 从靠左改为靠右、头部从 57px 收到 41px。
+
+- **`.sheet.wide`**：宽版弹层，桌面 `max-width: 760px`（普通 560px），给「大图 + 键值表」的详情（cosme 奖品详情）；手机仍是底部全宽抽屉。
+- **无标题 `.sheet-head`**：头里只放 `.close-x` 时自动 `justify-content: flex-end` + `padding: 10px 18px 0`（✕ 与有标题时同一右缘）。
+  选择器 `.sheet-head:where(:has(> .close-x:only-child))`，特异性与 `.sheet-head` 相同。DESIGN.md §8 有示例。
+- **`.term-lvl:disabled` / `.term-copy:disabled`**：熄灭态（`--term-dim` 60%、无描边、`not-allowed`，悬停不亮；active 的级别禁用后也熄灭）。
+- **`.pill.slate` / `.pill.pink`**：slate = 中性灰蓝「未知 / 未定」（cosme「未知模式」，与 amber「已下架」、violet「待选择」分开），pink = 补充色。
+  新 token `--slate` `--pink` `--tint-slate-bg` `--tint-pink-bg`（default 与 aurora 各一套，light-dark；aurora 的 slate 略偏青）。corner.css 随之重建。
+- **外观弹层内置「仅本地保存」提示**：`dotField.note: true`（`mountAppearance` / `mountAppearancePanel` / `mountChrome` 的 `appearance.dotField`，
+  以及 `mountDotFieldSettings({ note: true })`）显示内置文案 `localOnly`：「仅保存在本浏览器」/「このブラウザにのみ保存されます」/「Saved in this browser only」，
+  随 locale 切换；`labels.localOnly` 可改词；传字符串照旧原样显示。cosme 迁移时这句因包无内置文案而丢了。
+- **`--sheet-bg` 不变**（评估结论）：375 宽、背后满屏文字、light / dark × default / aurora 实测，标准用法（`.overlay` 遮罩模糊 + 92% / 94% 底色）下
+  弹层空白区亮度起伏约 2/255，背后文字不可辨；去掉遮罩模糊（弹层自身 18px 模糊仍在）也是约 2/255。只有 `backdrop-filter` 完全失效时
+  起伏约 8/255、能看出字形——那是挂载方式问题（弹层应 Portal 到 body 下、配 `.overlay`），不靠调 token 解决。
+- DESIGN.md：§12「替代谁」更正——cosme 的 `.acct-seg` 是账号进度条色段，不是分段控件，不是 `.seg` 的替代对象；新增 §13（v0.14.0 对照表），§11 公开类清单补齐。
+- 新增 `demo/components-v014.html`（不进 `files`）。
+
 ## v0.13.1 — 2026-10-09
 
 - 修 `--lift-shadow`：之前把整条阴影写进 `light-dark()`（它只接受颜色），浏览器算成 `none`，`.lift:hover` 的投影从未生效。改为 `--lift-shadow-color: light-dark(…)` + `--lift-shadow: 0 10px 32px var(--lift-shadow-color)`。可见变化：`.lift` 卡片悬停时出现设计稿里本来就有的投影。

@@ -8,7 +8,7 @@ szyyw.xyz 设计语言的共享实现：design tokens、玻璃组件层、交互
 ```jsonc
 // package.json
 "dependencies": {
-  "@szyyw/design": "github:Szyoo/szyyw-design#v0.13.1"
+  "@szyyw/design": "github:Szyoo/szyyw-design#v0.14.0"
 }
 ```
 
@@ -102,7 +102,7 @@ configureAppearance({ persist: "cookie", storageKeys: { theme: "app_theme", pale
 mountAppearancePanel({
   field,
   labels: { palettes: { default: "青紫", aurora: "极光翠青" } },  // 包不内置语言，缺省显示 id
-  dotField: { note: "仅本地预览" },                                // 背景参数段 / 版本行，与旧面板同名同义
+  dotField: { note: true },                                       // 背景参数段 / 版本行；note: true = 内置「仅保存在本浏览器」（v0.14.0，随 locale），字符串原样显示
   onChange: (a, changed) => savePrefs(a)                          // 账号级持久化；🌗 改明暗也会走这里
 });
 
@@ -145,8 +145,8 @@ const a = readAppearanceFromCookies((n) => cookies().get(n)?.value, { theme: "ap
 vendoring 用上游的 `sync.sh`，**各项目不要自己写同步脚本**（那是版本漂移的来源）：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Szyoo/szyyw-design/v0.13.1/sync.sh \
-  | sh -s -- ./static/vendor/szyyw-design v0.13.1
+curl -fsSL https://raw.githubusercontent.com/Szyoo/szyyw-design/v0.14.0/sync.sh \
+  | sh -s -- ./static/vendor/szyyw-design v0.14.0
 ```
 
 脚本从**目标 tag** 取（文件清单与那个版本一致，不用 main 上的）。它拷贝 18 个运行时文件并写 `VENDORED.md`

@@ -64,15 +64,15 @@ export function mountDotFieldSettings(options: {
   order?: number;
   /** 传了才显示「保存」按钮（存服务端用）；抛错即算失败 */
   onSave?: (values: DotFieldSettings) => void | Promise<void>;
-  /** 没有 onSave 时的页脚说明，如「访客模式 · 仅本地预览」 */
-  note?: string;
+  /** 没有 onSave 时的页脚说明，如「访客模式 · 仅本地预览」；true = 内置文案（v0.14.0，「仅保存在本浏览器」，随 locale） */
+  note?: string | true;
   /** 版本检测；false 关闭 */
   update?: false | UpdateConfig;
   labels?: Partial<
     Record<
       | "open" | "close" | "reset" | "save" | "saving" | "saved" | "error"
       | "version" | "check" | "checking" | "upToDate" | "updateAvailable" | "viewChanges"
-      | "copyCommand" | "copied" | "updateNow" | "updating" | "updated" | "updateFailed" | "checkFailed",
+      | "copyCommand" | "copied" | "updateNow" | "updating" | "updated" | "updateFailed" | "checkFailed" | "localOnly",
       string
     >
   > & { controls?: DotFieldControlLabels };
