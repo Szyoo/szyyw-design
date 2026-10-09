@@ -9,6 +9,12 @@
   box-sizing: border-box;
 }
 
+/* hidden 属性永远赢：组件类（.overlay / .stack / .callout / .row …）自带 display，
+   不加这条时 hidden 会被它们盖掉，应用只能逐个补兜底（v0.14.1） */
+[hidden] {
+  display: none !important;
+}
+
 html,
 body {
   margin: 0;
