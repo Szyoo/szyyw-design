@@ -8,7 +8,7 @@ szyyw.xyz 设计语言的共享实现：design tokens、玻璃组件层、交互
 ```jsonc
 // package.json
 "dependencies": {
-  "@szyyw/design": "github:Szyoo/szyyw-design#v0.13.0"
+  "@szyyw/design": "github:Szyoo/szyyw-design#v0.13.1"
 }
 ```
 
@@ -145,8 +145,8 @@ const a = readAppearanceFromCookies((n) => cookies().get(n)?.value, { theme: "ap
 vendoring 用上游的 `sync.sh`，**各项目不要自己写同步脚本**（那是版本漂移的来源）：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Szyoo/szyyw-design/v0.13.0/sync.sh \
-  | sh -s -- ./static/vendor/szyyw-design v0.13.0
+curl -fsSL https://raw.githubusercontent.com/Szyoo/szyyw-design/v0.13.1/sync.sh \
+  | sh -s -- ./static/vendor/szyyw-design v0.13.1
 ```
 
 脚本从**目标 tag** 取（文件清单与那个版本一致，不用 main 上的）。它拷贝 18 个运行时文件并写 `VENDORED.md`

@@ -51,7 +51,9 @@
   /* 细线与悬浮着色 */
   --line-soft: light-dark(rgba(90, 108, 133, 0.18), rgba(148, 163, 184, 0.1));
   --hover-tint: light-dark(rgba(3, 105, 161, 0.07), rgba(56, 189, 248, 0.06));
-  --lift-shadow: light-dark(0 10px 32px rgba(30, 41, 59, 0.12), 0 10px 32px rgba(0, 0, 0, 0.35));
+  /* light-dark() 只接受颜色：整条阴影写进去会算成 none（v0.13.0 及之前 .lift:hover 的阴影因此从未生效） */
+  --lift-shadow-color: light-dark(rgba(30, 41, 59, 0.12), rgba(0, 0, 0, 0.35));
+  --lift-shadow: 0 10px 32px var(--lift-shadow-color);
   /* 浮层阴影（v0.13.0：.menu / .drawer / .toast）。light-dark() 只接受颜色，
      所以拆成「阴影颜色 token + 固定几何」，整条阴影不能直接塞进 light-dark() */
   --pop-shadow-color: light-dark(rgba(30, 41, 59, 0.16), rgba(0, 0, 0, 0.45));
