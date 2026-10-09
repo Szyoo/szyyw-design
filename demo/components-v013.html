@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>v0.13.0 新组件 · 手测</title>
+<!--
+  @szyyw/design v0.13.0 新增件的静态手测页（不进 package files）。
+  仓库根目录 `python3 -m http.server 8080`，打开 http://localhost:8080/demo/components-v013.html
+    ?anon=1      门户 /api/me 回 401（看「登录」按钮与 --corner-rail-w 变宽）
+    ?nosso=1     mountChrome({ portal: null })：非 SSO，只挂外观与语言
+    ?column=1    工具位纵排（--corner-tools-dir: column）
+  门户接口用页内假 fetch 模拟（https://portal.demo.test），不发真实请求。
+-->
+<script>
+  (function () {
+    var d = document.documentElement;
+    try {
+      var p = localStorage.getItem("demo13:palette"), s = localStorage.getItem("demo13:scheme");
+      if (p && p !== "default") d.setAttribute("data-palette", p);
+      if (s === "auto" || s === "dark" || s === "light") d.setAttribute("data-scheme", s);
+    } catch (e) {}
+    if (/[?&]column=1/.test(location.search)) d.style.setProperty("--corner-tools-dir", "column");
+  })();
+</script>
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../components.css">
+<style>
+  .demo { max-width: 860px; margin: 0 auto; padding: 8px 20px 64px; }
+  .demo > section { padding: 20px 22px; margin-bottom: 16px; }
+  .demo h2 { margin: 0 0 4px; font-size: 15px; }
+  .demo .note { margin: 0 0 14px; font-size: 12px; color: var(--text-dim); }
+  .swatches { display: flex; gap: 8px; flex-wrap: wrap; }
+  .swatch { width: 44px; height: 28px; border-radius: 8px; border: 1px solid var(--glass-border); }
+</style>
+</head>
+<body>
+<div class="bg-layer" aria-hidden="true"></div>
+<div class="app-frame">
+  <header class="app-header" id="hdr">
+    <div class="app-brand">
+      <h1 class="app-title">组件手测</h1>
+      <span class="app-sub">szyyw design v0.13.0</span>
+    </div>
+    <div class="app-actions">
+      <span class="small muted mono" id="railw"></span>
+      <button class="btn btn-small" type="button" id="open-drawer">打开抽屉</button>
+    </div>
+  </header>
+
+  <main class="demo">
+    <section class="glass">
+      <h2>工具位 · mountChrome / createCornerButton / 语言</h2>
+      <p class="note">切语言 → 切换器 / 账户菜单 / 外观 / 🌗 / 语言按钮文案全换，点阵画布不重建（下方「画布同一个」）。</p>
+      <div class="field-row">
+        <span class="chip-row" id="locales">
+          <button class="chip active" type="button" data-locale="zh">中文</button>
+          <button class="chip" type="button" data-locale="ja">日本語</button>
+          <button class="chip" type="button" data-locale="en">English</button>
+        </span>
+      </div>
+      <div class="field-row" style="margin-top: 10px">
+        <button class="btn-ghost btn-small" type="button" data-badge="null">角标：无</button>
+        <button class="btn-ghost btn-small" type="button" data-badge="true">角标：点</button>
+        <button class="btn-ghost btn-small" type="button" data-badge="3">角标：3</button>
+        <button class="btn-ghost btn-small" type="button" data-badge="120">角标：120</button>
+        <button class="btn-ghost btn-small" type="button" id="toggle-extra">增 / 减一枚工具位按钮</button>
+      </div>
+      <dl class="kv mono" style="margin-top: 14px">
+        <dt>--corner-rail-w</dt><dd id="s-railw"></dd>
+        <dt>工具位实测</dt><dd id="s-rail"></dd>
+        <dt>画布同一个</dt><dd id="s-canvas"></dd>
+        <dt>locale</dt><dd id="s-locale"></dd>
+      </dl>
+    </section>
+
+    <section class="glass">
+      <h2>文本 · 提示条</h2>
+      <p class="note"><code>.ok-text</code> <code>.warn-text</code> <code>.err-text</code> <code>.hint</code> <code>.callout</code></p>
+      <p><span class="ok-text">已同步</span> · <span class="warn-text">即将到期</span> · <span class="err-text">连接失败</span></p>
+      <div class="form-row">
+        <label for="d1">邮箱</label>
+        <input id="d1" class="field" placeholder="name@example.com">
+        <p class="hint">只用于找回密码，不会公开。</p>
+      </div>
+      <div class="stack">
+        <div class="callout">中性提示：没有变体时是灰底。</div>
+        <div class="callout info"><strong>提示</strong> 跟随配色的 accent。</div>
+        <div class="callout ok"><strong>完成</strong> 已导入 42 条记录。</div>
+        <div class="callout warn"><strong>注意</strong> 这一步不可撤销。</div>
+        <div class="callout err"><strong>失败</strong> 网络错误，请稍后重试。</div>
+      </div>
+    </section>
+
+    <section class="glass">
+      <h2>标签页 · 分段</h2>
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" aria-selected="true">概览</button>
+        <button class="tab" role="tab" aria-selected="false">明细</button>
+        <button class="tab active">.active 写法</button>
+        <button class="tab" disabled>禁用</button>
+      </div>
+      <div class="tabs compact" style="margin-top: 10px">
+        <button class="tab active">紧凑</button><button class="tab">第二个</button>
+      </div>
+      <div class="row wrap" style="margin-top: 14px">
+        <div class="seg" role="group" aria-label="周期">
+          <button aria-pressed="true">日</button><button aria-pressed="false">周</button><button aria-pressed="false">月</button>
+        </div>
+        <div class="seg"><button class="active">股票</button><button>基金</button><button disabled>期货</button></div>
+      </div>
+    </section>
+
+    <section class="glass">
+      <h2>Toast</h2>
+      <div class="actions" style="margin-top: 0">
+        <button class="btn btn-small" type="button" data-toast="ok">ok</button>
+        <button class="btn btn-small" type="button" data-toast="info">info</button>
+        <button class="btn btn-small" type="button" data-toast="warn">warn</button>
+        <button class="btn btn-small" type="button" data-toast="err">err</button>
+        <button class="btn-ghost btn-small" type="button" data-toast="sticky">不自动消失</button>
+      </div>
+    </section>
+
+    <section class="glass">
+      <h2>表单补充 · 转圈</h2>
+      <div class="field-row">
+        <input class="field small" placeholder=".field.small">
+        <select class="field small"><option>紧凑下拉</option><option>二</option></select>
+        <button class="btn btn-small" type="button">查询</button>
+      </div>
+      <div class="field-row" style="margin-top: 10px">
+        <input class="field" value="禁用的输入框" disabled>
+        <label class="row" style="margin: 0"><input type="checkbox" class="switch" checked disabled> 禁用开关</label>
+        <label class="row" style="margin: 0"><input type="checkbox" class="switch" disabled> 关</label>
+      </div>
+      <div class="row wrap" style="margin-top: 14px">
+        <span class="spinner"></span>
+        <span class="spinner" style="color: var(--accent)"></span>
+        <button class="btn btn-small" type="button" disabled><span class="spinner"></span> 保存中</button>
+        <span class="spinner lg" style="color: var(--accent2)"></span>
+      </div>
+    </section>
+
+    <section class="glass">
+      <h2>表格 · 吸顶 / 悬停 / 排序 / 数字列 / 行菜单</h2>
+      <div class="table-wrap" style="--table-max-h: 220px">
+        <table class="tbl sticky hover">
+          <thead><tr>
+            <th aria-sort="none">日期</th>
+            <th aria-sort="descending" class="sorted col-num">金额</th>
+            <th>备注</th>
+            <th></th>
+          </tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="glass">
+      <h2>键值列表 · 图表色</h2>
+      <dl class="kv">
+        <dt>版本</dt><dd class="num">v0.13.0</dd>
+        <dt>上次同步</dt><dd>2026-10-09 12:00</dd>
+        <dt>很长的值</dt><dd class="mono">https://codeload.github.com/Szyoo/szyyw-design/tar.gz/refs/tags/v0.13.0</dd>
+      </dl>
+      <div class="swatches" style="margin-top: 14px">
+        <span class="swatch" style="background: var(--chart-1)"></span>
+        <span class="swatch" style="background: var(--chart-2)"></span>
+        <span class="swatch" style="background: var(--chart-3)"></span>
+        <span class="swatch" style="background: var(--chart-4)"></span>
+        <span class="swatch" style="background: var(--chart-5)"></span>
+        <span class="swatch" style="background: var(--chart-6)"></span>
+      </div>
+      <div class="glass" style="margin-top: 14px; padding: 14px; box-shadow: var(--pop-shadow)">--pop-shadow</div>
+    </section>
+  </main>
+</div>
+
+<aside class="drawer" id="drawer" hidden aria-label="管理">
+  <div class="drawer-head">
+    <h2>管理</h2>
+    <button class="close-x" type="button" aria-label="关闭" id="close-drawer">✕</button>
+  </div>
+  <div class="tabs scroll" style="padding: 0 18px 10px">
+    <button class="tab active">用户</button><button class="tab">卡片</button><button class="tab">应用与权限</button><button class="tab">登录记录</button>
+  </div>
+  <div class="drawer-body">
+    <div class="callout info">抽屉 z 51，遮罩是兄弟 .overlay（z 50）。</div>
+    <div class="form-row field-row"><input class="field" placeholder="新用户名"><button class="btn btn-small" type="button">新增</button></div>
+    <dl class="kv"><dt>用户</dt><dd>alice</dd><dt>角色</dt><dd><span class="pill cyan">管理员</span></dd></dl>
+  </div>
+  <div class="drawer-foot">
+    <button class="btn-ghost" type="button" id="cancel-drawer">取消</button>
+    <button class="btn" type="button">保存</button>
+  </div>
+</aside>
+
+<script type="module">
+  import { mountChrome } from "../chrome.js";
+  import { createCornerButton } from "../corner.js";
+  import { toast } from "../toast.js";
+  import { attachMenu } from "../menu.js";
+
+  const q = new URLSearchParams(location.search);
+  const PORTAL = "https://portal.demo.test";
+
+  // 假门户：/api/me、/api/apps、/api/logout
+  const realFetch = window.fetch.bind(window);
+  window.fetch = async (url, init) => {
+    const u = String(url);
+    if (!u.startsWith(PORTAL)) return realFetch(url, init);
+    const json = (status, body) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
+    if (u.endsWith("/api/me")) return q.get("anon") ? json(401, {}) : json(200, { id: "u1", user: "alice", role: "admin" });
+    if (u.endsWith("/api/apps")) return json(200, { apps: [
+      { host: "portal.demo.test", url: PORTAL, title: "门户", portal: true },
+      { host: "ledger.demo.test", url: "#ledger", title: "记账本" },
+      { host: "localhost:8080", url: "#here", title: "本页" }
+    ] });
+    if (u.endsWith("/api/logout")) return json(500, {});
+    return json(404, {});
+  };
+
+  const chrome = mountChrome({
+    background: document.querySelector(".bg-layer"),
+    persist: "localStorage",
+    cookiePrefix: "demo13:",
+    locale: "zh",
+    portal: q.get("nosso") ? null : PORTAL,
+    appearance: { dotField: { note: "仅本地预览", update: false } },
+    localeToggle: { locales: ["zh", "ja", "en"], onChange: (l) => { markLocale(l); toast(`locale → ${l}`, { tone: "info" }); } }
+  });
+  window.__chrome = chrome;
+  const canvas0 = document.querySelector(".bg-layer canvas");
+
+  const bell = createCornerButton({
+    icon: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>',
+    label: "通知",
+    order: 30,
+    badge: 3,
+    onClick: () => toast("点了通知", { tone: "ok" })
+  });
+  window.__bell = bell;
+  for (const b of document.querySelectorAll("[data-badge]")) {
+    b.addEventListener("click", () => bell.setBadge(JSON.parse(b.dataset.badge)));
+  }
+  let extra = null;
+  document.getElementById("toggle-extra").addEventListener("click", () => {
+    if (extra) { extra.destroy(); extra = null; return; }
+    extra = createCornerButton({ icon: "?", label: "帮助", href: "#help", order: 40, badge: true });
+  });
+
+  const $ = (id) => document.getElementById(id);
+  function markLocale(l) {
+    for (const o of document.querySelectorAll("#locales .chip")) o.classList.toggle("active", o.dataset.locale === l);
+  }
+  for (const b of document.querySelectorAll("#locales .chip")) {
+    b.addEventListener("click", () => { chrome.setLocale(b.dataset.locale); markLocale(b.dataset.locale); });
+  }
+  function renderState() {
+    const v = document.documentElement.style.getPropertyValue("--corner-rail-w");
+    const rail = document.querySelector(".corner-tools");
+    const r = rail?.getBoundingClientRect();
+    $("s-railw").textContent = v || "（未发布）";
+    $("railw").textContent = "rail-w " + (v || "—");
+    $("s-rail").textContent = r ? `left ${Math.round(r.left)} · 视口 ${document.documentElement.clientWidth} · 差 ${Math.round(document.documentElement.clientWidth - r.left)}` : "—";
+    $("s-canvas").textContent = String(document.querySelector(".bg-layer canvas") === canvas0);
+    $("s-locale").textContent = chrome.locale;
+  }
+  setInterval(renderState, 300);
+  renderState();
+
+  for (const b of document.querySelectorAll("[data-toast]")) {
+    b.addEventListener("click", () => {
+      const t = b.dataset.toast;
+      if (t === "sticky") toast("这条不会自己消失，点一下关闭", { timeout: 0 });
+      else toast({ ok: "已保存", info: "已复制链接", warn: "额度快用完了", err: "保存失败：网络错误（503）" }[t], { tone: t });
+    });
+  }
+
+  // 表格 + 行菜单
+  const tbody = $("rows");
+  for (let i = 1; i <= 14; i++) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td class="num">2026-10-${String(i).padStart(2, "0")}</td><td class="col-num amt-exp">-${(i * 1234.5).toFixed(2)}</td><td>第 ${i} 行</td>` +
+      `<td><div class="menu-wrap"><button class="btn-ghost btn-small" type="button" aria-label="操作">⋯</button>` +
+      `<div class="menu" hidden><button class="menu-item" type="button">编辑</button><button class="menu-item" type="button">复制</button>` +
+      `<div class="menu-sep"></div><button class="menu-item danger" type="button">删除</button></div></div></td>`;
+    tbody.append(tr);
+    const btn = tr.querySelector(".menu-wrap > button");
+    attachMenu(btn, btn.nextElementSibling);
+    tr.querySelector(".menu-item.danger").addEventListener("click", () => toast(`删除第 ${i} 行`, { tone: "err" }));
+  }
+  for (const th of document.querySelectorAll("th[aria-sort]")) {
+    th.addEventListener("click", () => {
+      const next = th.getAttribute("aria-sort") === "ascending" ? "descending" : "ascending";
+      for (const o of document.querySelectorAll("th[aria-sort]")) { o.setAttribute("aria-sort", "none"); o.classList.remove("sorted"); }
+      th.setAttribute("aria-sort", next);
+      th.classList.add("sorted");
+    });
+  }
+
+  // 抽屉
+  // .overlay 自带 display:flex，hidden 属性压不住——遮罩按需创建 / 移除
+  const drawer = $("drawer");
+  const ov = document.createElement("div");
+  ov.className = "overlay";
+  const setDrawer = (open) => { drawer.hidden = !open; if (open) drawer.before(ov); else ov.remove(); };
+  $("open-drawer").addEventListener("click", () => setDrawer(true));
+  $("close-drawer").addEventListener("click", () => setDrawer(false));
+  $("cancel-drawer").addEventListener("click", () => setDrawer(false));
+  ov.addEventListener("click", () => setDrawer(false));
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") setDrawer(false); });
+</script>
+</body>
+</html>

@@ -1,11 +1,16 @@
 /** 切换器在右上角工具位里的位次（比明暗切换 10 更靠左） */
 export const SWITCHER_ORDER: number;
 
+import type { SwitcherText } from "./chrome-text";
+export type { SwitcherText };
+
 export interface AppSwitcherHandle {
   open(): void;
   close(): void;
   /** 强制重新拉取列表（绕过缓存） */
   refresh(): Promise<void>;
+  /** v0.13.0：换语言（按钮提示 + 面板就地重画，不重新拉列表）；labels 覆盖保留 */
+  setLocale(locale: string): void;
   destroy(): void;
 }
 
@@ -24,7 +29,10 @@ export function mountAppSwitcher(options?: {
   current?: string;
   /** 列表缓存毫秒数。缺省 60000；0 = 每次打开都拉 */
   cacheMs?: number;
-  labels?: Partial<Record<"open" | "portal" | "loading" | "empty" | "unauth" | "error", string>>;
+  /** v0.13.0：内置文案语言 "zh" | "ja" | "en"（"ja-JP" 也认），缺省 "zh"（与旧版逐字相同） */
+  locale?: string;
+  /** 逐键覆盖内置文案 */
+  labels?: Partial<SwitcherText>;
 }): AppSwitcherHandle;
 
 export { mountAccountMenu, ACCOUNT_ORDER } from "./account";
