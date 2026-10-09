@@ -29,7 +29,7 @@ type PanelTextKey =
   | "open" | "close" | "reset" | "save" | "saving" | "saved" | "error"
   | "version" | "check" | "checking" | "upToDate" | "updateAvailable" | "viewChanges"
   | "copyCommand" | "copied" | "updateNow" | "updating" | "updated" | "updateFailed" | "checkFailed"
-  | "theme" | "palette" | "scheme" | "background";
+  | "theme" | "palette" | "scheme" | "background" | "localOnly";
 
 export type AppearancePanelLabels = Partial<Record<PanelTextKey, string>> & {
   /** 每个主题的名字（主题 > 1 个时才显示主题行；缺省显示 id） */
@@ -83,7 +83,8 @@ export function mountAppearancePanel(options?: {
     persist?: "localStorage" | "none";
     storageKey?: string;
     onSave?: (values: DotFieldSettings) => void | Promise<void>;
-    note?: string;
+    /** 没有 onSave 时的页脚说明；true = 内置文案（v0.14.0，「仅保存在本浏览器」，随 locale） */
+    note?: string | true;
     update?: false | UpdateConfig;
   };
   labels?: AppearancePanelLabels;
@@ -127,7 +128,8 @@ export function mountAppearance(options?: {
     persist?: "localStorage" | "none";
     storageKey?: string;
     onSave?: (values: DotFieldSettings) => void | Promise<void>;
-    note?: string;
+    /** 没有 onSave 时的页脚说明；true = 内置文案（v0.14.0，「仅保存在本浏览器」，随 locale） */
+    note?: string | true;
     update?: false | UpdateConfig;
   };
 }): AppearanceHandle;

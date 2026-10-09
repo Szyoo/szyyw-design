@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>v0.14.0 新件 · 手测</title>
+<!--
+  @szyyw/design v0.14.0 新增件的静态手测页（不进 package files）。
+  仓库根目录 `python3 -m http.server 8080`，打开 http://localhost:8080/demo/components-v014.html
+    ?sheet=wide|plain|bare   打开即弹出对应弹层（截图用）
+  覆盖：.sheet.wide、无标题 .sheet-head、.term-lvl / .term-copy:disabled、.pill.slate / .pill.pink、
+  外观弹层 dotField.note: true 的内置文案（切语言看三种写法：工具位 → 外观 → 背景参数 → 页脚）。
+-->
+<script>
+  (function () {
+    var d = document.documentElement;
+    try {
+      var p = localStorage.getItem("demo14:palette"), s = localStorage.getItem("demo14:scheme");
+      if (p && p !== "default") d.setAttribute("data-palette", p);
+      if (s === "auto" || s === "dark" || s === "light") d.setAttribute("data-scheme", s);
+    } catch (e) {}
+  })();
+</script>
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../components.css">
+<style>
+  .demo { max-width: 860px; margin: 0 auto; padding: 8px 20px 64px; }
+  .demo > section { padding: 20px 22px; margin-bottom: 16px; }
+  .demo h2 { margin: 0 0 4px; font-size: 15px; }
+  .demo .note { margin: 0 0 14px; font-size: 12px; color: var(--text-dim); }
+  .prize { display: grid; gap: 18px; }
+  .prize-img { aspect-ratio: 4 / 3; border-radius: 12px; background: var(--grad); opacity: 0.85; }
+  @media (min-width: 900px) { .prize { grid-template-columns: 320px 1fr; align-items: start; } }
+</style>
+</head>
+<body>
+<div class="bg-layer" aria-hidden="true"></div>
+<div class="app-frame">
+  <header class="app-header">
+    <div class="app-brand">
+      <h1 class="app-title">组件手测</h1>
+      <span class="app-sub">szyyw design v0.14.0</span>
+    </div>
+  </header>
+
+  <main class="demo">
+    <section class="glass">
+      <h2>状态胶囊 · .pill.slate / .pill.pink</h2>
+      <p class="note">slate = 中性「未知 / 未定」，与默认 .pill、amber（已下架）、violet（待选择）一眼分开。切配色 / 明暗对比。</p>
+      <div class="row wrap">
+        <span class="pill">默认</span>
+        <span class="pill slate">未知模式</span>
+        <span class="pill amber">已下架</span>
+        <span class="pill violet">待选择</span>
+        <span class="pill pink">限定</span>
+        <span class="pill red">失败</span>
+        <span class="pill green">已领取</span>
+        <span class="pill cyan">进行中</span>
+      </div>
+      <div class="field-row" style="margin-top: 14px">
+        <span class="chip-row" id="locales">
+          <button class="chip active" type="button" data-locale="zh">中文</button>
+          <button class="chip" type="button" data-locale="ja">日本語</button>
+          <button class="chip" type="button" data-locale="en">English</button>
+        </span>
+        <button class="btn-ghost btn-small" type="button" id="open-appearance">外观（看页脚 note: true）</button>
+      </div>
+    </section>
+
+    <section class="glass">
+      <h2>弹层 · .sheet.wide / 无标题头</h2>
+      <p class="note">宽版桌面 760px，手机仍是底部全宽抽屉；头里只有 ✕ 时靠右、头部只有按钮高。</p>
+      <div class="actions" style="margin-top: 0">
+        <button class="btn btn-small" type="button" data-sheet="wide">宽版详情（无标题）</button>
+        <button class="btn-ghost btn-small" type="button" data-sheet="plain">普通弹层（有标题）</button>
+        <button class="btn-ghost btn-small" type="button" data-sheet="bare">普通宽度 · 无标题</button>
+      </div>
+    </section>
+
+    <section class="glass">
+      <h2>终端窗 · 禁用的级别 / 复制</h2>
+      <div class="term">
+        <button class="term-head" type="button"><span class="term-dot" data-live="1"></span><span class="term-title">任务日志</span><span class="term-caret">▾</span></button>
+        <div class="term-bar">
+          <button class="term-lvl active" type="button">全部</button>
+          <button class="term-lvl" type="button">info</button>
+          <button class="term-lvl" type="button" disabled>debug（禁用）</button>
+          <button class="term-lvl active" type="button" disabled>active+禁用</button>
+          <span style="flex: 1"></span>
+          <button class="term-lvl term-copy" type="button" disabled title="没有可复制的内容">⧉</button>
+          <button class="term-lvl term-copy" type="button">⧉</button>
+        </div>
+        <div class="term-body">
+          <div class="term-line info">[12:00:01] 开始扫描</div>
+          <div class="term-line warn">[12:00:02] 第 3 页超时，重试</div>
+          <div class="term-line error">[12:00:03] 失败</div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<template id="tpl-wide">
+  <div class="sheet wide" role="dialog" aria-label="奖品详情">
+    <div class="sheet-head"><button class="close-x" type="button" aria-label="关闭" data-close>✕</button></div>
+    <div class="sheet-body">
+      <div class="prize">
+        <div class="prize-img" role="img" aria-label="奖品图"></div>
+        <div>
+          <h2 class="sheet-title" style="margin-bottom: 10px">限定化妆水 200ml</h2>
+          <dl class="kv">
+            <dt>状态</dt><dd><span class="pill slate">未知模式</span></dd>
+            <dt>积分</dt><dd class="num">1,200</dd>
+            <dt>来源</dt><dd>手机版全量列表</dd>
+            <dt>截止</dt><dd class="num">2026-10-31</dd>
+            <dt>备注</dt><dd>宽版弹层给「大图 + 键值表」：桌面左右两栏，手机上下排。</dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+    <div class="sheet-foot">
+      <button class="btn-ghost" type="button" data-close>关闭</button>
+      <button class="btn" type="button">选择</button>
+    </div>
+  </div>
+</template>
+
+<template id="tpl-plain">
+  <div class="sheet" role="dialog" aria-label="普通弹层">
+    <div class="sheet-head"><h2 class="sheet-title">普通弹层</h2><button class="close-x" type="button" aria-label="关闭" data-close>✕</button></div>
+    <div class="sheet-body"><p>有标题时头部不变：标题靠左、✕ 靠右。</p></div>
+    <div class="sheet-foot"><button class="btn-ghost danger" type="button">删除</button><button class="btn" type="button" data-close>好</button></div>
+  </div>
+</template>
+
+<template id="tpl-bare">
+  <div class="sheet" role="dialog" aria-label="无标题">
+    <div class="sheet-head"><button class="close-x" type="button" aria-label="关闭" data-close>✕</button></div>
+    <div class="sheet-body"><p>头里只有 ✕：靠右、头部收成按钮高。</p></div>
+  </div>
+</template>
+
+<script type="module">
+  import { mountChrome } from "../chrome.js";
+  import { openAppearancePanel } from "../appearance.js";
+
+  const chrome = mountChrome({
+    background: document.querySelector(".bg-layer"),
+    persist: "localStorage",
+    cookiePrefix: "demo14:",
+    locale: "zh",
+    portal: null,
+    appearance: { dotField: { note: true, update: false } },
+    localeToggle: { locales: ["zh", "ja", "en"], onChange: (l) => markLocale(l) }
+  });
+  window.__chrome = chrome;
+
+  function markLocale(l) {
+    for (const o of document.querySelectorAll("#locales .chip")) o.classList.toggle("active", o.dataset.locale === l);
+  }
+  for (const b of document.querySelectorAll("#locales .chip")) {
+    b.addEventListener("click", () => { chrome.setLocale(b.dataset.locale); markLocale(b.dataset.locale); });
+  }
+  document.getElementById("open-appearance").addEventListener("click", () => {
+    openAppearancePanel();
+    document.querySelector(".appearance-advanced")?.setAttribute("open", "");
+  });
+
+  // 弹层：遮罩按开合创建 / 移除（.overlay 带 display:flex，hidden 压不住）
+  let ov = null;
+  function openSheet(kind) {
+    closeSheet();
+    ov = document.createElement("div");
+    ov.className = "overlay";
+    ov.append(document.getElementById("tpl-" + kind).content.cloneNode(true));
+    ov.addEventListener("click", (e) => { if (e.target === ov || e.target.closest("[data-close]")) closeSheet(); });
+    document.body.append(ov);
+  }
+  function closeSheet() { ov?.remove(); ov = null; }
+  for (const b of document.querySelectorAll("[data-sheet]")) b.addEventListener("click", () => openSheet(b.dataset.sheet));
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeSheet(); });
+  const q = new URLSearchParams(location.search).get("sheet");
+  if (q) openSheet(q);
+</script>
+</body>
+</html>

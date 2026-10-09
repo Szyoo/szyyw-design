@@ -236,7 +236,8 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
 **手动调过的归你管，没调过的跟主题走**，「恢复默认」把控制权整体交还主题。
 
 `onSave` 传了才显示「保存」按钮（存服务端用），存的是同一份「改动过的键」；
-没传就显示 `note`（如「访客模式 · 仅本地预览」）。
+没传就显示 `note`（如「访客模式 · 仅本地预览」）。v0.14.0 起 `note: true` 用内置文案（「仅保存在本浏览器」/ ja / en，随 locale），
+应用不必再在自己的 i18n 里放这一句；传字符串仍原样显示。
 
 **版本检测**：面板底部显示当前版本（来自 version.js，vendored 场景也随行），
 静默比对上游最新 tag（匿名 GitHub API，60 次/时/IP，所以结果缓存 6h，
@@ -268,6 +269,18 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
 - 破坏性操作：二次确认（首点变红「再点一次确认」+ 展开影响范围警告），
   桌面弹层底栏里破坏性按钮靠左隔离（`.sheet-foot .danger { margin-right: auto }`）
 - 弹层：手机底部抽屉（sheet-up），桌面居中卡片（rise）；关闭 ✕ 恒在右上
+  - 宽版 `.sheet.wide`（v0.14.0）：桌面 760px（缺省 560px），给「大图 + 键值表」一类详情；手机仍是底部全宽抽屉
+  - 无标题弹层（v0.14.0）：`.sheet-head` 里只放一枚 `.close-x`，✕ 自动靠右、头部收成按钮高（不用占位标题、不用自己写 `margin-left: auto`）：
+
+    ```html
+    <div class="overlay">
+      <div class="sheet wide" role="dialog" aria-label="奖品详情">
+        <div class="sheet-head"><button class="close-x" type="button" aria-label="关闭">✕</button></div>
+        <div class="sheet-body">…大图 + <dl class="kv">…</dl></div>
+        <div class="sheet-foot">…</div>
+      </div>
+    </div>
+    ```
 - 动画终帧必须 `transform: none`——fill-mode 残留 transform 会困住子孙 fixed 弹层
 - 空状态：居中 emoji + 一句引导文案（`.empty`）
 
@@ -278,7 +291,8 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
 样子在 components.css：`.term` 外框 / `.term-head` 整条可点折叠 /
 `.term-dot[data-live="1"]` 实时脉冲 / `.term-bar` + `.term-lvl` 级别过滤 /
 `.term-body` 等宽正文 / `.term-line` 加 `.debug|.info|.warn|.error` 分级着色
-（暗 / 青 / 黄 / 红）/ `.term-copy.copied` 复制反馈 / `.term-cursor` 光标闪烁。
+（暗 / 青 / 黄 / 红）/ `.term-copy.copied` 复制反馈 / `.term-cursor` 光标闪烁 /
+`.term-lvl:disabled` `.term-copy:disabled` 熄灭态（v0.14.0：暗字、无描边、禁用光标，悬停不亮）。
 
 行为归各项目自己接：按级别过滤、自动跟随滚动（用户上翻时暂停）、
 复制后给 `.term-copy` 加 `.copied` 再撤掉。**着色用类，别再内联 `style`**。
@@ -333,7 +347,7 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
 - 表单：`.field` `.form-row` `.form-grid` `.chip` `.chip-row` `.switch` `.err-text` `.ok-text`
 - 按钮：`.btn` `.btn-ghost` `.btn-small` `.danger`
 - 文本 / 数据：`.page-title` `.page-sub` `.panel-title` `.panel-head` `.grad-text` `.muted` `.small` `.tiny` `.num` `.mono`
-  `.pill`（+ 色）`.amt-*` `.stat-*` `.bar` `.bar-fill` `.tbl` `.table-wrap` `.empty` `.term*`
+  `.pill`（+ 色：`cyan` `violet` `green` `red` `amber`，v0.14.0 加 `slate` `pink`）`.amt-*` `.stat-*` `.bar` `.bar-fill` `.tbl` `.table-wrap` `.empty` `.term*`
 - 动效：`.rise` `.stagger` `.shake` `.spot`
 - 工具位：`.corner-panel`（项目自己的工具位弹层挂它 + `claimCornerPanel`，见 §5）；
   v0.13.0 起 `.corner-tool`（工具位按钮外观）、`.corner-badge`（角标）、`.corner-clear`（让位）也是公开 API
@@ -341,6 +355,8 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
   `.toast-region` `.toast` `.field.small` `.spinner`（`.lg`）`.tbl.sticky` `.tbl.hover` `th[aria-sort]` `th.sorted` `.col-num`
   `.menu-wrap` `.menu`（`.start` `.up`）`.menu-item` `.menu-sep` `.kv` `.drawer`（`.left`）`.drawer-head` `.drawer-body` `.drawer-foot`
   `.app-header` `.app-brand` `.app-title` `.app-sub` `.app-actions`；token `--chart-1…6` `--pop-shadow` `--on-err` `--corner-gap`
+- v0.14.0 新增：`.sheet.wide`、无标题 `.sheet-head`（只含 `.close-x`）、`.term-lvl:disabled` `.term-copy:disabled`、`.pill.slate` `.pill.pink`；
+  token `--slate` `--pink` `--tint-slate-bg` `--tint-pink-bg`
 
 **内部实现**（只给包里的 JS 组件用，结构和定位随版本变，**项目不要借用这些类名去套自己的元素**，
 也不要在自己的 CSS 里覆写）：
@@ -365,7 +381,7 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
 | `.hint` | 字段下方提示：12px、`--text-dim`、上边距 6px | jppost / payroll 自写 `.hint`、内联 `tiny muted` |
 | `.callout` + `.ok/.warn/.err/.info` | 提示条：tint 底 + 同色描边；首个 `<strong>` 着语义色；info 跟 accent | 各处内联 style 的提示块 |
 | `.tabs > .tab` | 选中 `.active` 或 `[aria-selected="true"]`；`.tabs.compact` 紧凑；`.tabs.scroll` 不换行横滚 | jppost / ashare `.nav-tabs .tab`（样子一致）、portal `.tab-bar .tab-btn` |
-| `.seg > button` | 分段控件，选中 `.active` 或 `aria-pressed="true"` | ashare `.mode-switch`、portal `.lay-seg`、cosme `.acct-seg` |
+| `.seg > button` | 分段控件，选中 `.active` 或 `aria-pressed="true"` | ashare `.mode-switch`、portal `.lay-seg`（cosme 的 `.acct-seg` 是账号进度条的色段，不是分段控件，不在此列） |
 | `toast()`（toast.js） | `toast(msg, { tone, timeout })`，底部居中堆叠、点击关闭、aria-live；有底部导航时设 `--toast-offset` | portal `toast.jsx`、exit-console / ashare `.toast` |
 | `.field.small` | 紧凑输入（14px、6px 10px）；触屏 / ≤640px 仍 16px 防 iOS 缩放 | portal `.field-small`、ashare `select.field.small` |
 | `.field:disabled` / `.switch:disabled` | 熄灭态 | — |
@@ -390,3 +406,21 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
 - `.spinner` 的旋转是匀速 `linear`，是唯一不走 `--ease` 的动效（等待语义）。
 - 阴影 token 一律拆成「颜色 token（`light-dark()`）+ 固定几何」：`light-dark()` 只接受颜色，整条阴影塞进去会算成 `none`
   （v0.13.0 及之前 `--lift-shadow` 就是这样，`.lift:hover` 的投影从未生效，v0.13.1 修正）。浮层用 `--pop-shadow`。
+
+## 13. v0.14.0 补充
+
+迁移 cosme 等应用时发现的缺口，全部纯新增（例外：头里只有 ✕ 的 `.sheet-head` 之前 ✕ 靠左，现在靠右、头部变矮）。
+手测页 `demo/components-v014.html`。
+
+| 件 | 用法 | 替代 |
+|---|---|---|
+| `.sheet.wide` | 桌面 760px 的宽版弹层；手机仍是底部全宽抽屉 | cosme 奖品详情自写的弹层宽度 |
+| 无标题 `.sheet-head` | 头里只放 `.close-x`：✕ 靠右，头部只有按钮高（见 §8 示例） | 占位空标题、自写 `margin-left: auto` |
+| `.term-lvl:disabled` / `.term-copy:disabled` | 终端窗里暂不可用的级别 / 复制键 | 自写的 opacity / pointer-events |
+| `.pill.slate` | 中性灰蓝，表示「未知 / 未定」；和默认 `.pill`（无底色）、`amber`、`violet` 分得开 | cosme「未知模式」自写色 |
+| `.pill.pink` | 第六种状态色，和 `red` / `violet` 拉开色相 | 自写粉色胶囊 |
+| `dotField.note: true` | 外观弹层页脚「仅保存在本浏览器」，内置 zh / ja / en（`appearanceText().localOnly`，可用 `labels.localOnly` 改词） | 应用 i18n 里的 `localOnly` / 「参数仅保存在本浏览器」 |
+
+`--sheet-bg` 未改：375 宽、背后密集文字实测，遮罩模糊 + 92%/94% 底色下弹层空白区的亮度起伏只有约 2/255，
+背后文字不可辨。只有 `backdrop-filter` 失效时（不支持、或弹层被放进另一个带 `backdrop-filter` / `filter` 的祖先里，
+遮罩模糊作用不到）起伏升到约 8/255、能看出字形——弹层务必按 §3 用 Portal 挂到 body 下、配 `.overlay`。

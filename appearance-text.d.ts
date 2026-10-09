@@ -14,6 +14,8 @@ export interface AppearanceText {
   version: string; check: string; checking: string; upToDate: string; updateAvailable: string; viewChanges: string;
   copyCommand: string; copied: string; updateNow: string; updating: string; updated: string; updateFailed: string; checkFailed: string;
   theme: string; palette: string; scheme: string; background: string;
+  /** v0.14.0：dotField.note 传 true 时的页脚说明（「仅保存在本浏览器」） */
+  localOnly: string;
   themes: Record<string, string>;
   palettes: Record<string, string>;
   schemes: Record<"auto" | "dark" | "light", string>;

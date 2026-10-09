@@ -45,7 +45,8 @@ export function mountChrome(options?: {
       persist?: "localStorage" | "none";
       storageKey?: string;
       onSave?: (values: DotFieldSettings) => void | Promise<void>;
-      note?: string;
+      /** 没有 onSave 时的页脚说明；true = 内置文案（v0.14.0，「仅保存在本浏览器」，随 locale） */
+      note?: string | true;
       update?: false | UpdateConfig;
     };
   };
