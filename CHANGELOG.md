@@ -152,3 +152,5 @@ v0.14.2 的 `demo/appearance.html`、`demo/forms.html`、`demo/components-v013.h
 ## v0.6.2 及更早
 
 按 tag 看提交说明：v0.1.0 tokens + 玻璃层 + DotField → v0.1.1 光晕渐变修复 → v0.2.0 主题→配色→明暗三层 → v0.3.0 明暗模式模块 → v0.4.0 背景参数面板 + 右上角工具位 → v0.5.0 面板内版本检测 → v0.6.x React Bits 接入与 DotField 出处补记。
+
+- v0.4.0 破坏性变更：`.scheme-toggle` 不再自带 fixed 定位——定位归 `.corner-tools`，按钮长相归 `.corner-tool`。走 `mountSchemeToggle()` 的项目无需改动；手写 `<button class="scheme-toggle">` 的静态页要改成 `class="corner-tool scheme-toggle"` 并套一层 `.corner-tools`。
