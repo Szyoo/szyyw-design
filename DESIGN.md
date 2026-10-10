@@ -109,7 +109,9 @@ z-index 60  .toast-region    操作反馈（v0.13.0；压在一切之上，不�
 出处：原型是 [React Bits](https://reactbits.dev) 的 DotField（portal 用它替掉 Dashy，
 分支 `vps/portal-reactbits`）。上游是 React 组件、mousemove 用 pageX/pageY、
 光晕终点写 `stop-color="transparent"`；本实现改成框架无关 ESM、颜色量化缓存、
-token 取色，并修掉了那个 transparent 灰晕。取用上游素材见 README。
+token 取色，并修掉了那个 transparent 灰晕。上游素材可用 shadcn CLI 按本仓库 `components.json` 的
+`@react-bits` registry 取到 `reference/reactbits/`（`npx shadcn@latest add @react-bits/<名字>`；已 gitignore，
+不随包分发），只作参考、不作依赖。
 
 工程要点（都是踩过的坑）：
 - 颜色量化缓存（渐变 12 档 × 透明度 8 档），避免每帧上万次字符串分配
