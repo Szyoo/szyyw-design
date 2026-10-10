@@ -1,6 +1,6 @@
 # szyyw.xyz 设计语言
 
-适用范围：portal（szyyw.xyz）、jppost-tracker、app-b 及后续所有个人项目。
+适用范围：portal（szyyw.xyz）、jppost-tracker 及后续所有个人项目。
 本仓库是唯一权威来源——改设计先改这里，再升 tag，各项目升级依赖。
 
 ## 1. 气质
@@ -150,13 +150,13 @@ token 取色，并修掉了那个 transparent 灰晕。上游素材可用 shadcn
 从 components.css 的 `@corner:begin … @corner:end` 段落生成，`--check` 防过期。
 
 排列方向是 token 旋钮 `--corner-tools-dir`，缺省 `row`（横向）。
-紧凑布局要纵向堆叠（app-b 那种）就在自己的 `:root` 里设 `column`，
+紧凑布局要纵向堆叠（记账类应用那种）就在自己的 `:root` 里设 `column`，
 别用同权重 CSS 去覆盖整条规则。`order` 与按钮的挂载逻辑在两个方向下同样生效。
 
 ### 工具位弹层（.corner-panel）
 
 工具位按钮点开的面板**只有一种**：外观 / 背景参数、应用切换器、账户菜单，以及项目自己挂进工具位的按钮
-（app-b 的通知）都挂 `.glass.corner-panel`，打开时调 `claimCornerPanel(close)`。规则：
+（记账类应用的通知）都挂 `.glass.corner-panel`，打开时调 `claimCornerPanel(close)`。规则：
 
 - **位置由 corner.js 实测发布**：`--corner-panel-top` / `--corner-panel-right`。横排贴在工具位下方、右缘对齐；
   纵排（`--corner-tools-dir: column`）贴在工具位**左侧**、顶端对齐——纵排时挂在下方会压住下面几枚按钮。
@@ -382,21 +382,21 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
 
 | 组件 | 用法 | 替代 |
 |---|---|---|
-| `.warn-text` | 与 `.ok-text` / `.err-text` 同一族（13px、`--warn`） | cosme / payroll 自写 `.warn-text` |
-| `.hint` | 字段下方提示：12px、`--text-dim`、上边距 6px | jppost / payroll 自写 `.hint`、内联 `tiny muted` |
+| `.warn-text` | 与 `.ok-text` / `.err-text` 同一族（13px、`--warn`） | cosme / 某表单类应用自写 `.warn-text` |
+| `.hint` | 字段下方提示：12px、`--text-dim`、上边距 6px | jppost / 某表单类应用自写 `.hint`、内联 `tiny muted` |
 | `.callout` + `.ok/.warn/.err/.info` | 提示条：tint 底 + 同色描边；首个 `<strong>` 着语义色；info 跟 accent | 各处内联 style 的提示块 |
-| `.tabs > .tab` | 选中 `.active` 或 `[aria-selected="true"]`；`.tabs.compact` 紧凑；`.tabs.scroll` 不换行横滚 | jppost / app-a `.nav-tabs .tab`（样子一致）、portal `.tab-bar .tab-btn` |
-| `.seg > button` | 分段控件，选中 `.active` 或 `aria-pressed="true"` | app-a `.mode-switch`、portal `.lay-seg`（cosme 的 `.acct-seg` 是账号进度条的色段，不是分段控件，不在此列） |
-| `toast()`（toast.js） | `toast(msg, { tone, timeout })`，底部居中堆叠、点击关闭、aria-live；有底部导航时设 `--toast-offset` | portal `toast.jsx`、app-d / app-a `.toast` |
-| `.field.small` | 紧凑输入（14px、6px 10px）；触屏 / ≤640px 仍 16px 防 iOS 缩放 | portal `.field-small`、app-a `select.field.small` |
+| `.tabs > .tab` | 选中 `.active` 或 `[aria-selected="true"]`；`.tabs.compact` 紧凑；`.tabs.scroll` 不换行横滚 | jppost / 某看板类应用 `.nav-tabs .tab`（样子一致）、portal `.tab-bar .tab-btn` |
+| `.seg > button` | 分段控件，选中 `.active` 或 `aria-pressed="true"` | 某看板类应用 `.mode-switch`、portal `.lay-seg`（cosme 的 `.acct-seg` 是账号进度条的色段，不是分段控件，不在此列） |
+| `toast()`（toast.js） | `toast(msg, { tone, timeout })`，底部居中堆叠、点击关闭、aria-live；有底部导航时设 `--toast-offset` | portal `toast.jsx`、某控制台类 / 看板类应用 `.toast` |
+| `.field.small` | 紧凑输入（14px、6px 10px）；触屏 / ≤640px 仍 16px 防 iOS 缩放 | portal `.field-small`、某看板类应用 `select.field.small` |
 | `.field:disabled` / `.switch:disabled` | 熄灭态 | — |
 | `.spinner`（`.lg`） | 跟随文字色与字号；减少动效时停转但可见 | 各自的「加载中…」文字 / 自写转圈 |
 | `.tbl.sticky` | 表头吸顶；放在 `.table-wrap` 里，wrap 自动限高 `--table-max-h`（缺省 70vh）并纵向滚动 | — |
 | `.tbl.hover` | 行悬停着色 | — |
 | `th[aria-sort]` / `th.sorted` | 可排序列箭头（none ↕ / ascending ↑ / descending ↓），`.sorted` 高亮 | 自写排序箭头 |
-| `.col-num` | 数字列：右对齐 + 等宽数字（th、td 都加） | app-a `.r.num`、finance `.data-tbl .num` |
-| `.menu-wrap > .menu > .menu-item`（+ `attachMenu`） | 行操作 ⋯。在 `.table-wrap` / `.glass` 里必须用 menu.js 的 `attachMenu`（打开时搬到 body 下 fixed，不被裁切） | app-a `.menu` + 自写定位 |
-| `dl.kv` | 键值列表；≤520px 上下排 | cosme `.kv`、app-a `#set-status .kv` |
+| `.col-num` | 数字列：右对齐 + 等宽数字（th、td 都加） | 某看板类应用 `.r.num`、某记账类应用 `.data-tbl .num` |
+| `.menu-wrap > .menu > .menu-item`（+ `attachMenu`） | 行操作 ⋯。在 `.table-wrap` / `.glass` 里必须用 menu.js 的 `attachMenu`（打开时搬到 body 下 fixed，不被裁切） | 某看板类应用 `.menu` + 自写定位 |
+| `dl.kv` | 键值列表；≤520px 上下排 | cosme `.kv`、某看板类应用 `#set-status .kv` |
 | `.drawer` | 右侧抽屉（`.drawer-head/.drawer-body/.drawer-foot`），开合用 `hidden`；手机全宽；旋钮 `--drawer-w` / `--drawer-top` | portal `.portal-drawer` + `.drawer-body/.drawer-foot` |
 | `.app-header` | 页头：`.app-brand`（`.app-title` + `.app-sub`）+ `.app-actions`，右侧自动让位工具位、可换行 | 四个应用自写的 `.brand-title` / `.brand-sub` / 顶栏 padding |
 | `--chart-1…6` | 图表分类色，随配色与明暗 | 应用里写死的图表色板 |

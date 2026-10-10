@@ -49,7 +49,7 @@ v0.14.2 的 `demo/appearance.html`、`demo/forms.html`、`demo/components-v013.h
 
 ## v0.14.1 — 2026-10-09
 
-- **`[hidden]` 永远隐藏**：`components.css` 加全局 `[hidden] { display: none !important }`。之前 `.overlay`（flex）、`.stack`、`.callout`、`.row` 等自带 `display` 的类会盖掉 `hidden` 属性（app-a 迁移时复盘页一块空表单因此一直露着），应用只能各补 `.x[hidden]` 兜底——现在可以删掉这些兜底。可见变化：只影响「写了 `hidden` 却被类的 display 显示出来」的元素，它们现在按本意隐藏。`corner.css` 不含全局规则，不变。
+- **`[hidden]` 永远隐藏**：`components.css` 加全局 `[hidden] { display: none !important }`。之前 `.overlay`（flex）、`.stack`、`.callout`、`.row` 等自带 `display` 的类会盖掉 `hidden` 属性（某看板类应用迁移时复盘页一块空表单因此一直露着），应用只能各补 `.x[hidden]` 兜底——现在可以删掉这些兜底。可见变化：只影响「写了 `hidden` 却被类的 display 显示出来」的元素，它们现在按本意隐藏。`corner.css` 不含全局规则，不变。
 
 ## v0.14.0 — 2026-10-09
 
@@ -78,13 +78,13 @@ v0.14.2 的 `demo/appearance.html`、`demo/forms.html`、`demo/components-v013.h
 
 ## v0.13.0 — 2026-10-09
 
-补齐各应用自写 / 借用内部类的缺口（审计了 portal、jppost-tracker、payroll、app-a、app-d、claude-bridge、cosme-vault、app-b）。
+补齐各应用自写 / 借用内部类的缺口（审计了 portal、jppost-tracker、claude-bridge、cosme-vault 及另外几个私有应用）。
 **纯新增、向后兼容**：既有类 / 函数 / DOM / 存储键对现有标记不变——v0.12.0 的 `demo/appearance.html`、`demo/forms.html`
 （dark / light × 1024 / 375 × 外观弹层开合）逐元素计算样式与位置零差异；切换器 / 账户菜单不传 locale 时 DOM 逐字节相同。
 例外（规格明确要求、会影响已有标记的三处）：已禁用的 `.field` 现在显示熄灭态（之前与可用态无区别）、`.switch:disabled` 同理、
-写了 `class="field small"` 的元素变紧凑（app-a 唯一用处有自己更高特异性的覆盖，实际无变化）。
+写了 `class="field small"` 的元素变紧凑（某看板类应用唯一用处有自己更高特异性的覆盖，实际无变化）。
 
-- **工具位按钮公开化**（给 portal 的管理 / 账户 / 退出、app-b 的通知等）：`.corner-tool` 移入公开 API（样式不变）；
+- **工具位按钮公开化**（给 portal 的管理 / 账户 / 退出、某记账类应用的通知等）：`.corner-tool` 移入公开 API（样式不变）；
   新增 `.corner-badge` 角标（空 = 小圆点 / 数字 = 计数 / hidden）；corner.js 新增 `createCornerButton({ icon, label, order, onClick, href, badge })`
   → `{ el, setBadge, destroy }`。替代 portal 照抄的 `.pf-tool` 与各自拼的角标。外观按钮的「有新版」角标仍是原来的 `::after` 小点，未改。
 - **`--corner-rail-w` + `.corner-clear`**：corner.js 再发布「视口右缘 → 工具位左缘」的实测宽度（横排 / 纵排、按钮增减、resize 都重算，
@@ -99,12 +99,12 @@ v0.14.2 的 `demo/appearance.html`、`demo/forms.html`、`demo/components-v013.h
   由新脚本 `scripts/build-corner-css.mjs` 从 components.css 的 `@corner:begin/end` 段落 + 弹层依赖的公开类（限定到工具位内部）生成，`--check` 防过期。
   实测 corner.css 独立挂载与 components.css 下的工具位 / 四种弹层计算样式零差异。
 - **新公开组件**（components.css，DESIGN.md §12 有「替代谁」对照表）：`.warn-text` `.hint` `.callout`(+ok/warn/err/info)
-  `.tabs/.tab`（与 jppost / app-a 自写的 `.tab` 同外观）`.seg` toast（新 `toast.js`，`./toast`：`toast(msg, { tone, timeout })` / `clearToasts()`）
+  `.tabs/.tab`（与 jppost / 某看板类应用自写的 `.tab` 同外观）`.seg` toast（新 `toast.js`，`./toast`：`toast(msg, { tone, timeout })` / `clearToasts()`）
   `.field.small` `.field:disabled` `.switch:disabled` `.spinner` `.tbl.sticky` `.tbl.hover` `th[aria-sort]` `th.sorted` `.col-num`
   `.menu/.menu-item`（新 `menu.js`，`./menu`：`attachMenu()` 打开时搬到 body 下 fixed 定位，表格里不被裁）`dl.kv` `.drawer`（z 51）`.app-header/.app-brand/.app-title/.app-sub/.app-actions`。
 - **tokens**：`--chart-1…6`（default / aurora 各一套，light-dark）、`--pop-shadow`（+ `--pop-shadow-color`）、`--on-err`、`--corner-gap`。
   `check-tokens.mjs` 照旧通过。
-- `.tbl .num` **没有**改成右对齐（app-b / app-d 的表格用 `.num` 标日期与计数，改了会跳）；数字列右对齐用新的 `.col-num`。
+- `.tbl .num` **没有**改成右对齐（某记账类 / 某控制台类应用的表格用 `.num` 标日期与计数，改了会跳）；数字列右对齐用新的 `.col-num`。
 - `sync.sh`：文件清单加入 corner.css / chrome-text.js / locale-toggle.js / chrome.js / toast.js / menu.js（现为 18 个运行时文件）；
   已有 `VENDORED.md` 时连「同步到此目录的文件」一行一起刷新（没有就补上）；README / 脚本头部的一行用法改为从目标 tag 取 sync.sh。
 - 新增 `demo/components-v013.html`（不进 `files`）。

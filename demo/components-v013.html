@@ -214,7 +214,7 @@
     if (u.endsWith("/api/me")) return q.get("anon") ? json(401, {}) : json(200, { id: "u1", user: "alice", role: "admin" });
     if (u.endsWith("/api/apps")) return json(200, { apps: [
       { host: "portal.demo.test", url: PORTAL, title: "门户", portal: true },
-      { host: "ledger.demo.test", url: "#ledger", title: "记账本" },
+      { host: "books.demo.test", url: "#books", title: "示例应用" },
       { host: "localhost:8080", url: "#here", title: "本页" }
     ] });
     if (u.endsWith("/api/logout")) return json(500, {});

@@ -241,7 +241,7 @@ a {
 
 /* ---------- 工具位弹层（.corner-panel）----------
    工具位按钮点开的所有面板共用这一套：背景参数、应用切换器、账户菜单，
-   以及项目自己挂进工具位的按钮（如 app-b 的通知）。
+   以及项目自己挂进工具位的按钮（如记账类应用的通知）。
 
    - 位置读 corner.js 实测发布的锚点：横排贴在工具位下方，纵排贴在工具位左侧、顶端对齐
    - 不加遮罩、不锁页面滚动——锁滚动会让滚动条消失、整页横向跳一下；
@@ -1343,7 +1343,7 @@ table.tbl {
 .callout.info > strong:first-child { color: var(--accent); }
 
 /* ---------- 标签页（.tabs > .tab）----------
-   选中：.active 或 [aria-selected="true"]（role="tab" 时用后者）。样子与 jppost / app-a 自写的 .tab 一致，
+   选中：.active 或 [aria-selected="true"]（role="tab" 时用后者）。样子与 jppost / 某看板类应用自写的 .tab 一致，
    迁过来不跳。.tabs.compact 是紧凑档 */
 .tabs {
   display: flex;
@@ -1709,7 +1709,7 @@ select.field.small { padding-right: 30px; }
 
 /* ---------- 页头（.app-header）----------
    <header class="app-header">
-     <div class="app-brand"><h1 class="app-title">记账本</h1><span class="app-sub">FINANCE LEDGER</span></div>
+     <div class="app-brand"><h1 class="app-title">示例应用</h1><span class="app-sub">EXAMPLE APP</span></div>
      <div class="app-actions">…</div>
    </header>
    右侧自动给工具位让位（同 .corner-clear），窄屏放不下时操作区换到下一行。

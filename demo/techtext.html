@@ -53,7 +53,7 @@
       <h2>尺寸 · 20 / 28 / 40px</h2>
       <p class="note">悬停看虚线揭示与选框标注；按住字母拖走、松手回弹。参数按字号缩放。</p>
       <div class="sizes">
-        <h2 class="app-title s20">记账本 Ledger</h2>
+        <h2 class="app-title s20">示例应用 Example</h2>
         <h2 class="app-title s28">日本邮政快递追踪</h2>
         <h2 class="app-title s40">Claude Bridge</h2>
         <h2 class="app-title s28">ブログ · 持仓 2026</h2>
@@ -62,7 +62,7 @@
 
     <section class="glass">
       <h2>文字动态变化</h2>
-      <p class="note">应用 JS 改 textContent（app-a 的 #brand-title、bridge 的 #who）会自动重排；页头标题也一起变。</p>
+      <p class="note">应用 JS 改 textContent（某看板类应用的 #brand-title、bridge 的 #who）会自动重排；页头标题也一起变。</p>
       <h2 class="app-title s28" id="dyn" style="font-size: 28px">用户</h2>
       <div class="actions" style="margin-top: 10px">
         <button class="btn btn-small" type="button" id="swap">换文字</button>
@@ -73,7 +73,7 @@
     <section class="glass">
       <h2>非渐变字（文字色）</h2>
       <p class="note">元素没有渐变字时，填充 / 描边取它自己的 color。</p>
-      <h2 class="plain-title" id="plain">app-d 回国出口</h2>
+      <h2 class="plain-title" id="plain">示例控制台 出口选择</h2>
     </section>
 
     <section class="glass">
@@ -91,14 +91,14 @@
   const off = new URLSearchParams(location.search).has("off");
   const DOMAINS = [
     "szyyw.xyz",
-    "app-a.szyyw.xyz",
+    "board.example.com",
     "bark.szyyw.xyz",
     "claude.szyyw.xyz",
     "cosme.szyyw.xyz",
-    "exit.szyyw.xyz",
+    "console.example.com",
     "jppost.szyyw.xyz",
-    "ledger.szyyw.xyz",
-    "payroll.szyyw.xyz"
+    "books.example.com",
+    "forms.example.com"
   ];
   const list = document.getElementById("domains");
   for (const d of DOMAINS) {
