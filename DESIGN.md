@@ -359,6 +359,7 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
   `.app-header` `.app-brand` `.app-title` `.app-sub` `.app-actions`；token `--chart-1…6` `--pop-shadow` `--on-err` `--corner-gap`
 - v0.14.0 新增：`.sheet.wide`、无标题 `.sheet-head`（只含 `.close-x`）、`.term-lvl:disabled` `.term-copy:disabled`、`.pill.slate` `.pill.pink`；
   token `--slate` `--pink` `--tint-slate-bg` `--tint-pink-bg`
+- v0.17.0 新增（§15）：`.field-wrap` `.field-clear` `.u-*` 工具类 `.w-sm/.w-md/.w-lg` `.sub-hint` `.inset-list` `.row-hover` `.chip-group` `.chip-group-label` `.field-inset` `.field-inset-btn` `.icon-grid` `.icon-cell` `.btn-icon` `.msg-list` `.msg-item` `.msg-dot` `.msg-text` `.msg-title` `.msg-body` `.msg-time` `.back-link`；JS `./overlay`（`mountOverlay`）
 - v0.15.0 新增（§14）：JS `./techtext`（`mountTechText` `enhanceTechText` `DEFAULTS`）、`mountChrome({ techText })` 与 `handle.techText`；
   类 `.tech-text`（JS 加在被增强的元素上，可用来写选中色等外观）。`.tech-text-canvas` 是内部实现，别套用
 
@@ -435,6 +436,34 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
 原因：`.spread` 只有 flex 排版，`.section-name` 自带 10px 下边距在 flex 里只作用于标题，管不到按钮，
 按钮会贴着下方内容；窄屏标题与按钮换行时也无行距。`.section-head` 行下留 12px、换行间距 8px 12px，内部 `.section-name` 边距归零。
 勿用裸 `.spread` 后紧跟内容；纯新增，`.spread` / `.section-name` 行为不变。
+
+## 15. 通用工具类与布局契约（v0.17.0）
+
+**原则：通用样式缺陷修设计包，不在应用里补。** 应用里自己写的 month 输入修正、遮罩关闭逻辑、返回条、消息列表之类，
+只要别的站也会遇到，就下沉到这里；应用侧只留业务语义。以下全是纯新增（month iOS 修复除外），手测页 `demo/utilities.html`。
+
+- **month 输入**：`input[type="month"].field` 与 date / datetime-local 同款处理（`appearance: none`、`min-width: 0`、`max-width: 100%`、
+  文字左对齐、`::-webkit-date-and-time-value` 左对齐）。这是缺陷修复，并排的 month 不再被 iOS 固有宽度顶出、截断。
+- **清除键** `.field-wrap` + `.field-clear`：输入框内最右侧的 ✕，可点区域不小于 32px；有清除键时输入框右内边距自动让位。
+  `<div class="field-wrap"><input type="month" class="field"><button type="button" class="field-clear" aria-label="清除">✕</button></div>`。
+  值为空时由应用不渲染 / `hidden` 清除键。
+- **工具类**（统一 `u-` 前缀，因 app-a 已有 `.tbl.clickable`）：`.u-m0`；`.u-mt-1/2/3/4`、`.u-mb-1/2/3/4`（4/6/8/12px）；
+  `.u-gap-1/2/3/4/6`（2/4/6/8/12px，写在 `.row/.stack/.spread` 之后且有复合选择器，**能压过它们固定的 10px**）；
+  `.u-ai-center` `.u-ai-start` `.u-jc-between` `.u-nowrap` `.u-flex-none` `.u-flex-1`（`flex: 1 1 0` + `min-width: 0`）`.u-min-w-0`
+  `.u-clickable` `.u-fw-600` `.u-fw-400` `.u-block` `.u-ta-right`。用于一次性微调，别拿它们搭整页布局，重复出现的组合应成为语义类。
+- **字段限宽** `.field.w-sm / .w-md / .w-lg`（130 / 160 / 200px）：`max-width` 语义，窄屏收缩不溢出。
+- **`.sub-hint`**：紧跟 `h3` / `.panel-title` 的说明段（上拉 6px、下留 8px）。不改 `.panel-title + *` 的既有行为。
+- **`.inset-list` + `.row-hover`**：可点击行列表拉到卡片内边距外，hover 背景铺满卡片宽。`--inset` 缺省 18px（= `.panel` 的 padding），
+  卡片 padding 不同就在 `.inset-list` 上改该变量；行内容仍与卡片内容对齐。
+- **`.chip-group` + `.chip-group-label`** + `.chip-row`：行首标签 + 胶囊，≤520px 标签单独占一行。
+- **`.field-inset` + `.field-inset-btn`**：输入框内嵌图标触发钮；**`.icon-grid` + `.icon-cell`**：auto-fill 图标网格；分类标签条复用 `.tabs.scroll`。
+- **`.btn-icon`**（`.xs` 更小）：小型方形图标按钮。
+- **`.msg-list` / `.msg-item`**：消息列表。`.msg-item.unread` 为未读（没有则标题不加粗、圆点淡化）；`.msg-dot`（`.warn` `.err`）、
+  `.msg-text` 内放 `.msg-title` `.msg-body` `.msg-time`。
+- **`.back-link`**：页首返回条（`<a class="back-link" href="…">← 返回</a>`）。凡不在手机底栏的页面都应有。
+- **`mountOverlay(overlayEl, { onClose, lockScroll = true }) → { destroy() }`**（`@szyyw/design/overlay`）：遮罩点击关闭要求按下与松开都落在遮罩本身
+  （拖选文字松手在遮罩上不误关）；嵌套弹层的 body 滚动锁引用计数；Esc 只关最上层；模块顶层不碰 DOM。
+  它不搬动 / 移除元素，`onClose` 里由应用卸载并 `destroy()`。
 
 ## 14. TechText 字标（v0.15.0）
 

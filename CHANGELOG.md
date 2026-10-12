@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.17.0 — 2026-10-13
+
+纯新增（month 修复除外），既有类与函数行为不变；设计细则见 DESIGN.md §15，手测页 `demo/utilities.html`。
+
+**新增**
+- 清除键契约 `.field-wrap` + `.field-clear`（框内最右、可点区域 ≥ 32px）。
+- 工具类（`u-` 前缀）：`.u-m0`、`.u-mt-1…4`、`.u-mb-1…4`、`.u-gap-1/2/3/4/6`（能压过 `.row/.stack/.spread` 的 10px）、`.u-ai-center/start`、`.u-jc-between`、
+  `.u-nowrap`、`.u-flex-none/1`、`.u-min-w-0`、`.u-clickable`、`.u-fw-600/400`、`.u-block`、`.u-ta-right`。
+- `.field.w-sm/.w-md/.w-lg`、`.sub-hint`、`.inset-list` + `.row-hover`、`.chip-group` + `.chip-group-label`、`.field-inset` + `.icon-grid`、
+  `.btn-icon`（`.xs`）、`.msg-list` / `.msg-item`、`.back-link`。
+- JS `./overlay`：`mountOverlay(overlayEl, { onClose, lockScroll })`——按下与松开都在遮罩上才关、嵌套滚动锁引用计数、Esc 关最上层；SSR 可 import。
+  `sync.sh` 的 `FILES` 同步加入 `overlay.js`。
+
+**修复（month iOS）**
+- `input[type="month"].field` 与 date / datetime-local 同款处理（收缩、左对齐、`::-webkit-date-and-time-value` 左对齐），
+  并排时不再被 iOS 固有宽度截断。这是唯一的既有行为变化。
+
 ## v0.16.0 — 2026-10-12
 
 **新增 `.section-head`**（`components.css`，DESIGN.md §13.1）：分区标题行（`.section-name` + 右侧操作按钮），行下 12px，窄屏换行 8px 12px，内部 `.section-name` 边距归零。

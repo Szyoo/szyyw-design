@@ -195,6 +195,7 @@ const a = readAppearanceFromCookies((n) => cookies().get(n)?.value, { theme: "ap
 | `./toast` | `toast`、`clearToasts` |
 | `./menu` | `attachMenu` |
 | `./techtext` | `enhanceTechText`、`mountTechText`、`runningCount`、`DEFAULTS` |
+| `./overlay` | `mountOverlay`（遮罩点击 / Esc 关闭 + body 滚动锁引用计数） |
 | `./version` | `VERSION`、`REPO` |
 
 每个 JS 模块都有同名 `.d.ts`，选项与返回值以其为准。

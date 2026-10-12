@@ -671,11 +671,22 @@ select.field {
 
 /* iOS 日期/时间原生控件：统一外观与高度，防止溢出格子 */
 input[type="date"].field,
-input[type="datetime-local"].field {
+input[type="datetime-local"].field,
+input[type="month"].field {
   appearance: none;
   -webkit-appearance: none;
   min-height: 44px;
   max-width: 100%;
+}
+
+/* v0.17.0 修 iOS：month 与 date 同款——固有宽度会把并排的格子顶出，文字默认居中；这里收缩、左对齐 */
+input[type="month"].field {
+  min-width: 0;
+  text-align: left;
+}
+input[type="month"].field::-webkit-date-and-time-value {
+  text-align: left;
+  min-height: 1.2em;
 }
 
 .field::placeholder { color: color-mix(in srgb, var(--text-dim) 55%, transparent); }
@@ -1085,6 +1096,220 @@ table.tbl {
 @keyframes term-blink {
   to { visibility: hidden; }
 }
+
+/* ============================================================
+   v0.17.0 通用工具类与布局契约：全是新类（month iOS 修复除外，见上面的 date 块）。
+   工具类统一带 u- 前缀（app-a 已有 .tbl.clickable，无前缀会冲突）；
+   放在 .row/.stack/.spread 之后，gap 工具类才压得过它们固定的 10px。
+   用法见 DESIGN.md §15，手测 demo/utilities.html
+   ============================================================ */
+
+/* ---------- 输入框清除键：.field-wrap > input.field + button.field-clear ----------
+   <div class="field-wrap">
+     <input type="month" class="field" value="2026-10">
+     <button type="button" class="field-clear" aria-label="清除">✕</button>
+   </div>
+   值为空时由应用自己不渲染（或 hidden）清除键；有清除键时输入框右侧自动让位 */
+.field-wrap { position: relative; display: block; min-width: 0; }
+.field-clear {
+  appearance: none;
+  position: absolute;
+  top: 50%;
+  right: 2px;
+  transform: translateY(-50%);
+  min-width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  font-size: 14px;
+  line-height: 1;
+  color: var(--text-dim);
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: color 0.15s var(--ease), background 0.15s var(--ease);
+}
+.field-clear:hover { color: var(--text); background: var(--hover-tint); }
+.field-clear:focus-visible { outline: 2px solid color-mix(in srgb, var(--accent) 60%, transparent); outline-offset: -2px; }
+.field-wrap:has(.field-clear) > .field { padding-right: 36px; }
+
+/* ---------- 边距 / 间距 / 对齐工具类（u- 前缀） ---------- */
+.u-m0 { margin: 0; }
+.u-mt-1 { margin-top: 4px; }
+.u-mt-2 { margin-top: 6px; }
+.u-mt-3 { margin-top: 8px; }
+.u-mt-4 { margin-top: 12px; }
+.u-mb-1 { margin-bottom: 4px; }
+.u-mb-2 { margin-bottom: 6px; }
+.u-mb-3 { margin-bottom: 8px; }
+.u-mb-4 { margin-bottom: 12px; }
+
+/* gap：压过 .row/.stack/.spread 固定的 10px（同特异性、写在其后，另补一组复合选择器兜底） */
+.u-gap-1, .row.u-gap-1, .stack.u-gap-1, .spread.u-gap-1 { gap: 2px; }
+.u-gap-2, .row.u-gap-2, .stack.u-gap-2, .spread.u-gap-2 { gap: 4px; }
+.u-gap-3, .row.u-gap-3, .stack.u-gap-3, .spread.u-gap-3 { gap: 6px; }
+.u-gap-4, .row.u-gap-4, .stack.u-gap-4, .spread.u-gap-4 { gap: 8px; }
+.u-gap-6, .row.u-gap-6, .stack.u-gap-6, .spread.u-gap-6 { gap: 12px; }
+
+.u-ai-center { align-items: center; }
+.u-ai-start { align-items: flex-start; }
+.u-jc-between { justify-content: space-between; }
+.u-nowrap { white-space: nowrap; }
+.u-flex-none { flex: none; }
+.u-flex-1 { flex: 1 1 0; min-width: 0; }
+.u-min-w-0 { min-width: 0; }
+.u-clickable { cursor: pointer; }
+.u-fw-600 { font-weight: 600; }
+.u-fw-400 { font-weight: 400; }
+.u-block { display: block; }
+.u-ta-right { text-align: right; }
+
+/* ---------- 字段限宽：max-width 语义，窄屏自动收缩不溢出 ---------- */
+.field.w-sm { width: 100%; max-width: 130px; min-width: 0; }
+.field.w-md { width: 100%; max-width: 160px; min-width: 0; }
+.field.w-lg { width: 100%; max-width: 200px; min-width: 0; }
+
+/* ---------- .sub-hint：紧跟 h3 / .panel-title 的说明段（不改 .panel-title + * 现有行为） ---------- */
+.sub-hint { margin: -6px 0 8px; font-size: 12px; color: var(--text-dim); line-height: 1.5; }
+
+/* ---------- .inset-list：可点击行列表拉到卡片内边距外，hover 背景铺满卡片宽 ----------
+   --inset 缺省取 .panel 的 18px；卡片 padding 不同就在 .inset-list 上改这个变量。
+   行内容仍与卡片内容左右对齐（行自己补回 padding-inline） */
+.inset-list { --inset: 18px; margin-left: calc(var(--inset) * -1); margin-right: calc(var(--inset) * -1); }
+.inset-list > .row-hover { padding-left: var(--inset); padding-right: var(--inset); border-radius: 0; }
+.row-hover {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.15s var(--ease);
+}
+.row-hover:hover { background: var(--hover-tint); }
+
+/* ---------- .chip-group：行首标签 + .chip-row，窄屏堆叠 ---------- */
+.chip-group { display: flex; align-items: baseline; gap: 8px; margin-top: 6px; }
+.chip-group-label {
+  flex: 0 0 auto;
+  min-width: 4.5em;
+  font-size: 11.5px;
+  color: var(--text-dim);
+  padding-top: 5px;
+}
+@media (max-width: 520px) {
+  .chip-group { display: block; }
+  .chip-group-label { display: block; padding: 0 0 4px; }
+}
+
+/* ---------- .field-inset + .icon-grid：输入框内嵌图标触发钮 + 图标选择网格 ----------
+   <div class="field-inset"><input class="field"><button class="field-inset-btn">😀</button></div>
+   分类标签条复用 .tabs.scroll；网格里每格 .icon-cell */
+.field-inset { position: relative; min-width: 0; }
+.field-inset > .field { padding-right: 44px; }
+.field-inset-btn {
+  appearance: none;
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  line-height: 1;
+  padding: 4px 7px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.12s var(--ease);
+}
+.field-inset-btn:hover { background: var(--hover-tint); }
+.icon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(36px, 1fr));
+  gap: 2px;
+  padding: 8px;
+  margin-top: 6px;
+  max-height: 180px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.icon-cell {
+  appearance: none;
+  background: none;
+  border: none;
+  font-size: 20px;
+  line-height: 1;
+  padding: 6px 0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.12s var(--ease), transform 0.12s var(--ease);
+}
+.icon-cell:hover { background: var(--hover-tint); transform: scale(1.15); }
+
+/* ---------- .btn-icon：小型方形图标按钮（−/＋/⇄ 之类），.xs 更小 ---------- */
+.btn-icon {
+  appearance: none;
+  width: 30px;
+  height: 28px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  font-size: 14px;
+  line-height: 1;
+  color: var(--text-dim);
+  background: var(--inner-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: color 0.15s var(--ease), border-color 0.15s var(--ease);
+}
+.btn-icon.xs { width: 24px; height: 22px; font-size: 13px; border-radius: 7px; }
+.btn-icon:hover:not(:disabled) { color: var(--text); border-color: color-mix(in srgb, var(--text-dim) 45%, transparent); }
+.btn-icon:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ---------- .msg-list / .msg-item：消息列表（通知、提醒） ----------
+   <div class="msg-list"><button class="msg-item unread"><span class="msg-dot warn"></span>
+   <span class="msg-text"><span class="msg-title">…</span><span class="msg-body">…</span><span class="msg-time">…</span></span></button></div> */
+.msg-list { overflow-y: auto; overscroll-behavior: contain; padding: 6px; }
+.msg-item {
+  appearance: none;
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s var(--ease);
+}
+.msg-item:hover { background: var(--hover-tint); }
+.msg-dot { flex: none; width: 8px; height: 8px; margin-top: 6px; border-radius: 50%; background: var(--accent); }
+.msg-dot.warn { background: var(--warn); }
+.msg-dot.err { background: var(--err); }
+/* 已读（没有 .unread）：圆点淡出、标题不加粗 */
+.msg-item:not(.unread) .msg-dot { opacity: 0.25; }
+.msg-item:not(.unread) .msg-title { font-weight: 400; color: var(--text-dim); }
+.msg-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.msg-title { font-size: 13px; font-weight: 600; line-height: 1.4; }
+.msg-body { font-size: 12px; line-height: 1.45; color: var(--text-dim); overflow-wrap: anywhere; }
+.msg-time { font-size: 11px; color: var(--text-dim); opacity: 0.8; }
+
+/* ---------- .back-link：页首返回条（手机底栏之外的页面必备） ---------- */
+.back-link {
+  display: inline-block;
+  margin-bottom: 4px;
+  font-size: 12px;
+  color: var(--text-dim);
+  text-decoration: none;
+}
+.back-link:hover { color: var(--text); }
 
 /* ============================================================
    v0.13.0 公开组件：提示条 / 标签页 / 分段 / toast / 紧凑输入 / 转圈 /

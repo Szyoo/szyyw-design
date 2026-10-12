@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>通用工具类 · 手测</title>
+<!--
+  v0.17.0 通用工具类与布局契约的静态手测页（不进 package files），对应 DESIGN.md §15。
+  仓库根目录 `python3 -m http.server 8080`，打开 http://localhost:8080/demo/utilities.html
+  重点：窄屏看 month 并排不截断；gap 工具类压过 .row；弹层里拖选文字松手在遮罩上不关；嵌套弹层滚动锁。
+-->
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../components.css">
+<style>
+  .demo { max-width: 760px; margin: 0 auto; padding: 72px 20px 48px; }
+  .demo .glass { padding: 18px; margin-bottom: 16px; }
+  .demo h2 { margin: 0 0 4px; font-size: 15px; }
+  .demo code { font-size: 12px; }
+  .box { background: var(--inner-bg); border: 1px solid var(--glass-border); padding: 4px 10px; border-radius: 6px; font-size: 12px; }
+  .tall { height: 120vh; }
+</style>
+</head>
+<body>
+<div class="bg-layer" aria-hidden="true"></div>
+<main class="app-frame demo">
+  <a class="back-link" href="#">← .back-link</a>
+  <h1 class="page-title grad-text">通用工具类</h1>
+
+  <section class="glass panel" id="s-month">
+    <h2 class="panel-title">month 并排 + 清除键</h2>
+    <p class="sub-hint">.sub-hint：紧跟标题的说明</p>
+    <div class="form-grid">
+      <div class="field-wrap"><input type="month" class="field" value="2026-10" id="m1"><button type="button" class="field-clear" aria-label="清除" onclick="m1.value=''">✕</button></div>
+      <div class="field-wrap"><input type="month" class="field" value="2026-11"><button type="button" class="field-clear" aria-label="清除">✕</button></div>
+      <input type="date" class="field" value="2026-10-13">
+    </div>
+    <div class="row u-mt-4"><input class="field w-sm" placeholder="w-sm"><input class="field w-md" placeholder="w-md"><input class="field w-lg" placeholder="w-lg"></div>
+  </section>
+
+  <section class="glass panel" id="s-gap">
+    <h2 class="panel-title u-mb-3">gap 压过 .row</h2>
+    <div class="row" id="g-default"><span class="box">a</span><span class="box">b</span><span class="box">c</span></div>
+    <div class="row u-gap-1 u-mt-2" id="g1"><span class="box">a</span><span class="box">b</span><span class="box">c</span></div>
+    <div class="row u-gap-6 u-mt-2" id="g6"><span class="box">a</span><span class="box">b</span><span class="box">c</span></div>
+    <div class="stack u-gap-2 u-mt-2" id="gs"><span class="box">stack</span><span class="box">u-gap-2</span></div>
+    <div class="spread u-gap-6 u-mt-2" id="gsp"><span class="box u-flex-1">flex-1</span><span class="box u-flex-none u-fw-600">flex-none</span><span class="box u-clickable u-ta-right">clickable</span></div>
+  </section>
+
+  <section class="glass panel">
+    <h2 class="panel-title u-mb-3">.inset-list / .row-hover</h2>
+    <div class="inset-list">
+      <div class="row-hover"><span>第一行</span><span class="u-flex-1"></span><span class="muted tiny">hover 铺满卡片宽</span></div>
+      <div class="row-hover"><span>第二行</span></div>
+    </div>
+    <h2 class="panel-title u-mt-4">.chip-group</h2>
+    <div class="chip-group"><span class="chip-group-label">餐饮</span><div class="chip-row"><button class="chip active">早餐</button><button class="chip">午餐</button><button class="chip">晚餐</button></div></div>
+    <div class="chip-group"><span class="chip-group-label">交通</span><div class="chip-row"><button class="chip">电车</button><button class="chip">打车</button></div></div>
+  </section>
+
+  <section class="glass panel">
+    <h2 class="panel-title u-mb-3">.field-inset / .icon-grid / .btn-icon</h2>
+    <div class="field-inset"><input class="field" placeholder="名称"><button class="field-inset-btn" type="button">😀</button></div>
+    <div class="tabs scroll u-mt-3"><button class="tab active">表情</button><button class="tab">食物</button><button class="tab">交通</button></div>
+    <div class="icon-grid inner"><button class="icon-cell">😀</button><button class="icon-cell">🍜</button><button class="icon-cell">🚃</button><button class="icon-cell">🏠</button><button class="icon-cell">💰</button><button class="icon-cell">🎁</button></div>
+    <div class="row u-mt-3"><button class="btn-icon">−</button><button class="btn-icon">＋</button><button class="btn-icon xs">⇄</button><button class="btn-icon xs" disabled>×</button></div>
+  </section>
+
+  <section class="glass panel">
+    <h2 class="panel-title u-mb-3">.msg-list</h2>
+    <div class="msg-list inner">
+      <button class="msg-item unread"><span class="msg-dot"></span><span class="msg-text"><span class="msg-title">未读 · 默认</span><span class="msg-body">正文说明文字</span><span class="msg-time">刚刚</span></span></button>
+      <button class="msg-item unread"><span class="msg-dot warn"></span><span class="msg-text"><span class="msg-title">未读 · warn</span><span class="msg-body">正文</span></span></button>
+      <button class="msg-item unread"><span class="msg-dot err"></span><span class="msg-text"><span class="msg-title">未读 · err</span></span></button>
+      <button class="msg-item"><span class="msg-dot"></span><span class="msg-text"><span class="msg-title">已读</span><span class="msg-body">圆点淡出、标题不加粗</span></span></button>
+    </div>
+  </section>
+
+  <section class="glass panel">
+    <h2 class="panel-title u-mb-3">mountOverlay</h2>
+    <p class="sub-hint">打开后在输入框里选文字，拖到弹窗外松手：不应关闭。点遮罩 / Esc 关闭；嵌套时 body.style.overflow 最后一层才恢复。</p>
+    <button class="btn" id="open1">打开弹层</button>
+    <span id="lock" class="muted tiny"></span>
+  </section>
+  <div class="tall"></div>
+</main>
+<script type="module">
+  import { mountOverlay } from "../overlay.js";
+  const lock = document.getElementById("lock");
+  const show = () => { lock.textContent = " body.overflow = " + JSON.stringify(document.body.style.overflow); };
+  show();
+  function open(level) {
+    const el = document.createElement("div");
+    el.className = "overlay";
+    el.innerHTML = `<div class="sheet"><div class="sheet-head"><h3 class="sheet-title">弹层 ${level}</h3></div><div class="sheet-body"><input class="field" value="在这里选一段较长的文字再拖出去松手 ${level}"><button class="btn u-mt-3" data-next>再开一层</button></div></div>`;
+    document.body.appendChild(el);
+    const h = mountOverlay(el, { onClose() { h.destroy(); el.remove(); show(); } });
+    el.querySelector("[data-next]").onclick = () => open(level + 1);
+    show();
+  }
+  document.getElementById("open1").onclick = () => open(1);
+</script>
+</body>
+</html>
