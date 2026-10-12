@@ -539,6 +539,18 @@ input[type="color"]::-moz-color-swatch { border: none; border-radius: 4px; }
   margin: 0 0 10px;
 }
 
+/* 分区标题行：小标题 + 右侧操作。与下方内容至少 12px，窄屏换行时按钮不贴边。
+   别用裸 .spread 后紧跟内容——.spread 只有排版，.section-name 的下边距管不到按钮（v0.16.0） */
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin: 0 0 12px;
+}
+.section-head > .section-name { margin: 0; }
+
 .panel-title { margin: 0; font-size: 17px; font-weight: 600; }
 
 .panel-head {

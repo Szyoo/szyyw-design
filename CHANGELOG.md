@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.16.0 — 2026-10-12
+
+**新增 `.section-head`**（`components.css`，DESIGN.md §13.1）：分区标题行（`.section-name` + 右侧操作按钮），行下 12px，窄屏换行 8px 12px，内部 `.section-name` 边距归零。
+修复「`.spread` + `.section-name` 的按钮贴着下方内容」这一通用缺陷。纯新增，`.spread` / `.section-name` 不变，既有页面零视觉差异。
+
 ## v0.15.0 — 2026-10-09
 
 **新增 TechText 字标**（`./techtext`，新文件 `techtext.js` / `techtext.d.ts`，已进 `exports` / `files` 与 `sync.sh` 清单）。纯新增、缺省不开，向后兼容：

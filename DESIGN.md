@@ -344,7 +344,7 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
 
 **公开 API**（项目可以直接写在自己的标记里，跨版本保持语义；改动会进 CHANGELOG 并按 semver 处理）：
 
-- 布局：`.app-frame` `.bg-layer` `.row` `.spread` `.stack` `.wrap` `.field-row` `.actions` `.divider` `.section` `.section-name`
+- 布局：`.app-frame` `.bg-layer` `.row` `.spread` `.stack` `.wrap` `.field-row` `.actions` `.divider` `.section` `.section-name` `.section-head`
 - 容器：`.glass` `.panel` `.inner` `.lift` `.sheet` `.sheet-head` `.sheet-title` `.sheet-body` `.sheet-foot` `.overlay` `.close-x`
 - 表单：`.field` `.form-row` `.form-grid` `.chip` `.chip-row` `.switch` `.err-text` `.ok-text`
 - 按钮：`.btn` `.btn-ghost` `.btn-small` `.danger`
@@ -428,6 +428,13 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
 `--sheet-bg` 未改：375 宽、背后密集文字实测，遮罩模糊 + 92%/94% 底色下弹层空白区的亮度起伏只有约 2/255，
 背后文字不可辨。只有 `backdrop-filter` 失效时（不支持、或弹层被放进另一个带 `backdrop-filter` / `filter` 的祖先里，
 遮罩模糊作用不到）起伏升到约 8/255、能看出字形——弹层务必按 §3 用 Portal 挂到 body 下、配 `.overlay`。
+
+## 13.1 分区标题行 `.section-head`（v0.16.0）
+
+「小标题 + 右侧操作按钮」的行用 `<div class="section-head"><h3 class="section-name">…</h3><button class="btn btn-small">…</button></div>`。
+原因：`.spread` 只有 flex 排版，`.section-name` 自带 10px 下边距在 flex 里只作用于标题，管不到按钮，
+按钮会贴着下方内容；窄屏标题与按钮换行时也无行距。`.section-head` 行下留 12px、换行间距 8px 12px，内部 `.section-name` 边距归零。
+勿用裸 `.spread` 后紧跟内容；纯新增，`.spread` / `.section-name` 行为不变。
 
 ## 14. TechText 字标（v0.15.0）
 
