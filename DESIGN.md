@@ -447,7 +447,7 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
 - **清除键** `.field-wrap` + `.field-clear`：输入框内最右侧的 ✕，可点区域不小于 32px；有清除键时输入框右内边距自动让位。
   `<div class="field-wrap"><input type="month" class="field"><button type="button" class="field-clear" aria-label="清除">✕</button></div>`。
   值为空时由应用不渲染 / `hidden` 清除键。
-- **工具类**（统一 `u-` 前缀，因 app-a 已有 `.tbl.clickable`）：`.u-m0`；`.u-mt-1/2/3/4`、`.u-mb-1/2/3/4`（4/6/8/12px）；
+- **工具类**（统一 `u-` 前缀，因部分应用已有 `.tbl.clickable`）：`.u-m0`；`.u-mt-1/2/3/4`、`.u-mb-1/2/3/4`（4/6/8/12px）；
   `.u-gap-1/2/3/4/6`（2/4/6/8/12px，写在 `.row/.stack/.spread` 之后且有复合选择器，**能压过它们固定的 10px**）；
   `.u-ai-center` `.u-ai-start` `.u-jc-between` `.u-nowrap` `.u-flex-none` `.u-flex-1`（`flex: 1 1 0` + `min-width: 0`）`.u-min-w-0`
   `.u-clickable` `.u-fw-600` `.u-fw-400` `.u-block` `.u-ta-right`。用于一次性微调，别拿它们搭整页布局，重复出现的组合应成为语义类。
