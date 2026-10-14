@@ -1,6 +1,6 @@
 {
   "name": "@szyyw/design",
-  "version": "0.17.0",
+  "version": "0.18.0",
   "description": "szyyw.xyz design language — tokens, glass components, interactive dot-field background. Framework-agnostic CSS/JS, no build step.",
   "type": "module",
   "license": "MIT",
@@ -117,6 +117,7 @@
     "techtext.js",
     "techtext.d.ts",
     "overlay.js",
-    "overlay.d.ts"
+    "overlay.d.ts",
+    "fonts/"
   ]
 }

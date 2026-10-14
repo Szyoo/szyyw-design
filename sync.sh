@@ -15,7 +15,7 @@ set -eu
 DEST=${1:?usage: sync.sh <dest-dir> [tag|--local]}
 REF=${2:-latest}
 REPO=Szyoo/szyyw-design
-FILES="tokens.css components.css corner.css dotfield.js scheme.js corner.js settings.js switcher.js account.js version.js appearance.js appearance-data.js appearance-text.js chrome-text.js locale-toggle.js chrome.js toast.js menu.js techtext.js overlay.js"
+FILES="tokens.css components.css corner.css dotfield.js scheme.js corner.js settings.js switcher.js account.js version.js appearance.js appearance-data.js appearance-text.js chrome-text.js locale-toggle.js chrome.js toast.js menu.js techtext.js overlay.js fonts/Geist-Variable.woff2 fonts/OFL.txt"
 
 if [ "$REF" = "--local" ]; then
   SRC=${DESIGN_UPSTREAM:-$HOME/Documents/GitHub/szyyw-design}
@@ -40,6 +40,8 @@ VERSION=$(sed -n 's/.*VERSION = "\([^"]*\)".*/\1/p' "$SRC/version.js")
 
 mkdir -p "$DEST"
 for f in $FILES; do
+  # 清单可含子目录（v0.18.0 起有 fonts/）：先建目录
+  case "$f" in */*) mkdir -p "$DEST/${f%/*}" ;; esac
   cp "$SRC/$f" "$DEST/$f"
 done
 
@@ -48,7 +50,7 @@ if [ -f "$MD" ] && grep -q '当前版本：' "$MD"; then
   # 只刷新版本行与文件清单行，保留项目自己写的说明（旧 VENDORED.md 没有清单行就补在末尾）
   tmpmd=$(mktemp)
   sed -e "s/当前版本：\*\*v[0-9.][^*]*\*\*/当前版本：**v$VERSION**/" \
-      -e "s/^同步到此目录的文件：.*/同步到此目录的文件：$FILES/" "$MD" > "$tmpmd" && mv "$tmpmd" "$MD"
+      -e "s|^同步到此目录的文件：.*|同步到此目录的文件：$FILES|" "$MD" > "$tmpmd" && mv "$tmpmd" "$MD"
   grep -q '^同步到此目录的文件：' "$MD" || printf '\n同步到此目录的文件：%s\n' "$FILES" >> "$MD"
 else
   cat > "$MD" <<MDEOF

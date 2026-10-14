@@ -5,6 +5,16 @@
    任何硬编码颜色都会在浅色模式 / 换主题时漏色，禁止出现。
    ============================================================ */
 
+/* 标题字体 Geist（v0.18.0，.app-title / .wordmark 用）：随包分发 fonts/Geist-Variable.woff2（SIL OFL 1.1，见 fonts/OFL.txt）。
+   相对 URL：CDN 直引、Vite / Next 等打包器从 node_modules 打包、sync.sh 同步的 vendor 目录都能解析；
+   字体缺失时按后备链回退到正文字体，不影响布局可用性 */
+@font-face {
+  font-family: "Geist";
+  src: url("fonts/Geist-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -1730,16 +1740,22 @@ select.field.small { padding-right: 30px; }
   gap: 2px;
   min-width: 0;
 }
+/* 标题字样（v0.18.0，同门户主页左上角）：Geist 600、字距 -0.01em、整行纯色 --text。
+   mountChrome 缺省把 .app-title / .wordmark 增强为 TechText 字标；行内 .grad-text 子段仍是渐变（可选） */
+.app-title,
+.wordmark {
+  font-family: "Geist", 'Inter', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', system-ui, sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+/* 左上角标题：44px（窄屏按视口收缩，375 宽约 28px） */
 .app-title {
   margin: 0;
-  font-size: 26px;
-  font-weight: 700;
-  line-height: 1.25;
-  letter-spacing: 0.01em;
-  background: var(--grad);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  font-size: clamp(28px, 7vw, 44px);
+  line-height: 1.1;
+  /* 窄屏放不下时两行均分，不留单字孤行 */
+  text-wrap: balance;
 }
 .app-sub {
   margin: 0;
@@ -1756,7 +1772,6 @@ select.field.small { padding-right: 30px; }
 }
 @media (max-width: 640px) {
   .app-header { padding-left: 16px; }
-  .app-title { font-size: 22px; }
 }
 
 /* ---------- TechText 字标（v0.15.0，techtext.js）----------

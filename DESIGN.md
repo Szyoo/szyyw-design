@@ -266,6 +266,25 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
 - **所有数字加 `.num`**（tabular-nums），金额列才对得齐
 - 输入件字号 ≥16px：iOS 聚焦小于 16px 会触发页面缩放
 
+### 标题字样（v0.18.0）
+
+所有应用的品牌标题用同一套字样（取自门户主页左上角）：**Geist 600、`letter-spacing: -0.01em`、整行纯色 `var(--text)`**，
+再由 `mountChrome` 缺省增强为 TechText 字标（§14）。
+
+| 类 | 字号 | 用在 |
+|---|---|---|
+| `.app-title` | `clamp(28px, 7vw, 44px)`、`line-height: 1.1`、`margin: 0`、`text-wrap: balance` | 左上角页头标题（`.app-header > .app-brand`）；登录页想同尺寸也可直接用 |
+| `.wordmark` | 不设（继承） | 登录页标题等非左上角的标题，字号由所在上下文或应用决定 |
+
+- 不再整行渐变（v0.17.0 及以前 `.app-title` 是 700 + `--grad` 渐变）。想保留一段渐变（如域名后缀）就用子段：
+  `<h1 class="app-title">example<span class="grad-text">.com</span></h1>`，TechText 会按原渐变画这一段。
+- 字体：`fonts/Geist-Variable.woff2`（可变字重 100–900，SIL OFL 1.1，许可原文 `fonts/OFL.txt`，来自 npm `geist`），
+  `components.css` 顶部 `@font-face` 用相对 URL `fonts/Geist-Variable.woff2`，`font-display: swap`。
+  CDN（tag 的 `git archive`，含 `fonts/`）、打包器从 `node_modules` 打包、`sync.sh`（v0.18.0 起清单含 `fonts/` 子目录）都能解析；
+  手动复制文件时要带上 `fonts/` 目录。字体缺失时按 `"Geist", Inter, PingFang SC, …, system-ui` 后备链回退，只是字样不同，布局照常。
+- 中日文字形由后备链里的系统字体提供（Geist 只含拉丁字形），375 宽下 11 个字的标题（约 28px）放不下一行时均分成两行，不溢出。
+- `corner.css` 不含标题样式，也不加载字体。
+
 ## 8. 交互约定
 
 - 破坏性操作：二次确认（首点变红「再点一次确认」+ 展开影响范围警告），
@@ -360,6 +379,8 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
 - v0.14.0 新增：`.sheet.wide`、无标题 `.sheet-head`（只含 `.close-x`）、`.term-lvl:disabled` `.term-copy:disabled`、`.pill.slate` `.pill.pink`；
   token `--slate` `--pink` `--tint-slate-bg` `--tint-pink-bg`
 - v0.17.0 新增（§15）：`.field-wrap` `.field-clear` `.u-*` 工具类 `.w-sm/.w-md/.w-lg` `.sub-hint` `.inset-list` `.row-hover` `.chip-group` `.chip-group-label` `.field-inset` `.field-inset-btn` `.icon-grid` `.icon-cell` `.btn-icon` `.msg-list` `.msg-item` `.msg-dot` `.msg-text` `.msg-title` `.msg-body` `.msg-time` `.back-link`；JS `./overlay`（`mountOverlay`）
+- v0.18.0：`.app-title` 改为新标题字样（§7「标题字样」，有意的可见变化），新增 `.wordmark`（同字样、不设字号）；
+  `components.css` 新增 `@font-face "Geist"`（`fonts/`）；`mountChrome` 的 `techText` 缺省开启（`.app-title, .wordmark`，跟进后插入的元素）
 - v0.15.0 新增（§14）：JS `./techtext`（`mountTechText` `enhanceTechText` `DEFAULTS`）、`mountChrome({ techText })` 与 `handle.techText`；
   类 `.tech-text`（JS 加在被增强的元素上，可用来写选中色等外观）。`.tech-text-canvas` 是内部实现，别套用
 
@@ -474,13 +495,17 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
 
 ```js
 import { enhanceTechText, mountTechText } from "@szyyw/design/techtext";
-mountChrome({ /* … */, techText: true });          // 一站式：等价 enhanceTechText(".app-title")
+mountChrome({ /* … */ });                          // 一站式：缺省增强 ".app-title, .wordmark"，并跟进之后插入的标题
 enhanceTechText(".app-title", { specks: 6 });       // → handle[]
 const h = mountTechText(el, options);               // → { refresh(), destroy() }；同一元素重复调用返回同一个 handle
 ```
 
-`mountChrome` 的 `techText` 缺省 **不开**（semver 兼容）：`true` / 选择器字符串 / `{ selector, ...选项 }`；
-`handle.techText` 是 handle 数组，`chrome.destroy()` 一并销毁。
+`mountChrome` 的 `techText` 自 v0.18.0 起缺省 **开启**（v0.15.0–v0.17.0 缺省不开），选择器 `".app-title, .wordmark"`；
+`false` 关闭，`true` / 选择器字符串 / `{ selector, ...选项 }` 写法照旧。它在 `document.body` 上挂一个 MutationObserver
+（childList + subtree，同一微任务内合并扫描，忽略 TechText 自己插拔的画布）：之后新出现的匹配元素自动 `mountTechText`，
+脱离文档的元素销毁其 handle——React 等框架在 `mountChrome` 之后才渲染 / 重渲染标题也能生效、不泄漏。
+`handle.techText` 是**当前**仍在文档里的 handle 数组（每次增减都换成新数组），`chrome.destroy()` 断开观察并全部销毁。
+不调用 `mountChrome` 的页面用 `enhanceTechText(".app-title, .wordmark")`，它只处理调用时已在文档里的元素。
 
 **选项**（上游参数基本保留，缺省值与官方演示一致，尺寸类参数按字号缩放）：
 
@@ -525,7 +550,7 @@ const h = mountTechText(el, options);               // → { refresh(), destroy(
   窗口宽度、字体加载完成；主题 / 配色 / 明暗变化（`<html>` 的 `data-*` / `style` / `class` + `prefers-color-scheme`）只换色。
 - `destroy()` 移除 canvas、事件与观察者，行内样式还原到挂载前；React 里在 `useEffect` 的清理函数里调用。
 
-**什么时候用**：每个应用左上角的品牌标题（`.app-title`），以及门户里展示站点字标 / 域名的地方。不要用在正文、按钮、
+**什么时候用**：每个应用左上角的品牌标题（`.app-title`）、登录页等处的 `.wordmark` 标题，以及门户里展示站点字标 / 域名的地方。不要用在正文、按钮、
 表格等需要频繁读的文字上（每个实例一块 canvas + 每字两张小位图）。
 
 **出处与许可**：移植自 [React Bits](https://reactbits.dev/text-animations/tech-text) 的 TechText（Copyright (c) 2026 David Haz），

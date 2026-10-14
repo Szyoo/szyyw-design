@@ -14,7 +14,7 @@ export interface ChromeHandle {
   account: AccountMenuHandle | null;
   /** 没给 localeToggle.locales 时为 null */
   localeToggle: LocaleToggleHandle | null;
-  /** v0.15.0：techText 选项增强出的字标（没开时为空数组）；destroy() 一并销毁 */
+  /** techText 选项增强出的、当前仍在文档里的字标（没开时为空数组）；之后插入 / 移除的标题会自动增减（v0.18.0）；destroy() 一并销毁 */
   techText: TechTextHandle[];
   /** 当前语言 */
   readonly locale: string;
@@ -66,8 +66,9 @@ export function mountChrome(options?: {
     labels?: { title?: string; names?: Record<string, string>; short?: Record<string, string> };
   } | null;
   /**
-   * v0.15.0：左上角标题的 TechText 字标（缺省不开）。
-   * true = enhanceTechText(".app-title")；字符串 = 选择器；对象 = { selector?, ...TechTextOptions }
+   * 标题的 TechText 字标。v0.18.0 起缺省开启，选择器 ".app-title, .wordmark"；
+   * 会跟进 mountChrome 之后才插入的匹配元素（MutationObserver），元素移出文档时销毁其 handle。
+   * false = 不开；true = 缺省选择器；字符串 = 选择器；对象 = { selector?, ...TechTextOptions }
    */
   techText?: boolean | string | (TechTextOptions & { selector?: string });
 }): ChromeHandle;

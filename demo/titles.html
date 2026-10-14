@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>标题字样 · 手测</title>
+<!--
+  @szyyw/design v0.18.0 标题字样（.app-title / .wordmark + Geist + TechText 缺省开启）的静态手测页（不进 package files）。
+  仓库根目录 `python3 -m http.server 8080`，打开 http://localhost:8080/demo/titles.html
+    ?t=zh|ja|en     页头标题语言（缺省 zh，长中文标题）
+    ?notech         mountChrome({ techText: false })：只有字样，不增强
+  覆盖：页头 .app-title（1280 / 375）、.wordmark（继承字号）、.grad-text 子段、
+  React 式延迟插入 / 重渲染 / 移除标题（MutationObserver 跟进）、light / dark × default / aurora（工具位切换）。
+-->
+<script>
+  (function () {
+    var d = document.documentElement;
+    try {
+      var p = localStorage.getItem("demo18:palette"), s = localStorage.getItem("demo18:scheme");
+      if (p && p !== "default") d.setAttribute("data-palette", p);
+      if (s === "auto" || s === "dark" || s === "light") d.setAttribute("data-scheme", s);
+    } catch (e) {}
+  })();
+</script>
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../components.css">
+<style>
+  .demo { max-width: 860px; margin: 0 auto; padding: 8px 20px 64px; }
+  .demo > section { padding: 20px 22px; margin-bottom: 16px; }
+  .demo h2.sec { margin: 0 0 4px; font-size: 15px; }
+  .demo .note { margin: 0 0 14px; font-size: 12px; color: var(--text-dim); }
+  .login-card { max-width: 360px; padding: 24px; text-align: center; }
+  .login-card .wordmark { margin: 0 0 6px; font-size: 32px; line-height: 1.15; }
+  #react-root { min-height: 56px; }
+</style>
+</head>
+<body>
+<div class="bg-layer" aria-hidden="true"></div>
+<div class="app-frame">
+  <header class="app-header">
+    <div class="app-brand">
+      <h1 class="app-title" id="brand-title">我的快递与 Bark 设置</h1>
+      <span class="app-sub">szyyw design v0.18.0 · titles</span>
+    </div>
+  </header>
+
+  <main class="demo">
+    <section class="glass">
+      <h2 class="sec">三种语言的 .app-title</h2>
+      <p class="note">Geist 600 · -0.01em · 纯色 --text；中日文字形来自后备链。</p>
+      <div class="stack">
+        <div class="app-title" lang="zh-CN">示例应用 控制台</div>
+        <div class="app-title" lang="ja">ブログ · 家計簿</div>
+        <div class="app-title" lang="en">Example Console</div>
+        <div class="app-title">example<span class="grad-text">.com</span></div>
+      </div>
+    </section>
+
+    <section class="glass">
+      <h2 class="sec">.wordmark（不设字号，继承）</h2>
+      <p class="note">登录卡片里 32px；正文里 15px 的同字样短语。</p>
+      <div class="glass login-card">
+        <h2 class="wordmark">登录 example.com</h2>
+        <p class="muted small">用账号登录以继续</p>
+      </div>
+      <p>正文里的 <span class="wordmark">Wordmark</span> 跟随上下文字号。</p>
+    </section>
+
+    <section class="glass">
+      <h2 class="sec">React 式延迟渲染</h2>
+      <p class="note">mountChrome 之后 600ms 才插入标题；「重渲染」整块替换节点；「移除」后 handle 被销毁。当前 handle 数：<b id="count" class="num">–</b></p>
+      <div id="react-root"></div>
+      <div class="actions" style="margin-top: 10px">
+        <button class="btn btn-small" type="button" id="rerender">重渲染</button>
+        <button class="btn-ghost btn-small" type="button" id="remove">移除</button>
+        <button class="btn-ghost btn-small" type="button" id="add">再插入</button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script type="module">
+  import { mountChrome } from "../chrome.js";
+
+  const params = new URLSearchParams(location.search);
+  const TITLES = { zh: "我的快递与 Bark 设置", ja: "配送状況と通知設定", en: "Parcels & Notifications" };
+  const t = params.get("t");
+  if (t && TITLES[t]) document.getElementById("brand-title").textContent = TITLES[t];
+
+  const chrome = mountChrome({
+    background: document.querySelector(".bg-layer"),
+    persist: "localStorage",
+    cookiePrefix: "demo18:",
+    locale: "zh",
+    portal: null,
+    ...(params.has("notech") ? { techText: false } : {})
+  });
+  window.__chrome = chrome;
+
+  const root = document.getElementById("react-root");
+  let n = 0;
+  const render = () => {
+    n += 1;
+    root.replaceChildren();
+    const h = document.createElement("h2");
+    h.className = "app-title";
+    h.textContent = `延迟标题 #${n}`;
+    root.append(h);
+  };
+  const count = () => (document.getElementById("count").textContent = String(chrome.techText.length));
+  setInterval(count, 300);
+  setTimeout(render, 600);
+  document.getElementById("rerender").addEventListener("click", render);
+  document.getElementById("add").addEventListener("click", render);
+  document.getElementById("remove").addEventListener("click", () => root.replaceChildren());
+</script>
+</body>
+</html>

@@ -20,17 +20,17 @@ npm（钉精确 tag）：
 ```jsonc
 // package.json
 "dependencies": {
-  "@szyyw/design": "github:Szyoo/szyyw-design#v0.15.0"
+  "@szyyw/design": "github:Szyoo/szyyw-design#v0.18.0"
 }
 ```
 
 CDN（无构建步骤的项目，免 vendoring）：每个 `vX.Y.Z` tag 发布到 `https://design.szyyw.xyz/vX.Y.Z/`，内容即该 tag 的 `git archive`，发布后不再改写（`Cache-Control: immutable`，CORS `*`）。
 
 ```html
-<link rel="stylesheet" href="https://design.szyyw.xyz/v0.15.0/tokens.css">
-<link rel="stylesheet" href="https://design.szyyw.xyz/v0.15.0/components.css">
+<link rel="stylesheet" href="https://design.szyyw.xyz/v0.18.0/tokens.css">
+<link rel="stylesheet" href="https://design.szyyw.xyz/v0.18.0/components.css">
 <script type="module">
-  import { mountChrome } from "https://design.szyyw.xyz/v0.15.0/chrome.js";
+  import { mountChrome } from "https://design.szyyw.xyz/v0.18.0/chrome.js";
   mountChrome({ /* … */ });
 </script>
 ```
@@ -42,8 +42,8 @@ CDN（无构建步骤的项目，免 vendoring）：每个 `vX.Y.Z` tag 发布�
 vendoring（复制到项目目录）：只用上游 `sync.sh`，从目标 tag 取脚本，文件清单与该版本一致：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Szyoo/szyyw-design/v0.15.0/sync.sh \
-  | sh -s -- ./static/vendor/szyyw-design v0.15.0
+curl -fsSL https://raw.githubusercontent.com/Szyoo/szyyw-design/v0.18.0/sync.sh \
+  | sh -s -- ./static/vendor/szyyw-design v0.18.0
 ```
 
 它复制运行时文件（清单见 `sync.sh` 的 `FILES`）并写 / 刷新 `VENDORED.md`；第二个参数用 `--local` 可从本机 clone 同步未发版改动。
@@ -64,7 +64,7 @@ const chrome = mountChrome({
   portal: "https://szyyw.xyz",                      // SSO 门户；非 SSO 应用传 null（不挂切换器与账户菜单）
   appearance: { onChange: (a) => savePrefs(a) },    // 账号级外观持久化
   localeToggle: { locales: ["zh", "ja", "en"], onChange: (l) => setAppLocale(l) },  // 可省
-  techText: true                                    // 左上角 .app-title 变 TechText 字标（缺省不开）
+  // techText 缺省开启：.app-title / .wordmark 变 TechText 字标（含之后才插入的标题）；false = 不开
 });
 chrome.setLocale("ja");   // 切换器 / 账户菜单 / 明暗 / 外观 / 语言按钮一起换，画布不重建
 ```
@@ -98,7 +98,21 @@ const titles = enhanceTechText(".app-title");               // → handle 数组
 const h = mountTechText(el, { specks: 6, sweep: true });     // 单个元素；sweep 缺省 "loop"
 ```
 
-`mountChrome({ techText })` 也接受选择器或 `{ selector, ...选项 }`。启用前后布局零位移，原文字留给读屏。行为细则见 DESIGN.md §14，手测页 `demo/techtext.html`。
+`mountChrome` 缺省就增强 `.app-title, .wordmark`，并用 MutationObserver 跟进之后才渲染的标题（React 等框架）、标题移出文档时销毁其 handle；
+`techText: false` 关闭，也接受选择器或 `{ selector, ...选项 }`。不调用 `mountChrome` 的页面自己调 `enhanceTechText(".app-title, .wordmark")`（只处理调用时已在文档里的元素）。
+启用前后布局零位移，原文字留给读屏。行为细则见 DESIGN.md §14，手测页 `demo/techtext.html`。
+
+### 标题字样
+
+```html
+<h1 class="app-title">示例应用</h1>                      <!-- 左上角：Geist 600、纯色、clamp(28px, 7vw, 44px) -->
+<h1 class="wordmark" style="font-size: 32px">登录</h1>   <!-- 同字样、不设字号（继承），用于非左上角的标题 -->
+<h1 class="app-title">example<span class="grad-text">.com</span></h1>  <!-- 子段可选渐变 -->
+```
+
+字体 Geist 随包分发（`fonts/Geist-Variable.woff2`，SIL OFL 1.1，许可见 `fonts/OFL.txt`），`components.css` 用相对 URL `fonts/…` 引用：
+CDN 直引、打包器（Vite / Next）从 `node_modules` 打包、`sync.sh` 同步（v0.18.0 起清单含 `fonts/`）都能加载。
+自己复制文件时要连 `fonts/` 目录一起放在 `components.css` 旁边；缺了字体时标题回退到正文字体链（Inter / 系统字体），不影响使用。
 
 ### 分开挂
 

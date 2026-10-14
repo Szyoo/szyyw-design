@@ -1,5 +1,29 @@
 # Changelog
 
+## v0.18.0 — 2026-10-14
+
+**新标题字样**（取自门户主页左上角，DESIGN.md §7「标题字样」）。`.app-title` 的外观是**有意的可见变化**，其余类与函数行为不变。
+
+**变化**
+- `.app-title`：700 + 整行 `--grad` 渐变、26px（≤640px 22px）、`line-height: 1.25`、`letter-spacing: 0.01em`
+  → **Geist 600、整行纯色 `var(--text)`、`clamp(28px, 7vw, 44px)`、`line-height: 1.1`、`letter-spacing: -0.01em`**。
+  去掉了 `background` / `background-clip: text` / `color: transparent`；想保留一段渐变就在标题里用 `<span class="grad-text">…</span>`。
+  另加 `text-wrap: balance`：375 宽时约 28px，11 个字的长标题在页头里均分成两行、不溢出、不留单字孤行。
+- `mountChrome` 的 `techText` 缺省由 `false` 改为**开启**，缺省选择器 `".app-title, .wordmark"`；`techText: false` 可关闭，字符串 / 对象写法照旧。
+  新增跟进：MutationObserver 观察 `document.body`（childList + subtree），之后插入的匹配元素自动增强、脱离文档的元素销毁 handle；
+  `handle.techText` 是当前 handle 数组，`destroy()` 断开观察并全部销毁。
+
+**新增**
+- 公开类 `.wordmark`：与 `.app-title` 同字体 / 字重 / 字距 / 纯色，不设字号（继承），用于登录页等非左上角标题。
+- 字体 `fonts/Geist-Variable.woff2`（Geist 1.7.2 可变字重，SIL OFL 1.1，许可原文 `fonts/OFL.txt`），`package.json` `files` 加入 `fonts/`；
+  `components.css` 顶部 `@font-face "Geist"`（相对 URL，`font-display: swap`）。缺字体时回退到正文字体链。
+- `sync.sh`：`FILES` 加入 `fonts/Geist-Variable.woff2` `fonts/OFL.txt`，支持清单里的子目录；`VENDORED.md` 清单行的 sed 改用 `|` 分隔（清单含 `/`）。
+
+**升级提示**
+- 不想要 TechText 的应用传 `techText: false`；自己调过 `enhanceTechText(".app-title")` 的可以删掉（重复挂载返回同一 handle，不删也无害）。
+- 覆写过 `.app-title` 字号 / 渐变的应用检查一下左上角；用旧版 `sync.sh` 同步 v0.18.0 不会带上 `fonts/`（标题回退到正文字体），请用 v0.18.0 的 `sync.sh`。
+- `corner.css` 不变。
+
 ## v0.17.0 — 2026-10-13
 
 纯新增（month 修复除外），既有类与函数行为不变；设计细则见 DESIGN.md §15，手测页 `demo/utilities.html`。

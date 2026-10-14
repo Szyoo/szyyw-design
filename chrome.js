@@ -12,9 +12,61 @@ import { mountAppearance } from "./appearance.js";
 import { mountAppSwitcher } from "./switcher.js";
 import { mountAccountMenu } from "./account.js";
 import { mountLocaleToggle } from "./locale-toggle.js";
-import { enhanceTechText } from "./techtext.js";
+import { mountTechText } from "./techtext.js";
 
 const DEFAULT_PORTAL = "https://szyyw.xyz";
+const DEFAULT_TECH_TEXT = ".app-title, .wordmark";
+
+/**
+ * 增强当前与之后出现的匹配元素（v0.18.0）：React 等框架在 mountChrome 之后才渲染 / 重渲染标题时也生效；
+ * 元素脱离文档就销毁它的 handle，不泄漏。onChange 收到当前 handle 数组。返回停止函数（断开观察并销毁全部）。
+ */
+function watchTechText(selector, opts, onChange) {
+  const live = new Map(); // element → handle
+  const publish = () => onChange(Array.from(live.values()));
+  const scan = () => {
+    let changed = false;
+    for (const [el, h] of live) {
+      if (!el.isConnected) {
+        h.destroy();
+        live.delete(el);
+        changed = true;
+      }
+    }
+    for (const el of document.querySelectorAll(selector)) {
+      if (live.has(el)) continue;
+      live.set(el, mountTechText(el, opts));
+      changed = true;
+    }
+    if (changed) publish();
+  };
+  scan();
+  publish();
+  // 只看节点增删（不看属性 / 文字：TechText 自己会改元素样式与插画布，看了会自激）；同一帧内的多次变动合并成一次扫描
+  let queued = false;
+  const observer = typeof MutationObserver === "function" && document.body
+    ? new MutationObserver((records) => {
+        if (queued) return;
+        // 只有 TechText 自己插拔的画布不必重扫
+        const relevant = records.some((r) =>
+          [...r.addedNodes, ...r.removedNodes].some((n) => n.nodeType === 1 && !n.classList?.contains("tech-text-canvas"))
+        );
+        if (!relevant) return;
+        queued = true;
+        queueMicrotask(() => {
+          queued = false;
+          scan();
+        });
+      })
+    : null;
+  observer?.observe(document.body, { childList: true, subtree: true });
+  return () => {
+    observer?.disconnect();
+    for (const h of live.values()) h.destroy();
+    live.clear();
+    publish();
+  };
+}
 
 /**
  * @param {object}  options
@@ -27,8 +79,8 @@ const DEFAULT_PORTAL = "https://szyyw.xyz";
  * @param {object|false} options.switcher 透传给 mountAppSwitcher（labels / order / current / …）；false = 不挂
  * @param {object|false} options.account  透传给 mountAccountMenu（labels / order / onChange）；false = 不挂
  * @param {object}  options.localeToggle  { locales, onChange?, order?, labels? }；给了 locales 才挂语言切换
- * @param {boolean|string|object} options.techText  v0.15.0：左上角标题的 TechText 字标。缺省不开；
- *        true = enhanceTechText(".app-title")；字符串 = 选择器；对象 = { selector?, ...TechText 选项 }
+ * @param {boolean|string|object} options.techText  标题的 TechText 字标。v0.18.0 起缺省开启（选择器 ".app-title, .wordmark"），
+ *        并跟进之后才插入 / 移除的匹配元素；false = 不开；字符串 = 选择器；对象 = { selector?, ...TechText 选项 }
  */
 export function mountChrome({
   background = null,
@@ -40,7 +92,7 @@ export function mountChrome({
   switcher: switcherOpts = {},
   account: accountOpts = {},
   localeToggle: localeOpts = null,
-  techText: techTextOpts = false
+  techText: techTextOpts = true
 } = {}) {
   let current = locale;
 
@@ -57,6 +109,7 @@ export function mountChrome({
   const account = sso && accountOpts !== false ? mountAccountMenu({ ...(accountOpts || {}), portal, locale }) : null;
 
   let localeToggle = null;
+  let stopTechText = null;
   const handle = {
     appearance,
     switcher,
@@ -76,8 +129,8 @@ export function mountChrome({
       localeToggle?.set(next);
     },
     destroy() {
-      for (const t of handle.techText) t.destroy();
-      handle.techText = [];
+      stopTechText?.();
+      stopTechText = null;
       localeToggle?.destroy();
       account?.destroy();
       switcher?.destroy();
@@ -99,11 +152,13 @@ export function mountChrome({
   }
 
   if (techTextOpts) {
-    let selector = ".app-title";
+    let selector = DEFAULT_TECH_TEXT;
     let opts = {};
     if (typeof techTextOpts === "string") selector = techTextOpts;
-    else if (typeof techTextOpts === "object") ({ selector = ".app-title", ...opts } = techTextOpts);
-    handle.techText = enhanceTechText(selector, opts);
+    else if (typeof techTextOpts === "object") ({ selector = DEFAULT_TECH_TEXT, ...opts } = techTextOpts);
+    stopTechText = watchTechText(selector, opts, (list) => {
+      handle.techText = list;
+    });
   }
 
   return handle;

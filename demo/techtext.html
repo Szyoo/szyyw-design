@@ -8,7 +8,7 @@
   @szyyw/design v0.15.0 TechText 字标的静态手测页（不进 package files）。
   仓库根目录 `python3 -m http.server 8080`，打开 http://localhost:8080/demo/techtext.html
     ?off            不增强（对照原 .app-title）
-  覆盖：页头 .app-title（mountChrome techText: true）、20 / 28 / 40px、中英文、文字动态变化、
+  覆盖：页头 .app-title（mountChrome 缺省 techText）、20 / 28 / 40px、中英文、文字动态变化、
   「全部域名」字标列表（28–36px，带点号的英文域名）、light / dark × default / aurora（工具位切换）。
   鼠标悬停看揭示；按住字母拖走再松手看回弹；触屏横向拖字母、纵向照常滚动。
 -->
@@ -126,13 +126,15 @@
     document.getElementById("dyn").textContent = titles[i];
     document.getElementById("brand-title").textContent = i % 2 ? "复盘" : "股票看板";
   });
+  // 对照用：销毁 / 重新增强页面上的 .app-title（v0.18.0 起 mountChrome 跟进的是插拔，不管手动销毁）
   let on = !off;
+  let manual = [];
   document.getElementById("toggle").addEventListener("click", () => {
     if (on) {
-      for (const t of chrome.techText) t.destroy();
-      chrome.techText = [];
+      for (const t of [...chrome.techText, ...manual]) t.destroy();
+      manual = [];
     } else {
-      chrome.techText = enhanceTechText(".app-title");
+      manual = enhanceTechText(".app-title");
     }
     on = !on;
   });
