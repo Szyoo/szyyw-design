@@ -597,7 +597,7 @@ input[type="color"]::-moz-color-swatch { border: none; border-radius: 4px; }
 }
 .section-head > .section-name { margin: 0; }
 
-/* ---------- 吸顶标题：.page-head.sticky / .section-head.sticky（v0.20.0，DESIGN.md §13.2）----------
+/* ---------- 吸顶标题：.page-head.sticky / .section-head.sticky（v0.22.0，DESIGN.md §13.2）----------
    长页面：标题行往下滚时吸顶；分块小标题吸在标题行下方，滚到哪块显示哪块（每块包一层容器，
    小标题是容器的第一个子元素——sticky 只在父容器范围内生效，下一块上来时上一块的小标题被父容器带走）。
    .page-head 单用不加样式（已有应用写过 .app-header.page-head 修饰类），必须与 .sticky 一起用。
