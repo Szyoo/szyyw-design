@@ -1,11 +1,11 @@
 /* ============================================================
    @szyyw/design · tokens.css
    三层结构：
-     主题（theme）    html[data-theme]，一整套：背景效果 + 动效 + 光效 + 配色族。
-                      目前唯一主题 "nebula"（深空：DotField 点阵 + 毛玻璃 + 光晕/光斑）。
-                      新主题 = 新 token 块 + （可选）新的背景/光效模块。
-     配色（palette）  html[data-palette]，主题的附属色彩变体，只覆盖 hue 相关 token。
-                      nebula 缺省配色为青紫；附属配色 "aurora"（极光翠青）。
+     主题（theme）    html[data-theme]，背景效果（v0.19.0 起可插拔，见 themes/index.js）。
+                      缺省 "random"（v0.21.0）：data-theme 为实际抽到的主题，另有 data-theme-mode="random"。
+     配色（palette）  html[data-palette]，色彩变体，只覆盖 hue 相关 token，对所有主题通用。
+                      目前只有缺省配色青紫（:root 基础块）；v0.21.0 移除了 "aurora"。
+                      新配色 = :root[data-palette="<id>"] 块（含 --th-* 段）+ appearance-data.js 的 PALETTES。
      明暗（scheme）   html[data-scheme="dark" | "light" | "auto"]，缺省 dark。
 
    每个颜色 token 用 light-dark() 同时给出两套值，由 color-scheme 决定取哪套：
@@ -25,7 +25,7 @@
   color-scheme: light dark;
 }
 
-/* ---------- 主题 nebula（唯一主题）· 深空 —— 缺省配色 青紫 ---------- */
+/* ---------- 基础块 · 深空 —— 缺省配色 青紫（所有主题通用） ---------- */
 
 :root {
   /* 基底 */
@@ -116,38 +116,6 @@
   --term-err: #ef4444;
 }
 
-/* ---------- nebula 附属配色 aurora · 极光 翠绿 + 青蓝（只覆盖 hue） ---------- */
-
-:root[data-palette="aurora"] {
-  --bg: light-dark(#edf6f2, #081412);
-  --accent: light-dark(#047857, #34d399);
-  --accent2: light-dark(#0369a1, #38bdf8);
-
-  --glass-bg: light-dark(rgba(255, 255, 255, 0.6), rgba(6, 24, 21, 0.55));
-  --inner-bg: light-dark(rgba(134, 168, 155, 0.16), rgba(2, 16, 13, 0.38));
-  --field-bg: light-dark(rgba(255, 255, 255, 0.72), rgba(2, 16, 13, 0.55));
-  --sheet-bg: light-dark(rgba(244, 250, 247, 0.94), rgba(8, 26, 22, 0.92));
-  --hover-tint: light-dark(rgba(4, 120, 87, 0.08), rgba(52, 211, 153, 0.07));
-
-  --tint-cyan-bg: light-dark(rgba(3, 105, 161, 0.11), rgba(56, 189, 248, 0.14));
-  --tint-violet-bg: light-dark(rgba(4, 120, 87, 0.12), rgba(52, 211, 153, 0.15));
-  /* 补充状态色（v0.14.0）：灰蓝略偏青以贴合翠青底色，粉色不变（与翠绿 / 青蓝互补，最好认） */
-  --slate: light-dark(#44606a, #a0b8c0);
-  --tint-slate-bg: light-dark(rgba(68, 96, 106, 0.12), rgba(148, 178, 186, 0.16));
-  --tint-pink-bg: light-dark(rgba(190, 24, 93, 0.1), rgba(244, 114, 182, 0.15));
-
-  --chart-1: light-dark(#047857, #34d399);
-  --chart-2: light-dark(#0369a1, #38bdf8);
-  --chart-3: light-dark(#b45309, #fbbf24);
-  --chart-4: light-dark(#7e22ce, #c084fc);
-  --chart-5: light-dark(#be123c, #fb7185);
-  --chart-6: light-dark(#4338ca, #818cf8);
-
-  --df-from: light-dark(rgba(4, 120, 87, 0.38), rgba(52, 211, 153, 0.45));
-  --df-to: light-dark(rgba(3, 105, 161, 0.3), rgba(56, 189, 248, 0.38));
-  --df-glow: light-dark(#edf6f2, #081412);
-}
-
 /* ===== themes-webgl ===== */
 /* WebGL 背景主题（themes/gradient-waves.js / side-rays.js / pixel-blast.js）的取色 token。
    颜色的 alpha 是该主题的「强度系数」：浅色模式整体压低，叠在浅底上也不刺眼、不抢正文。 */
@@ -162,13 +130,4 @@
   --th-side-rays-2: light-dark(rgba(126, 34, 206, 0.65), rgba(168, 85, 247, 0.9));
   /* 像素爆破 */
   --th-pixel-blast-color: light-dark(rgba(126, 34, 206, 0.32), rgba(180, 151, 207, 0.55));
-}
-
-:root[data-palette="aurora"] {
-  --th-gradient-waves-horizon: light-dark(rgba(52, 211, 153, 0.85), #064e3b);
-  --th-gradient-waves-wave: light-dark(rgba(56, 189, 248, 0.7), #0f766e);
-  --th-gradient-waves-crest: light-dark(rgba(209, 250, 229, 0.9), #a7f3d0);
-  --th-side-rays-1: light-dark(rgba(4, 120, 87, 0.75), rgba(52, 211, 153, 0.9));
-  --th-side-rays-2: light-dark(rgba(3, 105, 161, 0.65), rgba(56, 189, 248, 0.9));
-  --th-pixel-blast-color: light-dark(rgba(4, 120, 87, 0.3), rgba(110, 231, 183, 0.5));
 }

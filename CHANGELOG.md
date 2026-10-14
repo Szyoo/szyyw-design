@@ -1,5 +1,45 @@
 # Changelog
 
+## v0.21.0 — 2026-10-14
+
+**主题缺省随机、移除 aurora 配色、Target Cursor 修复**（DESIGN.md §2、§2.1、§2.2、§5、§16）。
+
+**可见变化**
+- **主题缺省「随机」**：外观弹层主题行第一个新增「随机」（zh 随机 / ja ランダム / en Random），并成为缺省。每个时间段（缺省 1 天，按本地日期换日）
+  从全部主题里均匀抽一个，同一时间段内所有页面、所有标签页一致；换段时避开上一次抽中的主题。选中随机时提示行显示「本次：<主题名>」，
+  主题参数段显示实际主题的参数。面板里从别的主题切回随机会立即重抽并开始新的时间段。抽到的主题加载失败会排除它再抽，全部失败回退星云。
+- **移除「极光翠青」（aurora）配色**：tokens.css 的 `:root[data-palette="aurora"]` 两段（基础 token 与 `--th-*` 主题 token）、`PALETTES`、
+  三语文案与 demo 里的切换按钮一并删除。存着 `aurora` 的用户回到缺省配色，首屏不闪。
+- **只有一种配色时外观弹层不显示「配色」栏**（以后加回配色自动出现）。
+- **Target Cursor**：修复点外观弹层右上角 ✕ 后准星跳到页面左上角——吸附中的按钮随弹层 `display: none`，矩形变成 (0, 0) 的 0×0，准星按它吸附。
+  现在每帧校验吸附目标（脱离文档 / 不可见 / 尺寸为 0 / 不在指针下方即解除，回到真实指针位置），关闭弹层、换路由、移除元素、`hidden` 都覆盖；
+  同时修复帧间隔变长（掉帧、切回标签页）时弹簧积分发散、准星飞出屏幕。
+
+**接口**
+- `./appearance-data`：`THEMES` 第一项为 `{ id: "random", random: true }`；`DEFAULT_APPEARANCE.theme = "random"`；未知主题回退 `random`（原 nebula）。
+  新增 `RANDOM_THEME`、`REAL_THEME_IDS`、`FALLBACK_THEME`、`resolveThemeChoice(stored, explicit)`、`isRealTheme`、`pickRandomTheme`。
+  `APPEARANCE_COOKIES` / `appearanceCookieNames(prefix)` 增加 `themeSet`（`<prefix>theme_set`）。`PaletteId` 只剩 `"default"`；新增类型 `ThemeChoice`。
+- `appearanceAttrs`：theme 为 random 时不写 `data-theme`，写 `data-theme-mode="random"`（服务端不知道客户端会抽到哪个；配色与明暗照常铺）。
+- `<html>`：`data-theme` 永远是实际挂着的主题，随机模式另有 `data-theme-mode="random"`。
+- `./appearance`：`getAppearance()` / `onChange` / `onAppearanceChange` 的外观对象多 `resolvedTheme`（实际主题），`theme` 可为 `"random"`。
+  新增 `randomEvery` 选项（`"day"` 缺省 / `"week"` / 毫秒数；`mountAppearance`、`mountChrome` 的 `appearance`、`configureAppearance` 均可传）、
+  `rerollRandomTheme(failedId)`、`randomPeriodExpired(at, now, every)`。抽中的主题存在 localStorage `<主题键>_random`（不可用时退回同名 cookie）。
+- 文案新增 `randomNow`、`themes.random`；删除 `palettes.aurora`。`scripts/check-tokens.mjs` 增加随机项、缺省主题与三语文案的检查。
+
+**迁移规则**（一次性，cookie 与 localStorage 两种 persist、服务端读取与首屏片段同一条）
+- 新增显式选择标记 `<主题键>_set`（如 `fl_theme_set=1`）。没有标记时，已存的 `nebula`（v0.19.0 之前唯一的主题，只能是缺省值）/ 缺省 / 非法值视为 `random`；
+  已存的其他真实主题（v0.19.0 里用户点过的）保持。用户此后在面板里显式选任何主题（含 nebula、含随机）就写入标记，按其选择保持。
+
+**首屏片段更新**（DESIGN.md §2.1）
+- 静态页片段多读 `<prefix>theme_set`：随机 / 待迁移时只写 `data-theme-mode="random"`，实际主题由 `configureAppearance` 抽定后写入 `data-theme` 再挂背景。
+  旧片段照旧可用（主题、迁移与已移除的配色都会被 `configureAppearance` 校正，不闪错色）。
+- SSR：`readAppearanceFromCookies` 已含迁移，`appearanceAttrs` 按上面写属性；React 系应用给 `<html>` 加 `suppressHydrationWarning`（客户端会补 `data-theme`）。
+
+**应用侧需留意**
+- 服务端校验主题 / 配色白名单的：主题接受 `random`，配色去掉 `aurora`（或直接用 `normalizeAppearance`）。
+- 保存账号级外观偏好的：`theme` 可能是 `"random"`；`resolvedTheme` 只供展示不要存。v0.19.0 期间存进库的 `nebula` 多半是缺省值，
+  写回时连同显式标记一起存，或用 `resolveThemeChoice(theme, explicit)` 迁移。
+
 ## v0.20.0 — 2026-10-14
 
 **新增分页器**（DESIGN.md §16.1）。纯新增，旧标记不受影响。

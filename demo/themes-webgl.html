@@ -9,7 +9,7 @@
   themes/gradient-waves.js / side-rays.js / pixel-blast.js 的静态手测页（不进 package files）。
   不经外观面板，直接 import 三个主题模块，按 meta.params 生成简易控件。
   在仓库根目录 `python3 -m http.server 8080`，打开 http://localhost:8080/demo/themes-webgl.html
-  URL 参数：?theme=side-rays&palette=aurora&scheme=light 可直接定位；&bare=1 隐藏控件只看背景。
+  URL 参数：?theme=side-rays&scheme=light 可直接定位；&bare=1 隐藏控件只看背景。
 -->
 <link rel="stylesheet" href="../tokens.css">
 <link rel="stylesheet" href="../components.css">
@@ -36,10 +36,6 @@
 
     <section class="glass">
       <div class="row" id="themes"><span>主题</span></div>
-      <div class="row" id="palettes"><span>配色</span>
-        <button class="chip" type="button" data-palette="default">default</button>
-        <button class="chip" type="button" data-palette="aurora">aurora</button>
-      </div>
       <div class="row" id="schemes"><span>明暗</span>
         <button class="chip" type="button" data-scheme="dark">dark</button>
         <button class="chip" type="button" data-scheme="light">light</button>
@@ -180,7 +176,7 @@
   });
 
   if (q.get("bare")) document.querySelector("main").hidden = true;
-  setPalette(q.get("palette") === "aurora" ? "aurora" : "default");
+  setPalette("default");
   setScheme(q.get("scheme") === "light" ? "light" : "dark");
   mountTheme(current);
   window.__mountTheme = mountTheme;

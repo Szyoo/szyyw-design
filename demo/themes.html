@@ -11,15 +11,17 @@
   加 ?cursorStub=1：鼠标效果用页内的最小桩代替 target-cursor.js（不加载真实光标模块，只验证开关流程）。
 -->
 <script>
-  // 首屏不闪（v0.19.0 推荐片段：多恢复 data-cursor；data-theme 交给 configureAppearance 校验）
+  // 首屏不闪（v0.21.0 推荐片段：随机主题只标 data-theme-mode，实际主题由 configureAppearance 抽定）
   (function () {
     var d = document.documentElement;
     try {
       var t = localStorage.getItem("themes-demo:theme");
+      var m = localStorage.getItem("themes-demo:theme_set");
       var p = localStorage.getItem("themes-demo:palette");
       var s = localStorage.getItem("themes-demo:scheme");
       var c = localStorage.getItem("themes-demo:cursor");
-      if (t) d.setAttribute("data-theme", t);
+      if (t === "random" || (!m && (!t || t === "nebula"))) d.setAttribute("data-theme-mode", "random");
+      else if (t) d.setAttribute("data-theme", t);
       if (p && p !== "default") d.setAttribute("data-palette", p);
       if (s === "auto" || s === "dark" || s === "light") d.setAttribute("data-scheme", s);
       if (c && c !== "default") d.setAttribute("data-cursor", c);
@@ -56,6 +58,7 @@
     <section class="glass">
       <dl class="mono">
         <dt>data-theme</dt><dd id="s-theme"></dd>
+        <dt>随机</dt><dd id="s-random"></dd>
         <dt>已挂载</dt><dd id="s-mounted"></dd>
         <dt>加载状态</dt><dd id="s-status"></dd>
         <dt>data-palette / scheme</dt><dd id="s-ps"></dd>
@@ -138,7 +141,7 @@
   const $ = (id) => document.getElementById(id);
   const keys = appearanceCookieNames("themes-demo:");
   const quick = $("quick");
-  const quickBtns = THEME_REGISTRY.map((e) => {
+  const quickBtns = [{ id: "random", labels: { zh: "随机" } }, ...THEME_REGISTRY].map((e) => {
     const b = document.createElement("button");
     b.className = "chip";
     b.type = "button";
@@ -152,6 +155,7 @@
   function render() {
     const d = document.documentElement;
     $("s-theme").textContent = d.getAttribute("data-theme") ?? "（无）";
+    $("s-random").textContent = `mode=${d.getAttribute("data-theme-mode") ?? "（无）"}  存储 ${keys.theme}=${localStorage.getItem(keys.theme)} ${keys.themeSet}=${localStorage.getItem(keys.themeSet)}  抽取 ${localStorage.getItem(`${keys.theme}_random`)}`;
     $("s-mounted").textContent = `${bg.theme}（请求 ${bg.requested}）`;
     $("s-status").textContent = THEME_REGISTRY.map((e) => `${e.id}:${bg.status(e.id)}`).join("  ");
     $("s-ps").textContent = `${d.getAttribute("data-palette") ?? "default"} / ${d.getAttribute("data-scheme")}`;
@@ -159,8 +163,9 @@
     const k = bg.theme === "nebula" ? "szyyw:dotfield" : `szyyw:theme-params:${bg.theme}`;
     $("s-store").textContent = `${k} = ${localStorage.getItem(k)}`;
     for (const b of quickBtns) {
-      b.classList.toggle("active", b.dataset.value === bg.theme);
-      b.disabled = bg.status(b.dataset.value) === "failed";
+      const random = d.getAttribute("data-theme-mode") === "random";
+      b.classList.toggle("active", b.dataset.value === "random" ? random : !random && b.dataset.value === bg.theme);
+      b.disabled = b.dataset.value !== "random" && bg.status(b.dataset.value) === "failed";
       b.title = b.disabled ? "加载失败（文件缺失或不可用）" : "";
     }
   }

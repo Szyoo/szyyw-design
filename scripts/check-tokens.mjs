@@ -9,7 +9,9 @@
    - 块内 --bg: light-dark(L, D) 与 bg.light / bg.dark 一致（不区分大小写）
    - 反向：tokens.css 里每个 data-palette 块都要在 PALETTES 里登记（否则面板选不到）
    - 每个配色的 theme 都在 THEMES 里
-   - THEMES 与 themes/index.js 的注册表 id 一一对应（v0.19.0，同序）
+   - THEMES 里的真实主题（去掉 random: true 的「随机」项）与 themes/index.js 的注册表 id 一一对应（v0.19.0，同序）
+   - v0.21.0：THEMES 第一项是 random、注册表里没有 random；DEFAULT_APPEARANCE.theme 在 THEMES 里；
+     appearance-text 三语都有每个主题选项（含 random）与每个配色的文案，且没有已移除配色的残留文案
 
    用法：node scripts/check-tokens.mjs   （失败时退出码 1）
    ============================================================ */
@@ -17,8 +19,9 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { THEMES, PALETTES } from "../appearance-data.js";
+import { THEMES, PALETTES, DEFAULT_APPEARANCE, RANDOM_THEME } from "../appearance-data.js";
 import { THEME_REGISTRY } from "../themes/index.js";
+import { APPEARANCE_TEXT } from "../appearance-text.js";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const css = readFileSync(join(root, "tokens.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
@@ -37,7 +40,7 @@ const ok = [];
 const selectorOf = (id) => (id === "default" ? ":root" : `:root[data-palette="${id}"]`);
 
 for (const p of PALETTES) {
-  if (!THEMES.some((t) => t.id === p.theme)) errors.push(`配色 ${p.id} 的 theme "${p.theme}" 不在 THEMES 里`);
+  if (!THEMES.some((t) => t.id === p.theme && !t.random)) errors.push(`配色 ${p.id} 的 theme "${p.theme}" 不在 THEMES 里`);
   const sel = selectorOf(p.id);
   const body = blocks.get(sel);
   if (body === undefined) {
@@ -66,7 +69,18 @@ for (const sel of blocks.keys()) {
   }
 }
 
-const themeIds = THEMES.map((t) => t.id).join(",");
+if (THEMES[0]?.id !== RANDOM_THEME || !THEMES[0]?.random) errors.push(`THEMES 第一项应为 { id: "${RANDOM_THEME}", random: true }`);
+if (THEME_REGISTRY.some((t) => t.id === RANDOM_THEME)) errors.push(`themes/index.js 注册表不应登记 ${RANDOM_THEME}（它不是真实主题）`);
+if (!THEMES.some((t) => t.id === DEFAULT_APPEARANCE.theme)) errors.push(`DEFAULT_APPEARANCE.theme "${DEFAULT_APPEARANCE.theme}" 不在 THEMES 里`);
+for (const [loc, text] of Object.entries(APPEARANCE_TEXT)) {
+  for (const t of THEMES) if (!text.themes?.[t.id]) errors.push(`appearance-text ${loc}.themes 缺 ${t.id}`);
+  for (const p of PALETTES) if (!text.palettes?.[p.id]) errors.push(`appearance-text ${loc}.palettes 缺 ${p.id}`);
+  for (const id of Object.keys(text.palettes ?? {})) {
+    if (!PALETTES.some((p) => p.id === id)) errors.push(`appearance-text ${loc}.palettes 有未登记的配色 ${id}`);
+  }
+}
+
+const themeIds = THEMES.filter((t) => !t.random).map((t) => t.id).join(",");
 const registryIds = THEME_REGISTRY.map((t) => t.id).join(",");
 if (themeIds !== registryIds) {
   errors.push(`appearance-data.js THEMES（${themeIds}）与 themes/index.js 注册表（${registryIds}）不一致`);

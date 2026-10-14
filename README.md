@@ -22,17 +22,17 @@ npm（钉精确 tag）：
 ```jsonc
 // package.json
 "dependencies": {
-  "@szyyw/design": "github:Szyoo/szyyw-design#v0.19.0"
+  "@szyyw/design": "github:Szyoo/szyyw-design#v0.21.0"
 }
 ```
 
 CDN（无构建步骤的项目，免 vendoring）：每个 `vX.Y.Z` tag 发布到 `https://design.szyyw.xyz/vX.Y.Z/`，内容即该 tag 的 `git archive`，发布后不再改写（`Cache-Control: immutable`，CORS `*`）。
 
 ```html
-<link rel="stylesheet" href="https://design.szyyw.xyz/v0.19.0/tokens.css">
-<link rel="stylesheet" href="https://design.szyyw.xyz/v0.19.0/components.css">
+<link rel="stylesheet" href="https://design.szyyw.xyz/v0.21.0/tokens.css">
+<link rel="stylesheet" href="https://design.szyyw.xyz/v0.21.0/components.css">
 <script type="module">
-  import { mountChrome } from "https://design.szyyw.xyz/v0.19.0/chrome.js";
+  import { mountChrome } from "https://design.szyyw.xyz/v0.21.0/chrome.js";
   mountChrome({ /* … */ });
 </script>
 ```
@@ -44,8 +44,8 @@ CDN（无构建步骤的项目，免 vendoring）：每个 `vX.Y.Z` tag 发布�
 vendoring（复制到项目目录）：只用上游 `sync.sh`，从目标 tag 取脚本，文件清单与该版本一致：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Szyoo/szyyw-design/v0.19.0/sync.sh \
-  | sh -s -- ./static/vendor/szyyw-design v0.19.0
+curl -fsSL https://raw.githubusercontent.com/Szyoo/szyyw-design/v0.21.0/sync.sh \
+  | sh -s -- ./static/vendor/szyyw-design v0.21.0
 ```
 
 它复制运行时文件（清单见 `sync.sh` 的 `FILES`）并写 / 刷新 `VENDORED.md`；第二个参数用 `--local` 可从本机 clone 同步未发版改动。
@@ -131,7 +131,8 @@ const appearance = mountAppearance({
   background: document.querySelector(".bg-layer"),
   cookiePrefix: "app_",
   locale: "zh",
-  onChange: (a) => savePrefs(a)                // a：theme / palette / scheme / cursor / themeParams
+  onChange: (a) => savePrefs(a),               // a：theme（可为 "random"）/ resolvedTheme / palette / scheme / cursor / themeParams
+  randomEvery: "day"                           // 主题缺省「随机」：每天换一个（"week" / 毫秒数可选）
 });
 // 右上角外观弹层可切换主题与鼠标效果，「主题参数」按当前主题生成；
 // appearance.background 是主题背景句柄（setParams / resetParams / subscribe …），见 DESIGN.md §4.1
@@ -144,7 +145,7 @@ mountSchemeToggle({ labels: { auto: "跟随系统", light: "浅色", dark: "深�
 configureAppearance({ persist: "cookie", storageKeys: { theme: "app_theme", palette: "app_palette" } });
 mountAppearancePanel({
   field,
-  labels: { palettes: { default: "青紫", aurora: "极光翠青" } },
+  labels: { schemes: { auto: "跟随系统" } },
   dotField: { note: true },                  // 背景参数段 / 版本行；true = 内置「仅保存在本浏览器」
   onChange: (a, changed) => savePrefs(a)
 });
@@ -167,8 +168,9 @@ import { mountLocaleToggle } from "@szyyw/design/locale-toggle";
 ```ts
 import { readAppearanceFromCookies, appearanceAttrs, themeColorFor } from "@szyyw/design/appearance-data";
 const a = readAppearanceFromCookies((n) => cookies().get(n)?.value, appearanceCookieNames("app_"));  // theme / palette / scheme / cursor
-// <html {...appearanceAttrs(a)}>；theme-color = themeColorFor(a.palette, a.scheme)（auto 时返回 { dark, light }）
-// 存储键名：appearanceCookieNames("app_") → { theme, palette, scheme, cursor }
+// <html {...appearanceAttrs(a)} suppressHydrationWarning>；theme-color = themeColorFor(a.palette, a.scheme)（auto 时返回 { dark, light }）
+// 存储键名：appearanceCookieNames("app_") → { theme, palette, scheme, cursor, themeSet }
+// a.theme 为 "random" 时只写 data-theme-mode="random"、不写 data-theme（服务端不知道客户端抽到哪个；背景由 JS 挂，配色与明暗照常铺）
 ```
 
 静态页首屏片段（`<head>` 里、样式表之前；`app:` 换成自己的 `cookiePrefix`）：
@@ -178,9 +180,11 @@ const a = readAppearanceFromCookies((n) => cookies().get(n)?.value, appearanceCo
   (function () {
     var d = document.documentElement;
     try {
-      var t = localStorage.getItem("app:theme"), p = localStorage.getItem("app:palette"),
-          s = localStorage.getItem("app:scheme"), c = localStorage.getItem("app:cursor");
-      if (t) d.setAttribute("data-theme", t);
+      var t = localStorage.getItem("app:theme"), m = localStorage.getItem("app:theme_set"),
+          p = localStorage.getItem("app:palette"), s = localStorage.getItem("app:scheme"),
+          c = localStorage.getItem("app:cursor");
+      if (t === "random" || (!m && (!t || t === "nebula"))) d.setAttribute("data-theme-mode", "random");
+      else if (t) d.setAttribute("data-theme", t);
       if (p && p !== "default") d.setAttribute("data-palette", p);
       if (s === "auto" || s === "dark" || s === "light") d.setAttribute("data-scheme", s);
       if (c && c !== "default") d.setAttribute("data-cursor", c);
@@ -189,16 +193,19 @@ const a = readAppearanceFromCookies((n) => cookies().get(n)?.value, appearanceCo
 </script>
 ```
 
-只读 theme / palette / scheme 的旧片段仍可用（鼠标效果由 JS 补上），细节见 DESIGN.md §2.1。
+旧片段（只读 theme / palette / scheme，或不认随机）仍可用：主题选择、迁移与已移除的配色都由 `configureAppearance` 再校正一遍，
+首屏不闪错色（配色 / 明暗与主题无关）。细节见 DESIGN.md §2.1。
 
 ### 主题与明暗
 
 ```html
-<html data-theme="nebula" data-palette="aurora" data-scheme="auto">
+<html data-theme="particles" data-theme-mode="random" data-scheme="auto">
 ```
 
-- `data-theme`：背景主题，`nebula`（缺省）| `cursor-grid` | `gradient-waves` | `side-rays` | `pixel-blast` | `particles`；只加载当前主题，未知值回退 `nebula`
-- `data-palette`：配色，缺省青紫，可选 `aurora`（极光翠青），对所有主题通用
+- 主题选择缺省 **随机**（v0.21.0）：存储里存 `random`，每个时间段（缺省 1 天，按本地日期）从全部主题里抽一个，同一时间段内所有页面 / 标签页一致，
+  换段时避开上一次的主题；此时 `data-theme-mode="random"`，`data-theme` 是实际抽到的主题。显式选了某个主题时没有 `data-theme-mode`
+- `data-theme`：实际挂的背景主题，`nebula` | `cursor-grid` | `gradient-waves` | `side-rays` | `pixel-blast` | `particles`；只加载当前主题
+- `data-palette`：配色，目前只有缺省青紫（不写属性）；v0.21.0 移除 `aurora`，只剩一种配色时外观弹层不显示配色栏
 - `data-scheme`：`dark`（缺省）| `light` | `auto`（跟随系统，靠 `color-scheme` + `light-dark()`，无需 JS）
 - `data-cursor`：鼠标效果，缺省不写（系统指针）| `target`（Target Cursor，仅精确指针设备）
 
@@ -279,7 +286,7 @@ node scripts/check-tokens.mjs      # tokens.css 配色块与 PALETTES 一致；T
 node scripts/build-corner-css.mjs  # 由 components.css 的 @corner 段与公开类重新生成 corner.css；--check 只检查
 ```
 
-- 改 `tokens.css` 的配色块（`:root` 或 `:root[data-palette=…]`）要同步 `appearance-data.js` 的 `PALETTES` 并跑 `check-tokens`。
+- 改 `tokens.css` 的配色块（`:root` 或 `:root[data-palette=…]`）要同步 `appearance-data.js` 的 `PALETTES` 与 `appearance-text.js` 的 `palettes` 并跑 `check-tokens`。
 - 改 `components.css` 的 `@corner:begin` … `@corner:end` 段或弹层用到的公开类后重新生成 `corner.css`。
 - 新增运行时文件要同时加进 `package.json` 的 `files`（`exports` 按需）与 `sync.sh` 的 `FILES`；`appearance.js` 静态依赖 `theme-background.js`、`themes/index.js`、`themes/nebula.js`。
 - 主题手测页 `demo/themes.html`（`?cursorStub=1` 用页内桩代替 target-cursor.js）、`demo/themes-webgl.html`。

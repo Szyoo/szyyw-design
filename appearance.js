@@ -11,6 +11,12 @@
    - v0.19.0：主题可插拔。背景由 theme-background.js 的 mountThemeBackground 管（跟随 data-theme 切换，
      不刷新页面）；弹层的「主题参数」段按当前主题 meta.params 自动生成控件。
      鼠标效果 "target" 时按需 import("./target-cursor.js") 并 mountTargetCursor()，选回默认即销毁。
+   - v0.21.0：主题缺省 "random"。存储里存 "random" 本身；按时间段（缺省 1 天，randomEvery）从真实主题里
+     均匀抽一个，连同抽取时间存在 localStorage（`${主题键}_random`），同一时间段内所有页面 / 标签页一致，
+     换段时重抽且避开上一次抽中的。
+     <html> 上 data-theme = 实际抽到的主题、data-theme-mode="random"。抽到的主题加载失败就排除它再抽，全失败回退 nebula。
+     一次性迁移：没有「显式选择」标记（`${主题键}_set`）时，存着的 nebula / 缺省 / 非法值视为 random
+     （v0.19.0 之前 nebula 是唯一主题）；在面板里显式选任何主题（含 nebula、含随机）就写入标记。
 
    mountAppearancePanel 是 mountDotFieldSettings 的上位替代：同一枚调色板按钮（order 20）。两者二选一。
    模块顶层不碰 DOM：SSR 时被求值也不会炸。
@@ -43,8 +49,13 @@ import {
   SCHEMES,
   CURSORS,
   APPEARANCE_COOKIES,
+  RANDOM_THEME,
+  FALLBACK_THEME,
   normalizeAppearance,
-  appearanceCookieNames
+  appearanceCookieNames,
+  resolveThemeChoice,
+  isRealTheme,
+  pickRandomTheme
 } from "./appearance-data.js";
 import { appearanceText } from "./appearance-text.js";
 
@@ -57,12 +68,21 @@ const config = {
     theme: APPEARANCE_COOKIES.theme,
     palette: APPEARANCE_COOKIES.palette,
     cursor: APPEARANCE_COOKIES.cursor
+    // themeSet（v0.21.0）：显式选择标记；不给时按 `${theme}_set` 推出
   },
-  cookieDays: 365
+  cookieDays: 365,
+  /** 随机主题的轮换周期（v0.21.0）："day"（缺省）/ "week" / 毫秒数 */
+  randomEvery: "day"
 };
 
+/** 存储键名；themeSet 缺省 `${theme}_set`（与服务端 readAppearanceFromCookies 同一推法） */
+function keyName(key) {
+  if (key === "themeSet") return config.storageKeys.themeSet || `${config.storageKeys.theme}_set`;
+  return config.storageKeys[key];
+}
+
 function readStored(key) {
-  const name = config.storageKeys[key];
+  const name = keyName(key);
   if (!name) return null;
   try {
     if (config.persist === "cookie") {
@@ -78,7 +98,7 @@ function readStored(key) {
 }
 
 function writeStored(key, value) {
-  const name = config.storageKeys[key];
+  const name = keyName(key);
   if (!name) return;
   try {
     if (config.persist === "cookie") {
@@ -91,6 +111,114 @@ function writeStored(key, value) {
   } catch {
     // 存不了——功能照常，只是刷新后回到缺省
   }
+}
+
+/* ---------- 随机主题（v0.21.0）----------
+   按时间段轮换：抽中的主题与抽取时间一起存在 localStorage（`${主题键}_random`，如 fl_theme_random，
+   值为 JSON { id, at }）；localStorage 不可用时退回同名 cookie，都不可用则每次加载重抽。
+   同一时间段内所有页面、所有标签页都用同一个；时间段到了再打开时重抽，且避开上一次抽中的主题。 */
+
+/** 本页里加载失败过的主题：重抽时排除 */
+const randomFailed = new Set();
+
+/** 抽中主题的存储键（带应用前缀：fl_theme → fl_theme_random） */
+const drawKey = () => `${config.storageKeys.theme}_random`;
+
+function parseDraw(raw) {
+  try {
+    const v = JSON.parse(raw || "null");
+    if (v && isRealTheme(v.id) && Number.isFinite(v.at)) return { id: v.id, at: v.at };
+  } catch {
+    // 坏 JSON：当没抽过
+  }
+  return null;
+}
+
+function readDraw() {
+  const name = drawKey();
+  try {
+    const v = localStorage.getItem(name);
+    if (v !== null) return parseDraw(v);
+  } catch {
+    // localStorage 不可用：看 cookie
+  }
+  try {
+    const esc = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const m = document.cookie.match(new RegExp(`(?:^|;\\s*)${esc}=([^;]*)`));
+    return m ? parseDraw(decodeURIComponent(m[1])) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeDraw(draw) {
+  const name = drawKey();
+  const raw = JSON.stringify(draw);
+  try {
+    localStorage.setItem(name, raw);
+    return;
+  } catch {
+    // 退回 cookie
+  }
+  try {
+    document.cookie = `${name}=${encodeURIComponent(raw)}; path=/; max-age=${60 * 60 * 24 * config.cookieDays}; samesite=lax`;
+  } catch {
+    // 都存不了：每次加载重抽
+  }
+}
+
+const DAY = 24 * 60 * 60 * 1000;
+
+/** 本地日期的「第几天」（按本地 0 点换日） */
+function localDay(t) {
+  const d = new Date(t);
+  return Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / DAY);
+}
+
+/**
+ * 上次抽取（at）到现在（now）是否已进入新的时间段。
+ * every："day"（缺省，本地 0 点换日）/ "week"（本地周一 0 点换周）/ 毫秒数（距上次抽取满这么久）。
+ */
+export function randomPeriodExpired(at, now = Date.now(), every = "day") {
+  if (!Number.isFinite(at) || at > now) return true;
+  if (typeof every === "number" && every > 0) return now - at >= every;
+  const a = localDay(at);
+  const b = localDay(now);
+  // 1970-01-01 是周四：+3 让周一成为每周第 0 天
+  if (every === "week") return Math.floor((a + 3) / 7) !== Math.floor((b + 3) / 7);
+  return a !== b;
+}
+
+/**
+ * 取当前时间段的主题。fresh = 立即开始新的时间段（面板里切到「随机」时）；
+ * 新抽时避开上一次抽中的主题（及本页加载失败过的），主题只剩一个时不避。
+ */
+function drawTheme({ fresh = false } = {}) {
+  const prev = readDraw();
+  const now = Date.now();
+  if (!fresh && prev && !randomFailed.has(prev.id) && !randomPeriodExpired(prev.at, now, config.randomEvery)) {
+    return prev.id;
+  }
+  const exclude = [...randomFailed];
+  let id = prev ? pickRandomTheme([...exclude, prev.id]) : pickRandomTheme(exclude);
+  // 排除上一次后无主题可抽：放开再抽
+  if (prev && (randomFailed.has(id) || id === prev.id)) id = pickRandomTheme(exclude);
+  writeDraw({ id, at: now });
+  return id;
+}
+
+/**
+ * 随机模式下当前主题加载失败 → 排除它重抽（全失败回退 nebula）。返回新抽到的 id；不在随机模式返回 null。
+ * 外观弹层挂着时自动调用；只用 mountThemeBackground、不挂弹层的应用可在 status 事件里自己调。
+ */
+export function rerollRandomTheme(failedId = null) {
+  if (typeof document === "undefined") return null;
+  const root = document.documentElement;
+  if (root.dataset.themeMode !== RANDOM_THEME) return null;
+  if (failedId) randomFailed.add(failedId);
+  const id = drawTheme({ fresh: true });
+  if (root.dataset.theme !== id) root.dataset.theme = id;
+  return id;
 }
 
 function emit(appearance, changed) {
@@ -111,9 +239,12 @@ function ensureBridge() {
   });
 }
 
-function writeAttrs(theme, palette, cursor) {
+function writeAttrs(theme, resolved, palette, cursor) {
   const root = document.documentElement;
-  root.dataset.theme = theme;
+  // data-theme 永远是实际挂的主题；随机模式另加 data-theme-mode="random"
+  root.dataset.theme = resolved;
+  if (theme === RANDOM_THEME) root.dataset.themeMode = RANDOM_THEME;
+  else root.removeAttribute("data-theme-mode");
   // default 配色 = tokens.css 的 :root 基础块，不写属性（与 appearanceAttrs 一致）
   if (palette === "default") root.removeAttribute("data-palette");
   else root.dataset.palette = palette;
@@ -121,28 +252,50 @@ function writeAttrs(theme, palette, cursor) {
   else root.dataset.cursor = cursor;
 }
 
-/** 读 <html> 当前外观（SSR 渲染的属性是真相；缺省项按 DEFAULT_APPEARANCE 兜底） */
+/**
+ * 读 <html> 当前外观（SSR 渲染的属性是真相；缺省项按 DEFAULT_APPEARANCE 兜底）。
+ * v0.21.0：theme 是「选择」（随机模式为 "random"），resolvedTheme 是实际挂着的主题（data-theme；还没抽时为 null）。
+ */
 export function getAppearance() {
   const ds = document.documentElement.dataset;
-  return normalizeAppearance({ theme: ds.theme, palette: ds.palette, scheme: getScheme(), cursor: ds.cursor });
+  const theme = ds.themeMode === RANDOM_THEME ? RANDOM_THEME : ds.theme;
+  const a = normalizeAppearance({ theme, palette: ds.palette, scheme: getScheme(), cursor: ds.cursor });
+  a.resolvedTheme = isRealTheme(ds.theme) ? ds.theme : null;
+  return a;
 }
 
 /**
  * 改外观。主题 / 配色 / 鼠标效果写 <html> 并按 configureAppearance 持久化；明暗转交 setScheme。
  * 随后重算 theme-color，有变化才广播一次 "szyyw:appearancechange"。
+ * v0.21.0：patch 里带 theme 且 persist 时同时写「显式选择」标记；theme = "random" 时按本标签页的抽取挂主题
+ * （从显式主题切到随机时立即重抽一个、尽量不同于当前）。
  */
 export function setAppearance(patch = {}, { persist = true } = {}) {
+  return applyAppearance(patch, { persist });
+}
+
+function applyAppearance(patch, { persist = true, resolved = null } = {}) {
   ensureBridge();
+  patch = patch || {};
   const cur = getAppearance();
-  const next = normalizeAppearance({ ...cur, ...(patch || {}) });
+  const next = normalizeAppearance({ ...cur, ...patch });
   const changed = [];
   if (next.theme !== cur.theme) changed.push("theme");
   if (next.palette !== cur.palette) changed.push("palette");
   if (next.cursor !== cur.cursor) changed.push("cursor");
 
-  writeAttrs(next.theme, next.palette, next.cursor);
+  let actual = next.theme;
+  if (next.theme === RANDOM_THEME) {
+    if (isRealTheme(resolved)) actual = resolved;
+    else if (cur.theme === RANDOM_THEME && cur.resolvedTheme) actual = cur.resolvedTheme;
+    else if (persist && "theme" in patch) actual = drawTheme({ fresh: true });
+    else actual = drawTheme();
+  }
+
+  writeAttrs(next.theme, actual, next.palette, next.cursor);
   if (persist) {
     writeStored("theme", next.theme);
+    if ("theme" in patch) writeStored("themeSet", "1");
     writeStored("palette", next.palette);
     // 鼠标效果只在动过时落盘：旧应用没配 cursor 键名时不多写一个 cookie
     if (changed.includes("cursor") || "cursor" in (patch || {})) writeStored("cursor", next.cursor);
@@ -186,11 +339,18 @@ export function configureAppearance(options = {}) {
 
   const ds = document.documentElement.dataset;
   const patch = {};
-  if (!THEMES.some((t) => t.id === ds.theme)) {
-    const stored = readStored("theme");
-    if (stored) patch.theme = stored;
-  }
-  if (!PALETTES.some((p) => p.id === ds.palette)) {
+  // 主题（v0.21.0）：存储（含显式标记）优先；没存过就看 <html>——data-theme-mode="random" 即随机，
+  // 写死 / 旧片段写进来的 data-theme 按同一条迁移规则（nebula / 缺省 → random）。随后总是走一遍，
+  // 让随机模式抽定主题写进 data-theme（背景再按它挂）
+  const storedTheme = readStored("theme");
+  const marker = readStored("themeSet");
+  if (storedTheme != null || marker != null) patch.theme = resolveThemeChoice(storedTheme, marker);
+  else if (ds.themeMode === RANDOM_THEME) patch.theme = RANDOM_THEME;
+  else patch.theme = resolveThemeChoice(ds.theme, false);
+  if (ds.palette !== undefined && !PALETTES.some((p) => p.id === ds.palette)) {
+    // 已移除的配色（如 aurora）：回到存储值或缺省
+    patch.palette = readStored("palette") ?? "default";
+  } else if (ds.palette === undefined) {
     const stored = readStored("palette");
     if (stored) patch.palette = stored;
   }
@@ -198,8 +358,7 @@ export function configureAppearance(options = {}) {
     const stored = readStored("cursor");
     if (stored) patch.cursor = stored;
   }
-  if (Object.keys(patch).length) setAppearance(patch, { persist: false });
-  else refreshThemeColor();
+  applyAppearance(patch, { persist: false });
   return getAppearance();
 }
 
@@ -555,30 +714,34 @@ export function mountAppearancePanel({
 
   let themeRow = null;
   let pendingTheme = null;
+  let prevChoice = null;
   let failedNote = false;
   if (bg?.switchable) {
-    themeRow = chipRow(
-      "theme",
-      text.theme,
-      THEME_REGISTRY.filter((e) => THEMES.some((t) => t.id === e.id)).map((e) => ({ value: e.id, text: themeName(e.id) })),
-      (v) => {
-        pendingTheme = v;
-        failedNote = false;
-        setAppearance({ theme: v });
-      }
+    // 「随机」排第一，其余按注册表
+    const options = [{ value: RANDOM_THEME, text: themeName(RANDOM_THEME) }].concat(
+      THEME_REGISTRY.filter((e) => THEMES.some((t) => t.id === e.id)).map((e) => ({ value: e.id, text: themeName(e.id) }))
     );
+    themeRow = chipRow("theme", text.theme, options, (v) => {
+      prevChoice = getAppearance().theme;
+      pendingTheme = v;
+      failedNote = false;
+      setAppearance({ theme: v });
+    });
     rows.push(["theme", themeRow]);
     body.append(themeRow.row);
   }
 
-  const paletteRow = chipRow(
-    "palette",
-    text.palette,
-    PALETTES.map((p) => ({ value: p.id, text: text.palettes[p.id] ?? p.id })),
-    (v) => setAppearance({ palette: v })
-  );
-  rows.push(["palette", paletteRow]);
-  body.append(paletteRow.row);
+  // 只有一种配色时不出这一栏（v0.21.0）；以后加回配色自动出现
+  if (PALETTES.length > 1) {
+    const paletteRow = chipRow(
+      "palette",
+      text.palette,
+      PALETTES.map((p) => ({ value: p.id, text: text.palettes[p.id] ?? p.id })),
+      (v) => setAppearance({ palette: v })
+    );
+    rows.push(["palette", paletteRow]);
+    body.append(paletteRow.row);
+  }
 
   const schemeRow = chipRow(
     "scheme",
@@ -611,7 +774,10 @@ export function mountAppearancePanel({
       }
       const req = bg.requested;
       const st = req ? bg.status(req) : "ready";
-      themeRow.status(st === "loading" ? text.loading : st === "failed" || failedNote ? text.themeFailed : "");
+      const a = getAppearance();
+      // 随机模式：提示本次抽到的主题
+      const now = a.theme === RANDOM_THEME && bg.theme ? `${text.randomNow}${themeName(bg.theme)}` : "";
+      themeRow.status(st === "loading" ? text.loading : st === "failed" || failedNote ? text.themeFailed : now);
     }
     if (cursorRow) {
       const st = getCursorEffectStatus();
@@ -716,11 +882,16 @@ export function mountAppearancePanel({
           renderParams();
           renderRows();
         } else if (ev.type === "status") {
-          if (ev.status === "failed" && pendingTheme === ev.id && getAppearance().theme === ev.id) {
-            // 用户刚点的主题加载失败：选择退回当前背景的主题，chip 置灰
+          const a = getAppearance();
+          if (ev.status === "failed" && pendingTheme === ev.id && a.theme === ev.id) {
+            // 用户刚点的主题加载失败：选择退回之前的选择（之前是随机就回到随机、保留当前背景），chip 置灰
             pendingTheme = null;
             failedNote = true;
-            setAppearance({ theme: bg.theme ?? "nebula" });
+            const back = prevChoice === RANDOM_THEME ? RANDOM_THEME : bg.theme ?? FALLBACK_THEME;
+            applyAppearance({ theme: back }, { resolved: bg.theme });
+          } else if (ev.status === "failed" && a.theme === RANDOM_THEME && a.resolvedTheme === ev.id) {
+            // 随机抽到的主题加载失败：排除它再抽
+            rerollRandomTheme(ev.id);
           }
           renderRows();
         } else if (ev.type === "params") {
@@ -787,11 +958,16 @@ export function mountAppearance({
   labels = {},
   onChange = null,
   dotField = {},
-  cursorEffect = null
+  cursorEffect = null,
+  randomEvery = "day"
 } = {}) {
   const keys = appearanceCookieNames(cookiePrefix);
   configureScheme({ persist, storageKey: keys.scheme });
-  configureAppearance({ persist, storageKeys: { theme: keys.theme, palette: keys.palette, cursor: keys.cursor } });
+  configureAppearance({
+    persist,
+    randomEvery,
+    storageKeys: { theme: keys.theme, palette: keys.palette, cursor: keys.cursor, themeSet: keys.themeSet }
+  });
   if (cursorEffect) configureCursorEffect(cursorEffect);
 
   // 当前主题的背景（nebula 同步挂上；其余主题按需加载），参数从各自的存储恢复

@@ -1,4 +1,4 @@
-import type { AppearanceHandle, AppearancePanelLabels, AppearanceChange, AppearanceKey, ThemeParamsOptions, CursorEffectOptions } from "./appearance";
+import type { AppearanceHandle, AppearancePanelLabels, AppearanceChange, AppearanceKey, ThemeParamsOptions, CursorEffectOptions, RandomEvery } from "./appearance";
 import type { AppSwitcherHandle, SwitcherText } from "./switcher";
 import type { AccountMenuHandle, PortalLoginMessage } from "./account";
 import type { AccountLabels } from "./chrome-text";
@@ -47,6 +47,8 @@ export function mountChrome(options?: {
     dotField?: ThemeParamsOptions;
     /** v0.19.0：鼠标效果的加载器与选项 */
     cursorEffect?: CursorEffectOptions | null;
+    /** v0.21.0：随机主题轮换周期（"day" 缺省 / "week" / 毫秒数） */
+    randomEvery?: RandomEvery;
   };
   /** 透传给 mountAppSwitcher；false = 不挂 */
   switcher?: false | { endpoint?: string; order?: number; current?: string; cacheMs?: number; labels?: Partial<SwitcherText> };

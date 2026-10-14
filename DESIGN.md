@@ -11,11 +11,13 @@
 
 ## 2. 三层：主题 → 配色 → 明暗（+ 鼠标效果）
 
-- **主题（theme）**：`html[data-theme]`，决定**背景效果**。v0.19.0 起可插拔（§4.1）：`nebula`（星云，缺省，DotField 点阵）、
+- **主题（theme）**：`html[data-theme]`，决定**背景效果**。v0.19.0 起可插拔（§4.1）：`nebula`（星云，DotField 点阵）、
   `cursor-grid`（光标网格）、`gradient-waves`（渐变波浪）、`side-rays`（侧光）、`pixel-blast`（像素爆破）、`particles`（粒子）。
   切换主题时销毁旧背景、按需加载并挂上新背景，不刷新页面。毛玻璃层级、.spot 光斑与所有组件在各主题下一致。
+  **v0.21.0 起缺省主题是「随机」（`random`）**：见 §2.2。`data-theme` 永远是实际挂着的主题；随机模式另有 `data-theme-mode="random"`。
   效果类参数尽量做成 token 旋钮（如 `--df-sparkle` / `--df-wave`），让主题只用 CSS 就能重配行为。
-- **配色（palette）**：`html[data-palette]`，只覆盖 hue 相关 token（accent/bg/tint/df-*/th-*）。缺省青紫；`aurora`（极光翠青）。
+- **配色（palette）**：`html[data-palette]`，只覆盖 hue 相关 token（accent/bg/tint/df-*/th-*）。目前只有缺省青紫（`:root` 基础块，不写属性）；
+  v0.21.0 移除了 `aurora`（极光翠青），存着它的用户回到 `default`。只剩一种配色时外观弹层不显示配色栏，以后加回配色自动出现。
   v0.19.0 起**对所有主题通用**（tokens.css 的配色块本就不依赖 data-theme；`PALETTES[].theme` 只作来源标注）。
   各主题从 token 取色，配色 / 明暗切换即时换色、不重建。
 - **鼠标效果（cursor，v0.19.0）**：`html[data-cursor]`，`default`（系统指针，不写属性）/ `target`（Target Cursor，§5「鼠标效果」）。
@@ -36,35 +38,42 @@
 客户端状态与「外观」弹层在 `@szyyw/design/appearance`。状态的唯一真相仍是 `<html>` 上的属性
 （`data-theme` / `data-palette` / `data-scheme`，v0.19.0 加 `data-cursor`）。
 
-v0.19.0 起存储键四项：`appearanceCookieNames(prefix)` → `{ theme, palette, scheme, cursor }`（如 `fl_cursor`）。
+v0.19.0 起存储键四项：`appearanceCookieNames(prefix)` → `{ theme, palette, scheme, cursor }`（如 `fl_cursor`）；
+v0.21.0 加第五项 `themeSet`（`fl_theme_set`，主题「显式选择」标记，见 §2.2）。
 `readAppearanceFromCookies` / `normalizeAppearance` / `appearanceAttrs` 都认 `cursor`，cursor 为 default 时不写 `data-cursor`；
-只传三项键名的旧调用照旧可用（cursor 用缺省名 `cursor`）。未知主题 id（含旧版本没有的主题）一律回退 `nebula`；
+只传三项键名的旧调用照旧可用（cursor 用缺省名 `cursor`，themeSet 按 `${theme}_set` 推出）。未知主题 id 一律回退缺省 `random`（v0.21.0 前回退 nebula）；
 配色不再随主题过滤。客户端的鼠标效果只在用户动过时落盘（旧应用不会多写一个 cookie）。
 
 1. **SSR 项目（Next 等）**：服务端读 cookie → 铺到 `<html>`，theme-color 也在服务端算，首屏不闪。
 
    ```ts
-   import { readAppearanceFromCookies, appearanceAttrs, themeColorFor } from "@szyyw/design/appearance-data";
-   const COOKIES = { theme: "fl_theme", palette: "fl_palette", scheme: "fl_scheme", cursor: "fl_cursor" };
-   const a = readAppearanceFromCookies((n) => jar.get(n)?.value, COOKIES);
-   // <html lang="zh" {...appearanceAttrs(a)}>      —— palette 为 default 时不写 data-palette
+   import { readAppearanceFromCookies, appearanceAttrs, themeColorFor, appearanceCookieNames } from "@szyyw/design/appearance-data";
+   const a = readAppearanceFromCookies((n) => jar.get(n)?.value, appearanceCookieNames("fl_"));
+   // <html lang="zh" {...appearanceAttrs(a)} suppressHydrationWarning>   —— palette 为 default 时不写 data-palette
    // theme-color：themeColorFor(a.palette, a.scheme)；auto 返回 { dark, light }，各配一条 media 查询
    ```
+
+   v0.21.0：`a.theme` 已按迁移规则算好（可为 `"random"`）。随机时服务端不知道客户端会抽到哪个，`appearanceAttrs` **不写 `data-theme`**，
+   只写 `data-theme-mode="random"`；配色 / 明暗与主题无关，照常铺，所以首屏不闪错色，只是背景由客户端 `configureAppearance` 抽定后才挂上
+   （与 v0.19.0 的背景本来就由 JS 挂一致）。客户端随后会在 `<html>` 上补 `data-theme`，React 系应用给 `<html>` 加 `suppressHydrationWarning`。
 
 2. **客户端对齐**：`configureScheme({ persist: "cookie", storageKey: "fl_scheme" })` +
    `configureAppearance({ persist: "cookie", storageKeys: { theme: "fl_theme", palette: "fl_palette" } })`。
    两者都是「`<html>` 上已有合法属性的项不覆盖，没有的才从存储恢复」。
 3. **静态页（无服务端）**：`<head>` 里、样式表之前内联一段同步脚本，从 localStorage 读键写到 `<html>`，
-   然后用 `persist: "localStorage"`（完整示例见 `demo/appearance.html`）。v0.19.0 推荐片段（多读一个 cursor）：
+   然后用 `persist: "localStorage"`（完整示例见 `demo/appearance.html`）。v0.21.0 推荐片段（随机 / 迁移只标 `data-theme-mode`，
+   实际主题交给 JS 抽——片段不必内嵌主题清单，加主题也不用改）：
 
    ```html
    <script>
      (function () {
        var d = document.documentElement;
        try {
-         var t = localStorage.getItem("app:theme"), p = localStorage.getItem("app:palette"),
-             s = localStorage.getItem("app:scheme"), c = localStorage.getItem("app:cursor");
-         if (t) d.setAttribute("data-theme", t);
+         var t = localStorage.getItem("app:theme"), m = localStorage.getItem("app:theme_set"),
+             p = localStorage.getItem("app:palette"), s = localStorage.getItem("app:scheme"),
+             c = localStorage.getItem("app:cursor");
+         if (t === "random" || (!m && (!t || t === "nebula"))) d.setAttribute("data-theme-mode", "random");
+         else if (t) d.setAttribute("data-theme", t);
          if (p && p !== "default") d.setAttribute("data-palette", p);
          if (s === "auto" || s === "dark" || s === "light") d.setAttribute("data-scheme", s);
          if (c && c !== "default") d.setAttribute("data-cursor", c);
@@ -73,16 +82,43 @@ v0.19.0 起存储键四项：`appearanceCookieNames(prefix)` → `{ theme, palet
    </script>
    ```
 
-   **旧片段（只恢复 theme / palette / scheme）不会坏**：没有 `data-cursor` 时 `configureAppearance` 会从存储补上；
-   片段写进去的未知主题 id 也由 `configureAppearance` 归一化回 nebula。光标由 JS 挂载、晚一拍出现也不闪，所以旧片段可以不改。
+   **旧片段（只恢复 theme / palette / scheme，v0.19.0 片段）不会坏**：没有 `data-cursor` 时 `configureAppearance` 会从存储补上；
+   主题以存储为准重新判定（含迁移），旧片段写进去的 `data-theme="nebula"` 会被换成本时间段抽到的主题——背景还没挂，所以不闪；
+   写进去的 `data-palette="aurora"` 在 tokens.css 里已没有对应块，视觉上本就是缺省配色，随后属性被移除。旧片段可以不改，但推荐换新片段。
 
 4. **账号级持久化**归应用：`mountAppearancePanel({ onChange })` 里存库（🌗 改明暗也走这一个回调，别再另外订阅
-   `onSchemeChange` 存一遍）；登录后把库里的值写回 cookie，换设备不用重设。
+   `onSchemeChange` 存一遍）；登录后把库里的值写回 cookie，换设备不用重设。v0.21.0：`onChange` 的 `theme` 可为 `"random"`
+   （另带 `resolvedTheme` = 本次实际主题，只供展示、不要存）；服务端的主题白名单要接受 `random`，配色白名单去掉 `aurora`（或直接用 `normalizeAppearance`）；
+   v0.19.0 期间存进库的 `nebula` 多半只是缺省值——写回时要么连同显式标记一起存，要么用 `resolveThemeChoice(theme, explicit)` 迁移。
 5. **文案**（v0.12.0 起）：包内置 zh / ja / en（`appearance-text.js`），应用只传 `locale`，
    不要再在应用的 i18n 里抄一份外观文案；个别词要改用 `labels` 逐键覆盖（`controls` 管主题参数控件名）。
    v0.13.0 起应用切换器 / 账户菜单 / 语言切换的文案也内置（`chrome-text.js`，同一套规则：未知语言回退中文、缺键按中文补齐）。
 6. **配色色值手工双写**：JS 不能 import CSS，`PALETTES[].bg` 与 tokens.css 的 `--bg: light-dark(L, D)` 各写一份。
    改 tokens.css 的配色块必须同步 appearance-data.js，并跑 `node scripts/check-tokens.mjs`（不一致退出码 1）。
+
+### 2.2 随机主题（v0.21.0）
+
+- **缺省就是随机**：`DEFAULT_APPEARANCE.theme = "random"`；`THEMES` 第一项是 `{ id: "random", random: true }`（不是真实主题，注册表里没有），
+  `REAL_THEME_IDS` 是真实主题。存储里保存 `random` 本身，不保存抽到的那个。
+- **按时间段轮换**：抽中的主题与抽取时间一起存在 localStorage `${主题键}_random`（如 `fl_theme_random`，值 `{"id","at"}`；
+  localStorage 不可用时退回同名 cookie，都不可用则每次加载重抽）。同一时间段内所有页面、所有标签页用同一个；时间段到了之后第一次打开时重抽，
+  且**避开上一次抽中的主题**（主题 ≥ 2 个时），保证每次轮换都有变化。时间段由 `randomEvery` 决定：`"day"`（缺省，按用户本地日期，本地 0 点后换）/
+  `"week"`（本地周一换周）/ 毫秒数（距上次抽取满这么久）；`mountAppearance({ randomEvery })`、`mountChrome({ appearance: { randomEvery } })`、
+  `configureAppearance({ randomEvery })` 同义。抽取记录与 persist 方式无关（persist: "none" 也会记，它不是用户选择）。
+- **面板里点「随机」**（从别的主题切回随机）：立即重抽一个（避开当前主题）并开始新的时间段。随机已选中时再点不变。
+  「随机」排在主题行第一个，选中态是它本身；下方提示行显示「本次：<主题名>」（文案 `randomNow`，zh「本次：」/ ja「今回：」/ en「This time: 」）。
+  主题参数段显示实际主题的参数，调参照常按该主题保存。
+- **加载失败**：抽到的主题加载失败（文件缺失 / 网络 / 拿不到 WebGL）就排除它再抽，全部失败回退 nebula（外观弹层挂着时自动处理；
+  只用 `mountThemeBackground` 时可在 `status === "failed"` 事件里调 `rerollRandomTheme(id)`）。随机模式下显式点了一个加载失败的主题，选择退回随机、保留当前背景。
+- **`<html>` 表示**：`data-theme` = 实际主题（CSS / 主题 token 按实际主题生效），`data-theme-mode="random"` 标记随机模式；显式选择时没有 `data-theme-mode`。
+  `getAppearance()` 返回 `theme`（选择，可为 `"random"`）与 `resolvedTheme`（实际主题）。
+- **一次性迁移**（v0.19.0 之前 nebula 是唯一主题，存着的 `nebula` 只是缺省值）：显式标记键 `${主题键}_set`（如 `fl_theme_set=1`）。
+  没有标记时，存储值为 `nebula` / 缺省 / 非法 → 视为 `random`；为其他真实主题（v0.19.0 里用户自己点的）或 `random` → 保持。
+  在面板里（或 `setAppearance({ theme })`）显式选任何主题——包括 nebula、包括随机——都会写入标记，此后按选择保持。
+  cookie 与 localStorage 两种 persist 都写标记；服务端 `readAppearanceFromCookies`、客户端 `configureAppearance` 与首屏片段用同一条规则
+  （纯函数 `resolveThemeChoice(stored, explicit)`）。`<html>` 上写死的 `data-theme="nebula"`（没有存储时）同样视为缺省 → 随机。
+- 只挂旧 `field` 适配器（`mountAppearancePanel({ field })`，没有可切换背景）的应用：随机仍会在 `data-theme` 上记一个主题，但页面上只有点阵，
+  不受影响；想要随机生效请换 `mountAppearance({ background })`。
 
 ## 3. 层级模型
 
@@ -166,7 +202,7 @@ export function mount(container, params, ctx) { return { update(params, info), r
 - `update(params, { changed, overrides })`：参数变化热更新；`reset` 可选（「恢复默认」时调用，不实现则以缺省值调 update）。
 - 约定：canvas `pointer-events: none`，指针在 window 上监听且只在 `pointer: fine` 下启用；标签页隐藏 / 不在视口时暂停；
   `fps` 参数（背景缺省 30）；reduced-motion 下静态；destroy 移除 canvas / 监听 / rAF。
-- 颜色 token：主题需要专用色时在 tokens.css 为 default / aurora × light / dark 各加 `--th-<主题>-*`。
+- 颜色 token：主题需要专用色时在 tokens.css 为每个配色（目前只有 default）× light / dark 各加 `--th-<主题>-*`。
   **token 的 alpha 是强度系数**：浅色模式用较低 alpha，叠在浅底上不刺眼、不抢正文。
 
 **运行时** `mountThemeBackground(container, { theme?, follow = true, persist, storageKey, storagePrefix })`（`./theme-background`）：
@@ -294,9 +330,9 @@ pixel-blast 时间按 `speed` 积分（上游改速度时相位会跳）、液�
 `mountAppearancePanel()`（v0.10.0），面板根节点 `glass corner-panel settings-panel appearance-panel`，
 宽度与 ≥720px 两列网格沿用 `.settings-panel`。从上到下：
 
-- **主题行**（v0.19.0，有主题背景时）：按注册表列出，名字优先用 `labels.themes`，其次注册表 / meta 的三语名；
-  加载失败的主题 chip 置灰，原因写在 title 与下方提示行
-- **配色行**：配色 chip（`.chip` / `.chip-row`），v0.19.0 起对所有主题通用
+- **主题行**（v0.19.0，有主题背景时）：第一个是「随机」（v0.21.0，缺省选中，提示行显示「本次：<主题名>」，§2.2），其余按注册表列出，
+  名字优先用 `labels.themes`，其次注册表 / meta 的三语名；加载失败的主题 chip 置灰，原因写在 title 与下方提示行
+- **配色行**：配色 chip（`.chip` / `.chip-row`），v0.19.0 起对所有主题通用；**只有一种配色时整行不出现**（v0.21.0）
 - **明暗行**：跟随系统 / 深色 / 浅色。与 🌗 并列——🌗 是一键循环的快捷入口，弹层是完整设置；
   两者经 scheme.js 的事件互相同步
 - **鼠标效果行**（v0.19.0，仅 `pointer: fine`）：默认 / Target Cursor；`cursor: false` 可隐藏
@@ -339,6 +375,11 @@ v0.19.0 接口要点：
 选回默认 → `destroy()`，系统光标与 DOM 完全恢复。只在 `pointer: fine` 下生效。加载器与选项可换：`configureCursorEffect({ load, options })`
 （`mountAppearance` / `mountChrome` 的 `appearance.cursorEffect` 同义）。`getCursorEffectStatus()` → `off | loading | active | failed`；
 加载失败时弹层把 Target Cursor 置灰并提示。引用计数：`setLocale` 重挂弹层不会让光标闪一下。Target Cursor 的参数见 §16。
+
+吸附目标消失时（v0.21.0 修复）：点外观弹层的 ✕ 后按钮随弹层 `display: none`，`getBoundingClientRect()` 变成 (0, 0) 的 0×0，
+旧版准星按它吸附，跑到页面左上角。现在每帧校验吸附目标：脱离文档 / 不可见（`checkVisibility`）/ 尺寸为 0 / 已不在指针下方时立即解除，
+按真实指针位置重新找目标或回到自由态——关闭弹层、换路由、移除元素、`hidden` 都覆盖，不依赖 mouseleave。Target Cursor 不跟随焦点，
+鼠标点击后焦点回到触发按钮不会拉动准星。
 
 #### 背景参数（.settings-panel，`mountDotFieldSettings` 或外观弹层 nebula 主题的参数段）
 
@@ -708,6 +749,7 @@ DOM：`.toast-region > .toast-slot > .toast-gate > .toast`（卡片仍是 `.toas
 （缺省 `var(--accent)` / `var(--accent2)`，吸附时 oklab 混合）、`spinDuration`、`hoverDuration`、`parallaxOn`、`hideDefaultCursor`、`size`、
 `cornerSize`、`thickness`、`padding`、`matchRadius`、`dotSize`、`blendMode`（缺省 `normal`，上游 `difference`）、`showLabel`（读目标的
 `data-cursor-label`）、`clickEffect`、`container`。destroy 后恢复系统光标并移除全部 DOM / 样式。
+v0.21.0：吸附目标每帧校验（消失 / 不可见 / 不在指针下即解除，见 §5「鼠标效果」）；弹簧积分按帧间隔细分步长，掉帧时不再发散。
 
 ### Gradual Blur（`./gradual-blur`）
 

@@ -45,7 +45,10 @@ const zh = {
   themeFailed: "主题加载失败，已保留当前背景",
   cursorFailed: "鼠标效果加载失败",
   noParams: "这个主题没有可调参数",
+  /* v0.21.0：随机主题 */
+  randomNow: "本次：",
   themes: {
+    random: "随机",
     nebula: "星云",
     "cursor-grid": "光标网格",
     "gradient-waves": "渐变波浪",
@@ -54,7 +57,7 @@ const zh = {
     particles: "粒子"
   },
   cursors: { default: "默认", target: "Target Cursor" },
-  palettes: { default: "青紫（默认）", aurora: "极光翠青" },
+  palettes: { default: "青紫（默认）" },
   schemes: { auto: "跟随系统", dark: "深色", light: "浅色" },
   controls: {
     dotRadius: "点大小",
@@ -107,7 +110,9 @@ const ja = {
   themeFailed: "テーマを読み込めませんでした。現在の背景のままです",
   cursorFailed: "カーソル効果を読み込めませんでした",
   noParams: "このテーマに調整できる項目はありません",
+  randomNow: "今回：",
   themes: {
+    random: "ランダム",
     nebula: "ネビュラ",
     "cursor-grid": "カーソルグリッド",
     "gradient-waves": "グラデーションウェーブ",
@@ -116,7 +121,7 @@ const ja = {
     particles: "パーティクル"
   },
   cursors: { default: "標準", target: "ターゲットカーソル" },
-  palettes: { default: "シアン×バイオレット（既定）", aurora: "オーロラ（グリーン×シアン）" },
+  palettes: { default: "シアン×バイオレット（既定）" },
   schemes: { auto: "システムに従う", dark: "ダーク", light: "ライト" },
   controls: {
     dotRadius: "ドットの大きさ",
@@ -169,7 +174,9 @@ const en = {
   themeFailed: "Couldn't load the theme; keeping the current background",
   cursorFailed: "Couldn't load the cursor effect",
   noParams: "This theme has no adjustable settings",
+  randomNow: "This time: ",
   themes: {
+    random: "Random",
     nebula: "Nebula",
     "cursor-grid": "Cursor Grid",
     "gradient-waves": "Gradient Waves",
@@ -178,7 +185,7 @@ const en = {
     particles: "Particles"
   },
   cursors: { default: "Default", target: "Target Cursor" },
-  palettes: { default: "Cyan–violet (default)", aurora: "Aurora green–cyan" },
+  palettes: { default: "Cyan–violet (default)" },
   schemes: { auto: "Follow system", dark: "Dark", light: "Light" },
   controls: {
     dotRadius: "Dot size",

@@ -22,6 +22,9 @@
      blendMode 缺省 "normal"（上游缺省 difference + 白色：在浅色背景上会变得很淡）
    - 仅 `(hover: hover) and (pointer: fine)` 生效；设备条件变化时自动挂 / 卸，destroy 后无残留
    - 缺省选择器比上游宽（链接 / 按钮 / role=button 也吸附）
+   - v0.21.0：吸附目标每帧校验——脱离文档 / 不可见 / 尺寸为 0 / 已不在指针下方时立即解除吸附，回到真实指针位置
+     （修复：点外观弹层的关闭按钮后，按钮随弹层 display:none、矩形变成 (0,0) 的 0×0，准星被吸到左上角）。
+     不监听 focus：焦点变化（含鼠标点击后焦点回到触发按钮）不会拉动准星
    模块顶层不碰 DOM：SSR 时被求值也不会炸。
    ============================================================ */
 
@@ -75,7 +78,9 @@ const CSS = `
 `;
 
 function spring(state, goal, stiffness, damping, dt) {
-  const steps = 2;
+  // 显式积分：步长须远小于 2/damping 才稳定。帧间隔变长（后台 WebGL 背景很重、切标签页回来）时
+  // 固定 2 步会发散成 NaN，准星飞出屏幕（v0.21.0 修复）——按 dt 细分，单步不超过 1/240 s
+  const steps = Math.max(2, Math.ceil(dt * 240));
   const h = dt / steps;
   for (let i = 0; i < steps; i++) {
     state.v += (stiffness * (goal - state.x) - damping * state.v) * h;
@@ -184,6 +189,28 @@ export function mountTargetCursor(options = {}) {
       return found;
     }
 
+    /**
+     * 吸附目标还能用吗（v0.21.0）：脱离文档、display:none / hidden / visibility:hidden、尺寸为 0 都不行。
+     * 元素消失时不会有 mouseleave，所以每帧校验，不能等事件。
+     */
+    function usable(el, rect) {
+      if (!el || !el.isConnected) return false;
+      if (!rect || rect.width <= 0 || rect.height <= 0) return false;
+      if (typeof el.checkVisibility === "function" && !el.checkVisibility({ visibilityProperty: true })) return false;
+      return true;
+    }
+
+    /** 指针是否还在目标（含外扩 padding）范围内 */
+    function covers(rect) {
+      const pad = Math.max(0, settings.padding) + 2;
+      return (
+        pointer.x >= rect.left - pad &&
+        pointer.x <= rect.right + pad &&
+        pointer.y >= rect.top - pad &&
+        pointer.y <= rect.bottom + pad
+      );
+    }
+
     function lockOn(next) {
       if (next === target) return;
       target = next;
@@ -200,8 +227,21 @@ export function mountTargetCursor(options = {}) {
       const dt = last ? Math.min(0.05, (now - last) / 1000) : 1 / 60;
       last = now;
 
-      if (target && !target.isConnected) lockOn(null);
-      const rect = target ? target.getBoundingClientRect() : null;
+      let rect = target ? target.getBoundingClientRect() : null;
+      // 目标消失（关闭弹层、换路由、被移除 / hidden）或移出了指针下方：立即解除吸附，
+      // 改按真实指针位置重新找目标（找不到就回到自由态跟手）
+      if (target && (!usable(target, rect) || !covers(rect))) {
+        lockOn(null);
+        if (pointer.inside) {
+          const again = findTarget(pointer.x, pointer.y);
+          const r = again ? again.getBoundingClientRect() : null;
+          if (again && usable(again, r)) {
+            lockOn(again);
+            rect = r;
+          }
+        }
+        if (!target) rect = null;
+      }
       const locked = !!rect && pointer.inside;
       const snapW = 4.6 / s.hoverDuration;
       const snapK = snapW * snapW;
@@ -336,7 +376,8 @@ export function mountTargetCursor(options = {}) {
         pointer.inside = inside;
         hideCursor();
       }
-      lockOn(inside ? findTarget(pointer.x, pointer.y, event.target) : null);
+      const found = inside ? findTarget(pointer.x, pointer.y, event.target) : null;
+      lockOn(found && usable(found, found.getBoundingClientRect()) ? found : null);
       wake();
     };
     const onPointerDown = (event) => {

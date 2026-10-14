@@ -1381,7 +1381,7 @@ table.tbl {
 .callout.ok { background: var(--tint-green-bg); border-color: color-mix(in srgb, var(--ok) 40%, transparent); }
 .callout.warn { background: var(--tint-amber-bg); border-color: color-mix(in srgb, var(--warn) 45%, transparent); }
 .callout.err { background: var(--tint-red-bg); border-color: color-mix(in srgb, var(--err) 45%, transparent); }
-/* info 跟随配色的 accent（aurora 下是翠绿），不写死青色 */
+/* info 跟随配色的 accent，不写死青色 */
 .callout.info { background: color-mix(in srgb, var(--accent) 10%, transparent); border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
 .callout.ok > strong:first-child { color: var(--ok); }
 .callout.warn > strong:first-child { color: var(--warn); }

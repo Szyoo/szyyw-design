@@ -75,7 +75,7 @@ function watchTechText(selector, opts, onChange) {
  * @param {"cookie"|"localStorage"|"none"} options.persist  外观持久化，缺省 cookie
  * @param {string}  options.locale        "zh" | "ja" | "en"，缺省 "zh"
  * @param {string|null|false} options.portal  门户地址；缺省 https://szyyw.xyz；null / false = 非 SSO，不挂切换器与账户菜单
- * @param {object}  options.appearance    透传给 mountAppearance 的其余选项（labels / onChange / dotField / spot）
+ * @param {object}  options.appearance    透传给 mountAppearance 的其余选项（labels / onChange / dotField / spot / cursorEffect / randomEvery）
  * @param {object|false} options.switcher 透传给 mountAppSwitcher（labels / order / current / …）；false = 不挂
  * @param {object|false} options.account  透传给 mountAccountMenu（labels / order / onChange）；false = 不挂
  * @param {object}  options.localeToggle  { locales, onChange?, order?, labels? }；给了 locales 才挂语言切换

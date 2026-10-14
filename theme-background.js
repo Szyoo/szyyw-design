@@ -15,7 +15,10 @@
 import { resolveTokenColor } from "./dotfield.js";
 import * as nebula from "./themes/nebula.js";
 import { THEME_REGISTRY, loadTheme, themeEntry } from "./themes/index.js";
-import { normalizeAppearance } from "./appearance-data.js";
+import { isRealTheme, FALLBACK_THEME } from "./appearance-data.js";
+
+/** 任意 id → 真实主题 id（"random" / 缺失 / 未知一律 nebula；random 的抽取由 appearance.js 负责并写进 data-theme） */
+const realTheme = (id) => (isRealTheme(id) ? id : FALLBACK_THEME);
 
 const DEFAULT_STORAGE_KEY = "szyyw:dotfield";
 const DEFAULT_STORAGE_PREFIX = "szyyw:theme-params:";
@@ -188,7 +191,8 @@ export function readThemeParams(id, { storageKey = DEFAULT_STORAGE_KEY, storageP
  * 在容器（通常 .bg-layer）上挂当前主题的背景。
  *
  * @param container      背景容器
- * @param options.theme  初始主题；缺省读 html[data-theme]（未知回退 nebula）
+ * @param options.theme  初始主题；缺省读 html[data-theme]（缺失 / 未知 / "random" 回退 nebula——
+ *                       random 由 configureAppearance 先抽定写进 data-theme，再挂背景）
  * @param options.follow 跟随 html[data-theme] 变化自动切换（缺省 true）
  * @param options.persist / storageKey / storagePrefix  参数持久化（见文件头）
  */
@@ -257,7 +261,7 @@ export function mountThemeBackground(container, options = {}) {
   /** 切到某主题；返回 Promise<是否成功挂上该主题> */
   function setTheme(next) {
     if (destroyed) return Promise.resolve(false);
-    const id = themeEntry(next) ? next : normalizeAppearance({ theme: next }).theme;
+    const id = themeEntry(next) ? next : realTheme(next);
     requested = id;
     if (current?.id === id) return Promise.resolve(true);
     const token = ++seq;
@@ -282,12 +286,12 @@ export function mountThemeBackground(container, options = {}) {
   }
 
   const root = document.documentElement;
-  let ready = setTheme(initialTheme ?? normalizeAppearance({ theme: root.dataset.theme }).theme);
+  let ready = setTheme(initialTheme ?? realTheme(root.dataset.theme));
 
   let mo = null;
   if (follow) {
     mo = new MutationObserver(() => {
-      const id = normalizeAppearance({ theme: root.dataset.theme }).theme;
+      const id = realTheme(root.dataset.theme);
       if (id !== requested) ready = setTheme(id);
     });
     mo.observe(root, { attributes: true, attributeFilter: ["data-theme"] });

@@ -27,6 +27,8 @@ export interface AppearanceText {
   cursorFailed: string;
   /** v0.19.0：主题没有参数时的说明 */
   noParams: string;
+  /** v0.21.0：随机模式下主题行的提示前缀（「本次：」） */
+  randomNow: string;
   themes: Record<string, string>;
   /** v0.19.0：鼠标效果名 */
   cursors: Record<"default" | "target", string>;

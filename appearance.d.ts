@@ -1,24 +1,32 @@
 import type { DotFieldHandle } from "./dotfield";
 import type { DotFieldSettings, UpdateConfig } from "./settings";
-import type { Appearance, NormalizedAppearance, PaletteId, ThemeId, CursorId, Scheme } from "./appearance-data";
+import type { Appearance, NormalizedAppearance, PaletteId, ThemeId, ThemeChoice, CursorId, Scheme } from "./appearance-data";
 import type { DotFieldControlLabels } from "./appearance-text";
 import type { ThemeBackgroundHandle } from "./theme-background";
 import type { ThemeParams } from "./themes/types";
 
-export type { Appearance, NormalizedAppearance, PaletteId, ThemeId, CursorId, Scheme };
+export type { Appearance, NormalizedAppearance, PaletteId, ThemeId, ThemeChoice, CursorId, Scheme };
+
+/** 随机主题的轮换周期（v0.21.0）："day"（缺省，本地 0 点换日）/ "week"（本地周一换周）/ 毫秒数 */
+export type RandomEvery = "day" | "week" | number;
+
+/** getAppearance 的返回值（v0.21.0）：theme 是选择（可为 "random"），resolvedTheme 是实际挂着的主题 */
+export type CurrentAppearance = NormalizedAppearance & { resolvedTheme: ThemeId | null };
 
 /** onChange 的 changed 项；"themeParams"（v0.19.0）= 当前主题参数被改动（去抖 600ms） */
 export type AppearanceKey = keyof Appearance | "themeParams";
 
 /** onChange 收到的外观对象：四项外观 +（有背景时）当前主题动过的参数（v0.19.0） */
-export type AppearanceChange = NormalizedAppearance & { themeParams?: ThemeParams };
+export type AppearanceChange = CurrentAppearance & { themeParams?: ThemeParams };
 
 export interface AppearanceConfig {
   /** 主题 / 配色 / 鼠标效果的持久化方式（明暗走 configureScheme）。SSR 项目用 cookie；缺省 cookie */
   persist?: "cookie" | "localStorage" | "none";
-  /** 存储键名；缺省 { theme: "theme", palette: "palette", cursor: "cursor" } */
-  storageKeys?: { theme?: string; palette?: string; cursor?: string };
+  /** 存储键名；缺省 { theme: "theme", palette: "palette", cursor: "cursor" }；themeSet（v0.21.0）缺省 `${theme}_set` */
+  storageKeys?: { theme?: string; palette?: string; cursor?: string; themeSet?: string };
   cookieDays?: number;
+  /** v0.21.0：随机主题轮换周期，缺省 "day"。抽中的主题存在 localStorage 的 `${theme}_random` */
+  randomEvery?: RandomEvery;
 }
 
 /** dotField 选项包：主题参数段（v0.19.0 起对所有主题生效）与版本行 */
@@ -63,7 +71,8 @@ type PanelTextKey =
   | "version" | "check" | "checking" | "upToDate" | "updateAvailable" | "viewChanges"
   | "copyCommand" | "copied" | "updateNow" | "updating" | "updated" | "updateFailed" | "checkFailed"
   | "theme" | "palette" | "scheme" | "background" | "localOnly"
-  | "themeParams" | "cursor" | "unavailable" | "loading" | "themeFailed" | "cursorFailed" | "noParams";
+  | "themeParams" | "cursor" | "unavailable" | "loading" | "themeFailed" | "cursorFailed" | "noParams"
+  | "randomNow";
 
 export type AppearancePanelLabels = Partial<Record<PanelTextKey, string>> & {
   /** 每个主题的名字（主题 > 1 个时才显示主题行；缺省显示 id） */
@@ -80,23 +89,32 @@ export type AppearancePanelLabels = Partial<Record<PanelTextKey, string>> & {
   title?: string;
 };
 
-/** 读 <html> 当前外观（SSR 渲染的属性是真相） */
-export function getAppearance(): NormalizedAppearance;
+/** 读 <html> 当前外观（SSR 渲染的属性是真相）；v0.21.0 多 resolvedTheme */
+export function getAppearance(): CurrentAppearance;
+
+/**
+ * v0.21.0：随机模式下把 failedId 排除并重抽（全失败回退 nebula），写进 data-theme；不在随机模式返回 null。
+ * 外观弹层挂着时自动处理；只用 mountThemeBackground 时可在 status === "failed" 事件里调
+ */
+export function rerollRandomTheme(failedId?: string | null): ThemeId | null;
+
+/** v0.21.0：上次抽取时间 at 到 now 是否已进入新的时间段 */
+export function randomPeriodExpired(at: number, now?: number, every?: RandomEvery): boolean;
 
 /**
  * 改外观：主题 / 配色写 <html> 并按 configureAppearance 持久化，明暗转交 setScheme；
  * 重算 theme-color；有变化才广播一次 "szyyw:appearancechange"。persist: false 只改界面不落盘
  */
-export function setAppearance(patch: Partial<Appearance>, options?: { persist?: boolean }): NormalizedAppearance;
+export function setAppearance(patch: Partial<Appearance>, options?: { persist?: boolean }): CurrentAppearance;
 
 /** 订阅外观变化（含 🌗 改明暗，changed = ["scheme"]），返回解绑函数 */
-export function onAppearanceChange(handler: (appearance: NormalizedAppearance, changed: (keyof Appearance)[]) => void): () => void;
+export function onAppearanceChange(handler: (appearance: CurrentAppearance, changed: (keyof Appearance)[]) => void): () => void;
 
 /**
  * 配置主题 / 配色持久化并对齐初始状态（与 configureScheme 同构）。
  * <html> 已有合法属性的项不覆盖（SSR / 内联脚本）；没有的从存储恢复。返回当前外观
  */
-export function configureAppearance(options?: AppearanceConfig): NormalizedAppearance;
+export function configureAppearance(options?: AppearanceConfig): CurrentAppearance;
 
 /** 鼠标效果的加载器与选项（v0.19.0）；改完立即按当前 data-cursor 生效 */
 export function configureCursorEffect(options?: CursorEffectOptions): void;
@@ -162,8 +180,10 @@ export function mountAppearance(options?: {
   spot?: boolean;
   /** 主题 / 配色 / 明暗的持久化；SSR 项目用 cookie（缺省） */
   persist?: "cookie" | "localStorage" | "none";
-  /** 存储键前缀："fl_" → fl_theme / fl_palette / fl_scheme / fl_cursor；缺省无前缀 */
+  /** 存储键前缀："fl_" → fl_theme / fl_palette / fl_scheme / fl_cursor / fl_theme_set（+ localStorage fl_theme_random）；缺省无前缀 */
   cookiePrefix?: string;
+  /** v0.21.0：随机主题轮换周期，缺省 "day" */
+  randomEvery?: RandomEvery;
   /** "zh" | "ja" | "en"，缺省 "zh" */
   locale?: string;
   labels?: AppearancePanelLabels;
