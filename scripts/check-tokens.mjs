@@ -9,6 +9,7 @@
    - 块内 --bg: light-dark(L, D) 与 bg.light / bg.dark 一致（不区分大小写）
    - 反向：tokens.css 里每个 data-palette 块都要在 PALETTES 里登记（否则面板选不到）
    - 每个配色的 theme 都在 THEMES 里
+   - THEMES 与 themes/index.js 的注册表 id 一一对应（v0.19.0，同序）
 
    用法：node scripts/check-tokens.mjs   （失败时退出码 1）
    ============================================================ */
@@ -17,6 +18,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { THEMES, PALETTES } from "../appearance-data.js";
+import { THEME_REGISTRY } from "../themes/index.js";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const css = readFileSync(join(root, "tokens.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
@@ -62,6 +64,14 @@ for (const sel of blocks.keys()) {
   if (m && !PALETTES.some((p) => p.id === m[1])) {
     errors.push(`tokens.css 有配色块 ${sel}，但 appearance-data.js 的 PALETTES 没登记 ${m[1]}`);
   }
+}
+
+const themeIds = THEMES.map((t) => t.id).join(",");
+const registryIds = THEME_REGISTRY.map((t) => t.id).join(",");
+if (themeIds !== registryIds) {
+  errors.push(`appearance-data.js THEMES（${themeIds}）与 themes/index.js 注册表（${registryIds}）不一致`);
+} else {
+  ok.push(`themes   ${themeIds}`);
 }
 
 for (const line of ok) console.log("ok   " + line);

@@ -40,8 +40,8 @@ const COLORS = [
 
 const COLOR_KEYS = COLORS.map((c) => c.key);
 
-/** "rgba(56, 189, 248, 0.5)" | "#0b1020" → { hex, alpha } */
-function splitColor(text) {
+/** "rgba(56, 189, 248, 0.5)" | "#0b1020" → { hex, alpha }（@internal，appearance.js 复用） */
+export function splitColor(text) {
   const m = /^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*(?:,\s*([\d.]+)\s*)?\)$/.exec(text || "");
   if (m) {
     const hex = "#" + [m[1], m[2], m[3]].map((n) => Math.round(Number(n)).toString(16).padStart(2, "0")).join("");
@@ -50,7 +50,7 @@ function splitColor(text) {
   return { hex: /^#[0-9a-fA-F]{6}$/.test(text || "") ? text : "#000000", alpha: 1 };
 }
 
-function joinColor(hex, alpha, withAlpha) {
+export function joinColor(hex, alpha, withAlpha) {
   if (!withAlpha) return hex;
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
@@ -133,7 +133,7 @@ export async function checkDesignUpdate({
 }
 
 /** 滑杆右侧的读数：按 step 定小数位，免得 0.30000000000000004 */
-function formatValue(value, step) {
+export function formatValue(value, step) {
   const decimals = (String(step).split(".")[1] || "").length;
   return decimals ? Number(value).toFixed(decimals) : String(Math.round(value));
 }

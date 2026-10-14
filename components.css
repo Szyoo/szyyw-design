@@ -2009,3 +2009,16 @@ select.field.small { padding-right: 30px; }
 }
 
 /* @corner:end */
+
+/* ===== themes-framework ===== */
+/* v0.19.0 外观弹层：主题行 / 鼠标效果行 / 通用「主题参数」段（appearance.js）。
+   chip 复用 .chip / .chip-row；加载失败的选项禁用置灰，原因放在 title 与下方 .appearance-status 提示行 */
+.appearance-panel .chip:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.appearance-panel .chip:disabled:hover { color: var(--text-dim); }
+.appearance-panel .chip.active:disabled:hover { color: var(--accent); }
+.appearance-status { margin-top: -2px; }
+/* 选项类参数（select / token）的 chip 一行放不下两列：横跨整行 */
+.appearance-advanced-body > .theme-param-choice { grid-column: 1 / -1; }

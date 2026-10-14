@@ -16,7 +16,20 @@ export interface AppearanceText {
   theme: string; palette: string; scheme: string; background: string;
   /** v0.14.0：dotField.note 传 true 时的页脚说明（「仅保存在本浏览器」） */
   localOnly: string;
+  /** v0.19.0：「主题参数」折叠段标题 */
+  themeParams: string;
+  /** v0.19.0：「鼠标效果」行 */
+  cursor: string;
+  /** v0.19.0：加载失败的主题 / 鼠标效果 chip 的提示 */
+  unavailable: string;
+  loading: string;
+  themeFailed: string;
+  cursorFailed: string;
+  /** v0.19.0：主题没有参数时的说明 */
+  noParams: string;
   themes: Record<string, string>;
+  /** v0.19.0：鼠标效果名 */
+  cursors: Record<"default" | "target", string>;
   palettes: Record<string, string>;
   schemes: Record<"auto" | "dark" | "light", string>;
   controls: Required<DotFieldControlLabels>;

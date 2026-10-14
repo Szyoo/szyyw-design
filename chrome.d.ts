@@ -1,5 +1,4 @@
-import type { AppearanceHandle, AppearancePanelLabels, Appearance, AppearanceKey } from "./appearance";
-import type { DotFieldSettings, UpdateConfig } from "./settings";
+import type { AppearanceHandle, AppearancePanelLabels, AppearanceChange, AppearanceKey, ThemeParamsOptions, CursorEffectOptions } from "./appearance";
 import type { AppSwitcherHandle, SwitcherText } from "./switcher";
 import type { AccountMenuHandle, PortalLoginMessage } from "./account";
 import type { AccountLabels } from "./chrome-text";
@@ -29,9 +28,9 @@ export interface ChromeHandle {
  * 用户在语言按钮里选了新语言：先 handle.setLocale(新语言)，再调 localeToggle.onChange（应用换自己的文案 / 存偏好）。
  */
 export function mountChrome(options?: {
-  /** 点阵背景容器（通常 .bg-layer）；不给就没有背景与背景参数段 */
+  /** 背景容器（通常 .bg-layer）；不给就没有背景、主题行与主题参数段 */
   background?: HTMLElement | null;
-  /** 外观三项存储键前缀："fl_" → fl_theme / fl_palette / fl_scheme（服务端用 appearanceCookieNames 读同一组） */
+  /** 外观存储键前缀："fl_" → fl_theme / fl_palette / fl_scheme / fl_cursor（服务端用 appearanceCookieNames 读同一组） */
   cookiePrefix?: string;
   /** 外观持久化；SSR 项目用 cookie（缺省） */
   persist?: "cookie" | "localStorage" | "none";
@@ -43,15 +42,11 @@ export function mountChrome(options?: {
   appearance?: {
     spot?: boolean;
     labels?: AppearancePanelLabels;
-    onChange?: (appearance: Appearance, changed: AppearanceKey[]) => void | Promise<unknown>;
-    dotField?: {
-      persist?: "localStorage" | "none";
-      storageKey?: string;
-      onSave?: (values: DotFieldSettings) => void | Promise<void>;
-      /** 没有 onSave 时的页脚说明；true = 内置文案（v0.14.0，「仅保存在本浏览器」，随 locale） */
-      note?: string | true;
-      update?: false | UpdateConfig;
-    };
+    onChange?: (appearance: AppearanceChange, changed: AppearanceKey[]) => void | Promise<unknown>;
+    /** 主题参数段与版本行（v0.19.0 起对所有主题生效） */
+    dotField?: ThemeParamsOptions;
+    /** v0.19.0：鼠标效果的加载器与选项 */
+    cursorEffect?: CursorEffectOptions | null;
   };
   /** 透传给 mountAppSwitcher；false = 不挂 */
   switcher?: false | { endpoint?: string; order?: number; current?: string; cacheMs?: number; labels?: Partial<SwitcherText> };

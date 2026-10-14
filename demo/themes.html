@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>背景主题 · 手测</title>
+<!--
+  @szyyw/design 可插拔背景主题 + 鼠标效果的静态手测页（不进 package files）。
+  ES module 不能 file:// 直开：在仓库根目录 `python3 -m http.server 8080`，
+  打开 http://localhost:8080/demo/themes.html
+  加 ?cursorStub=1：鼠标效果用页内的最小桩代替 target-cursor.js（该文件尚未就位时验证开关流程）。
+-->
+<script>
+  // 首屏不闪（v0.19.0 推荐片段：多恢复 data-cursor；data-theme 交给 configureAppearance 校验）
+  (function () {
+    var d = document.documentElement;
+    try {
+      var t = localStorage.getItem("themes-demo:theme");
+      var p = localStorage.getItem("themes-demo:palette");
+      var s = localStorage.getItem("themes-demo:scheme");
+      var c = localStorage.getItem("themes-demo:cursor");
+      if (t) d.setAttribute("data-theme", t);
+      if (p && p !== "default") d.setAttribute("data-palette", p);
+      if (s === "auto" || s === "dark" || s === "light") d.setAttribute("data-scheme", s);
+      if (c && c !== "default") d.setAttribute("data-cursor", c);
+    } catch (e) {
+      // 隐私模式：用缺省
+    }
+  })();
+</script>
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../components.css">
+<style>
+  .demo { max-width: 860px; margin: 0 auto; padding: 72px 20px 48px; }
+  .demo .glass { padding: 20px 22px; margin-bottom: 16px; }
+  .demo dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 16px; margin: 0; font-size: 13px; }
+  .demo dt { color: var(--text-dim); }
+  .demo dd { margin: 0; overflow-wrap: anywhere; }
+  .demo .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+  .demo .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+  .demo .cards .glass { margin: 0; min-height: 96px; }
+  .demo #log { margin: 0; font-size: 12px; max-height: 160px; overflow: auto; color: var(--text-dim); white-space: pre-wrap; }
+  .stub-cursor {
+    position: fixed; left: 0; top: 0; width: 26px; height: 26px; margin: -13px 0 0 -13px;
+    border: 2px solid var(--accent); border-radius: 4px; pointer-events: none; z-index: 9999;
+  }
+</style>
+</head>
+<body>
+<div class="bg-layer"></div>
+<main class="app-frame">
+  <div class="demo">
+    <h1 class="page-title">背景主题 · 手测</h1>
+    <p class="page-sub">右上角调色板 →「主题」切换（不刷新），「主题参数」按当前主题自动生成；「鼠标效果」默认 / Target Cursor。</p>
+
+    <section class="glass">
+      <dl class="mono">
+        <dt>data-theme</dt><dd id="s-theme"></dd>
+        <dt>已挂载</dt><dd id="s-mounted"></dd>
+        <dt>加载状态</dt><dd id="s-status"></dd>
+        <dt>data-palette / scheme</dt><dd id="s-ps"></dd>
+        <dt>data-cursor</dt><dd id="s-cursor"></dd>
+        <dt>当前主题存储</dt><dd id="s-store"></dd>
+      </dl>
+      <div class="actions">
+        <button class="btn btn-small" type="button" id="open">打开外观</button>
+        <button class="btn btn-ghost btn-small" type="button" id="clear">清空 demo 存储并刷新</button>
+        <span class="chip-row" id="locales">
+          <button class="chip active" type="button" data-locale="zh">中文</button>
+          <button class="chip" type="button" data-locale="ja">日本語</button>
+          <button class="chip" type="button" data-locale="en">English</button>
+        </span>
+      </div>
+      <div class="actions chip-row" id="quick"></div>
+    </section>
+
+    <section class="cards">
+      <div class="glass spot lift"><strong>卡片 A</strong><p class="page-sub">背景透过毛玻璃</p></div>
+      <div class="glass spot lift"><strong>卡片 B</strong><p class="page-sub"><a href="#" class="cursor-target">链接</a> · <button class="btn btn-small" type="button">按钮</button></p></div>
+      <div class="glass spot lift"><strong>卡片 C</strong><p class="page-sub">点空白处：光标网格 / 粒子的点击效果</p></div>
+    </section>
+
+    <section class="glass" style="margin-top:16px">
+      <pre id="log" class="mono"></pre>
+    </section>
+  </div>
+</main>
+
+<script type="module">
+  import { mountAppearance, openAppearancePanel, setAppearance, onAppearanceChange } from "../appearance.js";
+  import { THEME_REGISTRY } from "../themes/index.js";
+  import { appearanceCookieNames } from "../appearance-data.js";
+
+  const logEl = document.getElementById("log");
+  const log = (line) => {
+    logEl.textContent = `${new Date().toLocaleTimeString()}  ${line}\n` + logEl.textContent;
+  };
+  window.__log = [];
+
+  // ?cursorStub=1：target-cursor.js 未就位时，用一个跟随指针的方框验证「开 → 挂载 / 关 → 销毁」流程
+  const stub = new URLSearchParams(location.search).has("cursorStub");
+  const stubLoader = async () => ({
+    mountTargetCursor() {
+      const box = document.createElement("div");
+      box.className = "stub-cursor";
+      document.body.append(box);
+      const move = (e) => (box.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`);
+      window.addEventListener("pointermove", move, { passive: true });
+      window.__stubMounted = (window.__stubMounted ?? 0) + 1;
+      log("stub mountTargetCursor()");
+      return {
+        destroy() {
+          window.removeEventListener("pointermove", move);
+          box.remove();
+          window.__stubMounted -= 1;
+          log("stub destroy()");
+        }
+      };
+    }
+  });
+
+  const app = mountAppearance({
+    background: document.querySelector(".bg-layer"),
+    persist: "localStorage",
+    cookiePrefix: "themes-demo:",
+    locale: "zh",
+    dotField: { note: "仅本地预览", update: false, onSave: (values, info) => log(`onSave ${JSON.stringify(info)}`) },
+    cursorEffect: stub ? { load: stubLoader } : null,
+    onChange: (a, changed) => {
+      window.__log.push({ a, changed });
+      log(`onChange ${JSON.stringify(changed)} → ${JSON.stringify(a)}`);
+    }
+  });
+  window.__app = app;
+  window.__setAppearance = setAppearance;
+  const bg = app.background;
+
+  const $ = (id) => document.getElementById(id);
+  const keys = appearanceCookieNames("themes-demo:");
+  const quick = $("quick");
+  const quickBtns = THEME_REGISTRY.map((e) => {
+    const b = document.createElement("button");
+    b.className = "chip";
+    b.type = "button";
+    b.textContent = e.labels.zh;
+    b.dataset.value = e.id;
+    b.addEventListener("click", () => setAppearance({ theme: e.id }));
+    quick.append(b);
+    return b;
+  });
+
+  function render() {
+    const d = document.documentElement;
+    $("s-theme").textContent = d.getAttribute("data-theme") ?? "（无）";
+    $("s-mounted").textContent = `${bg.theme}（请求 ${bg.requested}）`;
+    $("s-status").textContent = THEME_REGISTRY.map((e) => `${e.id}:${bg.status(e.id)}`).join("  ");
+    $("s-ps").textContent = `${d.getAttribute("data-palette") ?? "default"} / ${d.getAttribute("data-scheme")}`;
+    $("s-cursor").textContent = `${d.getAttribute("data-cursor") ?? "（无 = default）"}  存储 ${localStorage.getItem(keys.cursor)}`;
+    const k = bg.theme === "nebula" ? "szyyw:dotfield" : `szyyw:theme-params:${bg.theme}`;
+    $("s-store").textContent = `${k} = ${localStorage.getItem(k)}`;
+    for (const b of quickBtns) {
+      b.classList.toggle("active", b.dataset.value === bg.theme);
+      b.disabled = bg.status(b.dataset.value) === "failed";
+      b.title = b.disabled ? "加载失败（文件未就位）" : "";
+    }
+  }
+  bg.subscribe((ev) => {
+    if (ev.type !== "params") log(`background ${JSON.stringify(ev)}`);
+    render();
+  });
+  onAppearanceChange(render);
+  render();
+
+  for (const b of document.querySelectorAll("#locales .chip")) {
+    b.addEventListener("click", () => {
+      app.setLocale(b.dataset.locale);
+      for (const o of document.querySelectorAll("#locales .chip")) o.classList.toggle("active", o === b);
+    });
+  }
+  $("open").addEventListener("click", () => openAppearancePanel());
+  $("clear").addEventListener("click", () => {
+    for (const k of Object.keys(localStorage)) {
+      if (k.startsWith("themes-demo:") || k.startsWith("szyyw:theme-params:") || k === "szyyw:dotfield") localStorage.removeItem(k);
+    }
+    location.reload();
+  });
+</script>
+</body>
+</html>

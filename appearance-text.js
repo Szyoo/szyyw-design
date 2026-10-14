@@ -1,6 +1,7 @@
 /* ============================================================
    @szyyw/design · appearance-text.js
    外观弹层 / 明暗按钮 / 背景参数控件的内置文案（zh / ja / en）。
+   各主题参数控件的名字在主题模块自己的 meta.params[].labels 里（v0.19.0），不在这里。
 
    应用只传 locale，不再各自维护一份同样的翻译；个别词想改仍可用 labels 覆盖。
    未知语言回退中文；缺的键也按中文补齐。零 DOM、零 import。
@@ -36,7 +37,23 @@ const zh = {
   background: "背景参数",
   /* v0.14.0：dotField.note === true 时页脚显示这句 */
   localOnly: "仅保存在本浏览器",
-  themes: { nebula: "星云" },
+  /* v0.19.0：可插拔主题 / 鼠标效果 */
+  themeParams: "主题参数",
+  cursor: "鼠标效果",
+  unavailable: "暂不可用",
+  loading: "加载中…",
+  themeFailed: "主题加载失败，已保留当前背景",
+  cursorFailed: "鼠标效果加载失败",
+  noParams: "这个主题没有可调参数",
+  themes: {
+    nebula: "星云",
+    "cursor-grid": "光标网格",
+    "gradient-waves": "渐变波浪",
+    "side-rays": "侧光",
+    "pixel-blast": "像素爆破",
+    particles: "粒子"
+  },
+  cursors: { default: "默认", target: "Target Cursor" },
   palettes: { default: "青紫（默认）", aurora: "极光翠青" },
   schemes: { auto: "跟随系统", dark: "深色", light: "浅色" },
   controls: {
@@ -83,7 +100,22 @@ const ja = {
   scheme: "モード",
   background: "背景設定",
   localOnly: "このブラウザにのみ保存されます",
-  themes: { nebula: "ネビュラ" },
+  themeParams: "テーマの設定",
+  cursor: "カーソル効果",
+  unavailable: "利用できません",
+  loading: "読み込み中…",
+  themeFailed: "テーマを読み込めませんでした。現在の背景のままです",
+  cursorFailed: "カーソル効果を読み込めませんでした",
+  noParams: "このテーマに調整できる項目はありません",
+  themes: {
+    nebula: "ネビュラ",
+    "cursor-grid": "カーソルグリッド",
+    "gradient-waves": "グラデーションウェーブ",
+    "side-rays": "サイドレイ",
+    "pixel-blast": "ピクセルブラスト",
+    particles: "パーティクル"
+  },
+  cursors: { default: "標準", target: "ターゲットカーソル" },
   palettes: { default: "シアン×バイオレット（既定）", aurora: "オーロラ（グリーン×シアン）" },
   schemes: { auto: "システムに従う", dark: "ダーク", light: "ライト" },
   controls: {
@@ -130,7 +162,22 @@ const en = {
   scheme: "Mode",
   background: "Background",
   localOnly: "Saved in this browser only",
-  themes: { nebula: "Nebula" },
+  themeParams: "Theme settings",
+  cursor: "Cursor effect",
+  unavailable: "Unavailable",
+  loading: "Loading…",
+  themeFailed: "Couldn't load the theme; keeping the current background",
+  cursorFailed: "Couldn't load the cursor effect",
+  noParams: "This theme has no adjustable settings",
+  themes: {
+    nebula: "Nebula",
+    "cursor-grid": "Cursor Grid",
+    "gradient-waves": "Gradient Waves",
+    "side-rays": "Side Rays",
+    "pixel-blast": "Pixel Blast",
+    particles: "Particles"
+  },
+  cursors: { default: "Default", target: "Target Cursor" },
   palettes: { default: "Cyan–violet (default)", aurora: "Aurora green–cyan" },
   schemes: { auto: "Follow system", dark: "Dark", light: "Light" },
   controls: {
@@ -166,7 +213,7 @@ export function appearanceText(locale, overrides = {}) {
   const base = APPEARANCE_TEXT[pick(locale)];
   const o = overrides || {};
   const merged = { ...zh, ...base, ...o };
-  for (const k of ["themes", "palettes", "schemes", "controls"]) {
+  for (const k of ["themes", "palettes", "schemes", "controls", "cursors"]) {
     merged[k] = { ...zh[k], ...base[k], ...(o[k] || {}) };
   }
   return merged;
