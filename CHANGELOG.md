@@ -1,5 +1,27 @@
 # Changelog
 
+## v0.22.0 — 2026-10-14
+
+**吸顶标题**（DESIGN.md §13.2，手测页 `demo/sticky-heads.html`）。纯新增，既有类与函数行为不变。
+
+**新增**
+- `.page-head.sticky`：页面标题行吸顶（返回条 + 标题 + 操作一行排下，标题过长省略，`min-height: 52px`）；
+  `.page-head` 单用不加样式（已有应用的 `.app-header.page-head` 修饰类不受影响）。
+- `.section-head.sticky`：分块小标题吸在标题行下方（`top: --sticky-top + --sticky-page-h`）；每块包一层容器，滚到哪块显示哪块。
+- 玻璃底（`--bg` 72% + `blur(14px)`，画在 `::before`）；层级 标题行 21 / 小标题 20，低于应用顶栏 30 与工具位 / 弹层（§3 层级表已补）。
+- token 旋钮 `--sticky-top`（应用自己的顶栏高）、`--sticky-page-h`（页面有 `.page-head.sticky` 时 CSS 缺省 52px）、`--sticky-clear`（右侧给纵排工具位让位）。
+- JS `./sticky-heads`：`mountStickyHeads({ root, offset, blur }) → { refresh, destroy }`，可选——实测标题行 / 顶栏高度写 `--sticky-page-h` / `--sticky-top`，
+  写 `data-stuck` / `data-covered`（没吸住时玻璃底隐去），并在吸顶标题下沿挂 Gradual Blur；MutationObserver 跟进换页。另导出 `STICKY_HEAD_SELECTOR`、`BLUR_DEFAULTS`。
+- `mountGradualBlur` 新选项 `outside`（缺省 false，旧行为不变）：模糊带作为元素子节点贴在该边外侧、随元素移动，越靠近元素越糊。
+
+**兼容**
+- 吸顶标题及其所在块的 `.stagger` / `.rise` 入场动画改为 backwards 填充（结束帧即自然值，看起来一样）：both 填充会让元素一直是
+  backdrop root，玻璃底与模糊带糊不到外面。只作用于带 `.sticky` 的新标记，其余元素不变。
+- `corner.css` 不变。
+
+**升级提示**
+- vendored 项目用 v0.20.0 的 `sync.sh`（清单加了 `sticky-heads.js`）；CDN / npm 项目只改版本号。
+
 ## v0.21.0 — 2026-10-14
 
 **主题缺省随机、移除 aurora 配色、Target Cursor 修复**（DESIGN.md §2、§2.1、§2.2、§5、§16）。

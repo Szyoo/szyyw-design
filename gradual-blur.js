@@ -29,6 +29,10 @@
    新增：
      edgeFade  px，缺省 64：滚动容器 / 页面「离开该边缘」多远时模糊带才完全显现——
                已经在顶端就不叠顶部那条，往下滚时渐渐浮现（底部同理）；0 = 常驻
+     outside   v0.22.0，缺省 false：仅元素目标。模糊带改为元素自己的子节点、贴在该边**外侧**
+               （bottom = 元素下沿往下一条），随元素移动（吸顶标题、固定栏）；越靠近元素越糊。
+               元素须是定位元素（sticky / relative / absolute / fixed），且自身不要带 backdrop-filter
+               （否则成为 backdrop root，带子糊不到外面的内容）。edgeFade 此时按页面滚动计
    与上游的差异：
    - 框架无关：React → 挂载函数；无 backdrop-filter 的浏览器退回半透明 --bg 色带（颜色取自 token）
    - 滚动容器的模糊带是容器的兄弟节点（定位到容器可视区的边缘，ResizeObserver 跟随尺寸），
@@ -72,6 +76,8 @@ export const DEFAULTS = {
   style: {},
   /** 见文件头：离开边缘多远才完全显现；0 = 常驻 */
   edgeFade: 64,
+  /** v0.22.0，见文件头：模糊带贴在元素该边外侧、作为子节点随元素移动（仅元素目标） */
+  outside: false,
 };
 
 export const PRESETS = {
@@ -99,6 +105,7 @@ export const CURVE_FUNCTIONS = {
 };
 
 const DIRECTIONS = { top: "to top", bottom: "to bottom", left: "to left", right: "to right" };
+const OPPOSITE = { top: "bottom", bottom: "top", left: "right", right: "left" };
 const clamp01 = (n) => Math.max(0, Math.min(1, n));
 const isPageTarget = (t) =>
   t === "page" ||
@@ -162,6 +169,8 @@ export function mountGradualBlur(target, options = {}) {
   const page = isPageTarget(target);
   const el = page ? null : typeof target === "string" ? document.querySelector(target) : target;
   if (!page && !(el instanceof Element)) return { update() {}, destroy() {} };
+  // outside 在挂载时定型（决定节点挂在哪、监听谁），update 里改它不生效
+  const outside = !page && !!options.outside;
 
   let opts = { ...options };
   let cfg = mergeConfig(opts);
@@ -173,7 +182,7 @@ export function mountGradualBlur(target, options = {}) {
   let destroyed = false;
   const cleanups = [];
 
-  const scroller = () => (page ? document.scrollingElement || document.documentElement : el);
+  const scroller = () => (page || outside ? document.scrollingElement || document.documentElement : el);
 
   function barOpacity(pos) {
     if (!visible) return 0;
@@ -232,6 +241,25 @@ export function mountGradualBlur(target, options = {}) {
         }
         continue;
       }
+      if (outside) {
+        // 贴在元素该边外侧：纯 CSS 百分比定位，元素怎么动（sticky / 尺寸变化）都跟着，不用量
+        s.position = "absolute";
+        s.inset = "";
+        s[b.pos] = "";
+        s[OPPOSITE[b.pos]] = "100%";
+        if (vertical) {
+          s.left = "0";
+          s.right = "0";
+          s.width = "";
+          s.height = height;
+        } else {
+          s.top = "0";
+          s.bottom = "0";
+          s.height = "";
+          s.width = width || height;
+        }
+        continue;
+      }
       // 滚动容器：定位到容器可视区边缘。先归零量出本节点的坐标原点，再按容器矩形摆放，
       // 与包含块 / 边距 / 偏移父节点无关
       s.position = "absolute";
@@ -267,8 +295,10 @@ export function mountGradualBlur(target, options = {}) {
     bars = [];
     const n = Math.max(1, Math.round(cfg.divCount));
     const increment = 100 / n;
-    const hostNode = page ? document.body : el.parentNode;
+    const hostNode = page ? document.body : outside ? el : el.parentNode;
     for (const pos of positionsOf(cfg.position)) {
+      // outside：越靠近元素越糊，渐变方向与「贴在容器内缘」相反
+      const dir = DIRECTIONS[outside ? OPPOSITE[pos] : pos];
       const bar = document.createElement("div");
       bar.className = `gradual-blur ${page ? "gradual-blur-page" : "gradual-blur-parent"}${cfg.className ? " " + cfg.className : ""}`;
       bar.dataset.position = pos;
@@ -287,7 +317,7 @@ export function mountGradualBlur(target, options = {}) {
         let gradient = `transparent ${p1}%, black ${p2}%`;
         if (p3 <= 100) gradient += `, black ${p3}%`;
         if (p4 <= 100) gradient += `, transparent ${p4}%`;
-        const mask = `linear-gradient(${DIRECTIONS[pos]}, ${gradient})`;
+        const mask = `linear-gradient(${dir}, ${gradient})`;
         const layer = document.createElement("div");
         layer.style.cssText = "position:absolute;inset:0";
         layer.style.maskImage = mask;
@@ -314,8 +344,8 @@ export function mountGradualBlur(target, options = {}) {
           applyBlur();
         });
       }
-      // 页面级放 body 末尾；滚动容器放在容器后面（兄弟节点）
-      if (page) hostNode.append(bar);
+      // 页面级放 body 末尾；outside 放进元素末尾；滚动容器放在容器后面（兄弟节点）
+      if (page || outside) hostNode.append(bar);
       else hostNode.insertBefore(bar, el.nextSibling);
       bars.push({ pos, bar, layers });
     }
@@ -340,7 +370,7 @@ export function mountGradualBlur(target, options = {}) {
   }
 
   // 监听：滚动（模糊带随离开边缘的距离浮现）、尺寸变化、窗口缩放
-  const scrollTarget = page ? window : el;
+  const scrollTarget = page || outside ? window : el;
   scrollTarget.addEventListener("scroll", schedule, { passive: true });
   cleanups.push(() => scrollTarget.removeEventListener("scroll", schedule));
   let debounce = 0;
@@ -353,7 +383,8 @@ export function mountGradualBlur(target, options = {}) {
     clearTimeout(debounce);
     window.removeEventListener("resize", onResize);
   });
-  if (typeof ResizeObserver === "function") {
+  // outside 的几何全是 CSS 百分比，不需要跟尺寸
+  if (typeof ResizeObserver === "function" && !outside) {
     const ro = new ResizeObserver(() => relayout());
     if (page) ro.observe(document.documentElement);
     else {
@@ -369,7 +400,7 @@ export function mountGradualBlur(target, options = {}) {
   function setupObserver() {
     io?.disconnect();
     io = null;
-    if (cfg.animated !== "scroll" || page || typeof IntersectionObserver !== "function") {
+    if (cfg.animated !== "scroll" || page || outside || typeof IntersectionObserver !== "function") {
       if (!visible) {
         visible = true;
         applyOpacity();

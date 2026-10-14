@@ -12,6 +12,7 @@ szyyw.xyz 设计语言的共享实现：design tokens、玻璃组件层、右上
 - 外观持久化（cookie / localStorage）与 SSR 首屏不闪
 - 背景主题：星云（DotField 点阵，缺省）、光标网格、渐变波浪、侧光、像素爆破、粒子；参数全部可在外观弹层里调
 - 鼠标效果：默认 / Target Cursor
+- 吸顶标题：`.page-head.sticky` / `.section-head.sticky`（+ 可选 `./sticky-heads`）
 - 组件：Swipe Toast、行菜单、TechText 字标、Squish Switch、Glide Select、Status Mark、Lattice Loader、Gradual Blur、Branched Menu
 - 内置 zh / ja / en 文案
 
@@ -22,17 +23,17 @@ npm（钉精确 tag）：
 ```jsonc
 // package.json
 "dependencies": {
-  "@szyyw/design": "github:Szyoo/szyyw-design#v0.21.0"
+  "@szyyw/design": "github:Szyoo/szyyw-design#v0.22.0"
 }
 ```
 
 CDN（无构建步骤的项目，免 vendoring）：每个 `vX.Y.Z` tag 发布到 `https://design.szyyw.xyz/vX.Y.Z/`，内容即该 tag 的 `git archive`，发布后不再改写（`Cache-Control: immutable`，CORS `*`）。
 
 ```html
-<link rel="stylesheet" href="https://design.szyyw.xyz/v0.21.0/tokens.css">
-<link rel="stylesheet" href="https://design.szyyw.xyz/v0.21.0/components.css">
+<link rel="stylesheet" href="https://design.szyyw.xyz/v0.22.0/tokens.css">
+<link rel="stylesheet" href="https://design.szyyw.xyz/v0.22.0/components.css">
 <script type="module">
-  import { mountChrome } from "https://design.szyyw.xyz/v0.21.0/chrome.js";
+  import { mountChrome } from "https://design.szyyw.xyz/v0.22.0/chrome.js";
   mountChrome({ /* … */ });
 </script>
 ```
@@ -44,8 +45,8 @@ CDN（无构建步骤的项目，免 vendoring）：每个 `vX.Y.Z` tag 发布�
 vendoring（复制到项目目录）：只用上游 `sync.sh`，从目标 tag 取脚本，文件清单与该版本一致：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Szyoo/szyyw-design/v0.21.0/sync.sh \
-  | sh -s -- ./static/vendor/szyyw-design v0.21.0
+curl -fsSL https://raw.githubusercontent.com/Szyoo/szyyw-design/v0.22.0/sync.sh \
+  | sh -s -- ./static/vendor/szyyw-design v0.22.0
 ```
 
 它复制运行时文件（清单见 `sync.sh` 的 `FILES`）并写 / 刷新 `VENDORED.md`；第二个参数用 `--local` 可从本机 clone 同步未发版改动。
@@ -225,6 +226,22 @@ const loader = mountLatticeLoader(el, { label: "处理中" });  loader.set({ sta
 
 `.switch` 不挂 JS 也有 Squish 动效；Gradual Blur、Branched Menu、Target Cursor 的用法见 DESIGN.md §16，手测页在 `demo/`。
 
+### 吸顶标题
+
+长页面的标题行与分块小标题吸顶（小标题叠在标题行下方，滚到哪块显示哪块），吸住时下沿挂 Gradual Blur。纯 CSS 就能吸顶，JS 可选：
+
+```html
+<div class="page-head sticky"><a class="back-link" href="…">← 返回</a><h1 class="page-title">标题</h1><button class="btn btn-small">设置</button></div>
+<section><div class="section-head sticky"><h2 class="section-name">流水明细</h2></div>…</section>
+```
+
+```js
+import { mountStickyHeads } from "@szyyw/design/sticky-heads";
+mountStickyHeads({ offset: ".my-topbar" });   // 外壳里挂一次：实测高度、吸住状态、模糊带；offset = 应用自己的 sticky 顶栏（可省）
+```
+
+每块要包一层容器、小标题是第一个子元素；旋钮 `--sticky-top` / `--sticky-page-h` / `--sticky-clear` 与层级见 DESIGN.md §13.2，手测页 `demo/sticky-heads.html`。
+
 ### 表单排版
 
 一个字段用 `.form-row`（label + 控件），输入框 + 按钮同一行用 `.field-row`（可与 `.form-row` 叠加），纵向一串用 `.stack`。哪些类是公开 API、哪些是组件内部实现不要借用，见 DESIGN.md §10–§11，手测页 `demo/forms.html`。
@@ -261,6 +278,7 @@ const loader = mountLatticeLoader(el, { label: "处理中" });  loader.set({ sta
 | `./status-mark` | `mountStatusMark`、`enhanceStatusMarks` |
 | `./lattice-loader` | `mountLatticeLoader` |
 | `./gradual-blur` | `mountGradualBlur`、`enhanceGradualBlur`、`DEFAULTS`、`PRESETS`、`CURVE_FUNCTIONS` |
+| `./sticky-heads` | `mountStickyHeads`、`STICKY_HEAD_SELECTOR`、`BLUR_DEFAULTS`（吸顶标题 `.page-head.sticky` / `.section-head.sticky` 的可选增强，DESIGN.md §13.2） |
 | `./branched-menu` | `mountBranchedMenu`、`ICONS`、`DEFAULTS` |
 | `./menu` | `attachMenu` |
 | `./techtext` | `enhanceTechText`、`mountTechText`、`runningCount`、`DEFAULTS` |

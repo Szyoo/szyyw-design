@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>吸顶标题 · 手测</title>
+<!-- 手测页（不进 package files）：仓库根目录 python3 -m http.server 8080，打开 http://localhost:8080/demo/sticky-heads.html
+     ?topbar=1 模拟应用自己的 sticky 顶栏（offset 实测）；?js=0 不挂 sticky-heads.js（纯 CSS 退化）；?blur=0 不挂模糊带 -->
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../components.css">
+<style>
+  .demo { max-width: 860px; margin: 0 auto; padding: 16px 16px 120px; }
+  .demo-bar { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 8px; }
+  /* 模拟应用自己的吸顶顶栏（手机端常见的那种），只在 ?topbar=1 时出现 */
+  .demo-topbar {
+    position: sticky; top: 0; z-index: 30;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px;
+    background: color-mix(in srgb, var(--bg) 72%, transparent);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .demo-topbar[hidden] { display: none; }
+  .demo-rows p { margin: 0 0 10px; }
+</style>
+</head>
+<body>
+<header class="demo-topbar" id="topbar" hidden><strong>Demo App</strong><span class="pill">设置</span></header>
+<main class="demo">
+  <div class="demo-bar" id="bar">
+    <button class="btn-ghost btn-small" type="button" data-scheme="dark">dark</button>
+    <button class="btn-ghost btn-small" type="button" data-scheme="light">light</button>
+    <button class="btn-ghost btn-small" type="button" data-palette="default">默认配色</button>
+    <button class="btn-ghost btn-small" type="button" data-palette="aurora">aurora</button>
+    <a class="btn-ghost btn-small" href="?topbar=1">带顶栏</a>
+    <a class="btn-ghost btn-small" href="?js=0">纯 CSS</a>
+    <a class="btn-ghost btn-small" href="?blur=0">无模糊带</a>
+    <a class="btn-ghost btn-small" href="?">缺省</a>
+  </div>
+
+  <div class="stagger">
+    <div class="page-head sticky">
+      <a class="back-link" href="#">← 账户</a>
+      <h1 class="page-title">三井住友银行 普通预金（一个很长很长的账户名用来测省略）</h1>
+      <button class="btn btn-small" type="button">设置</button>
+    </div>
+
+    <section>
+      <div class="section-head sticky"><h2 class="section-name">余额与同步</h2></div>
+      <div class="glass stat-card">
+        <div class="stat-label"><span class="pill cyan">JPY</span> 余额</div>
+        <div class="stat-value num">¥1,234,567</div>
+      </div>
+      <div class="glass panel u-mt-4 demo-rows" id="sync"></div>
+    </section>
+
+    <section class="section">
+      <div class="section-head sticky"><h2 class="section-name">流水明细</h2></div>
+      <div class="glass panel demo-rows" id="txs"></div>
+    </section>
+
+    <section class="section">
+      <div class="section-head sticky">
+        <h2 class="section-name">导入历史</h2>
+        <button class="btn-ghost btn-small" type="button">12 ▸</button>
+      </div>
+      <div class="glass panel demo-rows" id="hist"></div>
+    </section>
+
+    <section class="section">
+      <div class="section-head sticky"><h2 class="section-name">统计</h2></div>
+      <div class="glass panel demo-rows" id="stats"></div>
+    </section>
+  </div>
+</main>
+<script type="module">
+  const root = document.documentElement;
+  document.getElementById("bar").addEventListener("click", (e) => {
+    const b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.scheme) root.setAttribute("data-scheme", b.dataset.scheme);
+    if (b.dataset.palette) { if (b.dataset.palette === "default") root.removeAttribute("data-palette"); else root.setAttribute("data-palette", b.dataset.palette); }
+  });
+  const rows = (label, n) => Array.from({ length: n }, (_, i) =>
+    `<p class="spread"><span>${label} ${i + 1} · セブン-イレブン 渋谷店 The quick brown fox</span><span class="num">¥${(i * 1373) % 9000 + 120}</span></p>`).join("");
+  document.getElementById("sync").innerHTML = rows("同步记录", 4);
+  document.getElementById("txs").innerHTML = rows("流水", 40);
+  document.getElementById("hist").innerHTML = rows("批次", 12);
+  document.getElementById("stats").innerHTML = rows("月份", 24);
+
+  const q = new URLSearchParams(location.search);
+  if (q.get("topbar") === "1") document.getElementById("topbar").hidden = false;
+  if (q.get("js") !== "0") {
+    const { mountStickyHeads } = await import("../sticky-heads.js");
+    window.stickyHeads = mountStickyHeads({
+      offset: q.get("topbar") === "1" ? "#topbar" : undefined,
+      blur: q.get("blur") === "0" ? false : undefined,
+    });
+  }
+</script>
+</body>
+</html>

@@ -52,6 +52,12 @@ export interface GradualBlurOptions {
    * 缺省 64；0 = 常驻。内容没溢出时不显示。
    */
   edgeFade?: number;
+  /**
+   * v0.22.0：仅元素目标。模糊带作为元素的子节点贴在该边**外侧**（bottom = 元素下沿往下一条），随元素移动，
+   * 越靠近元素越糊——用于吸顶标题 / 固定栏下方。元素须是定位元素且自身不带 backdrop-filter；
+   * edgeFade 按页面滚动计算。缺省 false（模糊带是兄弟节点、贴在容器可视区内缘，同 v0.19.0）。挂载时定型，update 不改它。
+   */
+  outside?: boolean;
 }
 
 export interface GradualBlurHandle {
@@ -61,7 +67,7 @@ export interface GradualBlurHandle {
   destroy(): void;
 }
 
-export const DEFAULTS: Required<Pick<GradualBlurOptions, "position" | "strength" | "height" | "divCount" | "exponential" | "zIndex" | "animated" | "duration" | "easing" | "opacity" | "curve" | "responsive" | "className" | "edgeFade">> & GradualBlurOptions;
+export const DEFAULTS: Required<Pick<GradualBlurOptions, "position" | "strength" | "height" | "divCount" | "exponential" | "zIndex" | "animated" | "duration" | "easing" | "opacity" | "curve" | "responsive" | "className" | "edgeFade" | "outside">> & GradualBlurOptions;
 export const PRESETS: Record<GradualBlurPreset, Partial<GradualBlurOptions>>;
 export const CURVE_FUNCTIONS: Record<GradualBlurCurve, (p: number) => number>;
 

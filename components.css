@@ -597,6 +597,91 @@ input[type="color"]::-moz-color-swatch { border: none; border-radius: 4px; }
 }
 .section-head > .section-name { margin: 0; }
 
+/* ---------- 吸顶标题：.page-head.sticky / .section-head.sticky（v0.20.0，DESIGN.md §13.2）----------
+   长页面：标题行往下滚时吸顶；分块小标题吸在标题行下方，滚到哪块显示哪块（每块包一层容器，
+   小标题是容器的第一个子元素——sticky 只在父容器范围内生效，下一块上来时上一块的小标题被父容器带走）。
+   .page-head 单用不加样式（已有应用写过 .app-header.page-head 修饰类），必须与 .sticky 一起用。
+   旋钮（都可在应用 :root 里设）：
+     --sticky-top     标题行吸在哪（缺省 0；应用自己有 sticky 顶栏时设成顶栏高，或交给 sticky-heads.js 的 offset 实测）
+     --sticky-page-h  标题行高度（小标题吸在 --sticky-top + 它）；页面有 .page-head.sticky 时 CSS 缺省 52px（= 标题行 min-height），
+                      sticky-heads.js 实测后写到 html 行内样式
+     --sticky-clear   右侧让位（缺省 0）：工具位纵排、会压住吸顶行右端按钮的布局设成 工具位宽 − 页面右内边距
+   玻璃底画在 ::before 上而不是元素本身：元素自己带 backdrop-filter 会成为 backdrop root，
+   sticky-heads.js 挂在里面的 Gradual Blur 带就糊不到下面滚过的内容了。
+   data-stuck（sticky-heads.js 写）："0" 未吸住时玻璃底隐去；没有 JS 时玻璃底常驻、不挂模糊带。 */
+:where(:root:has(.page-head.sticky)) { --sticky-page-h: 52px; }
+
+.page-head.sticky,
+.section-head.sticky {
+  position: -webkit-sticky;
+  position: sticky;
+  padding-right: var(--sticky-clear, 0px);
+}
+
+.page-head.sticky {
+  top: var(--sticky-top, 0px);
+  z-index: 21;
+  display: flex;
+  align-items: center;
+  gap: 8px 12px;
+  min-height: 52px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  margin: 0 0 6px;
+}
+/* 一行排下：标题吃掉剩余宽度、过长省略；返回条 / 按钮不压缩。高度因此稳定，小标题的吸顶位置不跳 */
+.page-head.sticky > * { flex: none; }
+.page-head.sticky > .page-title {
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.page-head.sticky > .back-link { margin: 0; }
+
+.section-head.sticky {
+  top: calc(var(--sticky-top, 0px) + var(--sticky-page-h, 0px));
+  z-index: 20;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.page-head.sticky::before,
+.section-head.sticky::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--bg) 72%, transparent);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  transition: opacity 0.2s var(--ease);
+}
+.page-head.sticky[data-stuck="0"]::before,
+.section-head.sticky[data-stuck="0"]::before { opacity: 0; }
+
+/* 入场动效 .stagger / .rise 是 both 填充：动画结束后 opacity 动画仍在「填充」，Chrome 把元素一直当 backdrop root，
+   吸顶标题的玻璃底与模糊带只能糊到它自己里面（实测：底下滚过的字原样透出来）。
+   只对吸顶标题及其所在块改成 backwards 填充——结束帧就是自然值，入场看起来一样 */
+.stagger > .page-head.sticky,
+.stagger > :has(> .section-head.sticky),
+.rise.page-head.sticky,
+.rise:has(> .section-head.sticky) { animation-fill-mode: backwards; }
+
+/* sticky-heads.js 挂的 Gradual Blur 带（贴在标题下沿外侧）：只在吸住时显示；
+   有小标题吸在标题行下面时（data-covered）标题行那条让位，免得糊住小标题 */
+.page-head.sticky:not([data-stuck="1"]) > .gradual-blur,
+.page-head.sticky[data-covered] > .gradual-blur,
+.section-head.sticky:not([data-stuck="1"]) > .gradual-blur { visibility: hidden; }
+
+@media (prefers-reduced-motion: reduce) {
+  .page-head.sticky::before,
+  .section-head.sticky::before { transition: none; }
+}
+
 .panel-title { margin: 0; font-size: 17px; font-weight: 600; }
 
 .panel-head {

@@ -1,6 +1,6 @@
 {
   "name": "@szyyw/design",
-  "version": "0.21.0",
+  "version": "0.22.0",
   "description": "szyyw.xyz design language — tokens, glass components, interactive dot-field background. Framework-agnostic CSS/JS, no build step.",
   "type": "module",
   "license": "MIT",
@@ -120,6 +120,10 @@
     "./pager": {
       "types": "./pager.d.ts",
       "default": "./pager.js"
+    },
+    "./sticky-heads": {
+      "types": "./sticky-heads.d.ts",
+      "default": "./sticky-heads.js"
     }
   },
   "files": [
@@ -180,6 +184,8 @@
     "pager.d.ts",
     "lattice-loader.js",
     "lattice-loader.d.ts",
+    "sticky-heads.js",
+    "sticky-heads.d.ts",
     "themes/",
     "fonts/"
   ]

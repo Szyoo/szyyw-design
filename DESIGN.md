@@ -125,6 +125,8 @@ v0.21.0 加第五项 `themeSet`（`fl_theme_set`，主题「显式选择」标�
 ```
 z-index 0   .bg-layer        点阵背景（fixed，独立合成层）
 z-index 1   .app-frame       内容层
+z-index 20  .section-head.sticky  吸顶小标题（v0.22.0，内容层里；被标题行盖过）
+z-index 21  .page-head.sticky     吸顶标题行（v0.22.0；低于应用自己的顶栏 30，不盖工具位 / 弹层 / sheet）
 z-index 30  侧栏 / 顶栏（sticky/fixed + backdrop-blur）
 z-index 40  底部导航
 z-index 45  .corner-tools    右上角工具位
@@ -549,6 +551,8 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
   `.switch.is-dragging`（switch.js 拖动中）；toast 卡片内部结构 `.toast-slot` `.toast-gate` `.toast-icon` `.toast-body` `.toast-title` `.toast-text` `.toast-action` `.toast-close` `.toast-fuse`；
   属性 `html[data-cursor]`、`data-glide` `data-status` `data-gradual-blur`、`data-cursor-label`；token `--th-*`、`--sw-*`；
   JS `./theme-background` `./themes` `./themes/<id>` `./target-cursor` `./gradual-blur` `./branched-menu` `./switch` `./glide-select` `./status-mark` `./lattice-loader`
+- v0.22.0 新增（§13.2）：`.page-head.sticky` `.section-head.sticky`（`.page-head` 必须带 `.sticky`）；属性 `data-stuck` `data-covered`（sticky-heads.js 写）；
+  token 旋钮 `--sticky-top` `--sticky-page-h` `--sticky-clear`；JS `./sticky-heads`（`mountStickyHeads`）；`mountGradualBlur` 新选项 `outside`
 - v0.15.0 新增（§14）：JS `./techtext`（`mountTechText` `enhanceTechText` `DEFAULTS`）、`mountChrome({ techText })` 与 `handle.techText`；
   类 `.tech-text`（JS 加在被增强的元素上，可用来写选中色等外观）。`.tech-text-canvas` 是内部实现，别套用
 
@@ -625,6 +629,52 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
 原因：`.spread` 只有 flex 排版，`.section-name` 自带 10px 下边距在 flex 里只作用于标题，管不到按钮，
 按钮会贴着下方内容；窄屏标题与按钮换行时也无行距。`.section-head` 行下留 12px、换行间距 8px 12px，内部 `.section-name` 边距归零。
 勿用裸 `.spread` 后紧跟内容；纯新增，`.spread` / `.section-name` 行为不变。
+
+## 13.2 吸顶标题 `.page-head.sticky` / `.section-head.sticky`（v0.22.0）
+
+长页面（账户详情一类）：标题行往下滚时吸顶；页面分几块时每块的小标题也吸顶，叠在标题行下方，滚到哪块显示哪块；
+吸住时标题下方滚上去的内容用 Gradual Blur（§16）雾化。手测页 `demo/sticky-heads.html`（`?topbar=1` / `?js=0` / `?blur=0`）。
+
+```html
+<div class="stagger">
+  <div class="page-head sticky">
+    <a class="back-link" href="…">← 账户</a>
+    <h1 class="page-title">账户名</h1>
+    <button class="btn btn-small">设置</button>
+  </div>
+  <section>
+    <div class="section-head sticky"><h2 class="section-name">余额与同步</h2></div>
+    …
+  </section>
+  <section class="section">
+    <div class="section-head sticky"><h2 class="section-name">流水明细</h2><button class="btn-ghost btn-small">…</button></div>
+    …
+  </section>
+</div>
+```
+
+- **分块要包容器**：`sticky` 只在父容器范围内生效。每块包一层（`<section>` / `.section`），小标题是它的**第一个子元素**；
+  下一块上来时上一块的小标题被自己的容器带走——「滚到哪块显示哪块」就是这么来的，不用 JS。
+- **`.page-head` 单用没有样式**（已有应用写过 `.app-header.page-head` 修饰类），一定与 `.sticky` 一起写。
+  标题行一行排下：`.page-title` 吃掉剩余宽度、过长省略，`.back-link` / 按钮不压缩；`min-height: 52px`，高度因此稳定。
+- **旋钮**（应用 `:root` 里设，或交给 JS 实测）：
+  - `--sticky-top`：标题行吸在哪，缺省 0。应用自己有 sticky / fixed 顶栏（手机顶栏一类）时设成顶栏高度，或用 `mountStickyHeads({ offset })` 实测。
+  - `--sticky-page-h`：标题行高度，小标题吸在 `--sticky-top + --sticky-page-h`。页面有 `.page-head.sticky` 时 CSS 缺省 52px（无 JS 也对得上），JS 实测后覆盖。
+  - `--sticky-clear`：吸顶行右侧让位，缺省 0。工具位纵排（`--corner-tools-dir: column`）会压住吸顶行右端时设
+    `calc(var(--corner-rail-w, 0px) + var(--corner-gap) - <页面右内边距>)`，只在会压住的断点设。
+- **玻璃底**：`color-mix(--bg 72%)` + `blur(14px)`，画在 `::before` 上——元素自己带 `backdrop-filter` 会成为 backdrop root，
+  里面的模糊带就糊不到外面滚过的内容。同理，`.stagger` / `.rise` 的 both 填充会让元素一直是 backdrop root，
+  包里已把吸顶标题及其所在块改为 backwards 填充（入场看起来一样）；**别把吸顶标题放进带 `filter` / `opacity < 1` / `backdrop-filter` 的祖先里**。
+- **可选 JS `mountStickyHeads({ root, offset, blur }) → { refresh(), destroy() }`**（`@szyyw/design/sticky-heads`）：
+  一个应用挂一次（外壳里），换页由 MutationObserver 跟进。做三件事：实测 `--sticky-page-h`（与 `offset` 给的顶栏高度 → `--sticky-top`，
+  `display: none` 时为 0，断点切换自动对）；写 `data-stuck="1|0"`（没吸住时玻璃底隐去，看起来就是普通标题）与标题行的 `data-covered`
+  （有小标题吸在下面时标题行的模糊带让位，免得糊住小标题）；在每个吸顶标题下沿外侧挂 Gradual Blur（`mountGradualBlur(el, { outside: true })`，
+  缺省 `height: 1.5rem, strength: 2, divCount: 5`，`blur: false` 不挂）。只跟页面（window）滚动。
+  不挂 JS 时退化为纯 CSS：照样吸顶，玻璃底常驻、没有模糊带。
+- **层级**（§3）：标题行 21、小标题 20，都在内容层里，低于应用顶栏（30）、底部导航（40）、工具位（45）与一切弹层，
+  菜单 / 抽屉 / sheet 照旧盖得住它们。
+- **移动端 / iOS Safari**：`position: -webkit-sticky` 在前；`backdrop-filter` 前写 `-webkit-backdrop-filter`；
+  吸顶的祖先不能有 `overflow: hidden / auto`（会把吸顶限制在那个容器里），`overflow-x: clip` 可以。
 
 ## 15. 通用工具类与布局契约（v0.17.0）
 
@@ -759,6 +809,8 @@ v0.21.0：吸附目标每帧校验（消失 / 不可见 / 不在指针下即解�
 `strength`、`height`、`width`、`divCount`、`exponential`、`zIndex`、`animated`（false / true / "scroll"）、`duration`、`easing`、`opacity`、`curve`、
 `responsive` + `mobile|tablet|desktop` `Height|Width`、`preset`、`hoverIntensity`、`onAnimationComplete`、`className`、`style`；
 新增 `edgeFade`（px，缺省 64：离开边缘多远才完全显现，0 = 常驻）。
+v0.22.0 新增 `outside`（仅元素目标，缺省 false）：模糊带改为元素自己的子节点、贴在该边**外侧**，随元素移动（吸顶标题 / 固定栏），
+越靠近元素越糊；元素须是定位元素且自身不带 `backdrop-filter`，`edgeFade` 按页面滚动计算（§13.2 的吸顶标题用的就是它）。
 
 ### Branched Menu（`./branched-menu`，备用）
 
