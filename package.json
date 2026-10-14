@@ -1,6 +1,6 @@
 {
   "name": "@szyyw/design",
-  "version": "0.19.0",
+  "version": "0.20.0",
   "description": "szyyw.xyz design language — tokens, glass components, interactive dot-field background. Framework-agnostic CSS/JS, no build step.",
   "type": "module",
   "license": "MIT",
@@ -116,6 +116,10 @@
     "./lattice-loader": {
       "types": "./lattice-loader.d.ts",
       "default": "./lattice-loader.js"
+    },
+    "./pager": {
+      "types": "./pager.d.ts",
+      "default": "./pager.js"
     }
   },
   "files": [
@@ -172,6 +176,8 @@
     "glide-select.d.ts",
     "status-mark.js",
     "status-mark.d.ts",
+    "pager.js",
+    "pager.d.ts",
     "lattice-loader.js",
     "lattice-loader.d.ts",
     "themes/",

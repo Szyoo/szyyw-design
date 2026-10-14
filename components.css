@@ -2743,3 +2743,48 @@ select.field.small { padding-right: 30px; }
   .lattice-loader .lattice-loader__mark { transform: none; }
   .lattice-loader .lattice-loader__text { filter: none; }
 }
+
+/* ---------- 分页器 .pager（pager.js，v0.20.0）----------
+   「共 N 条 · 第 a–b 条」 …… « ‹ 1 … 4 5 6 … 20 › » [每页] 跳至 [ ] 页。≤520px 页码收成「3 / 20」。 */
+.pager {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  padding: 10px 0 2px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+.pager-info { font-variant-numeric: tabular-nums; white-space: nowrap; margin-right: auto; }
+.pager-tools { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; }
+.pager .pager-size { width: auto; }
+.pager-nav { display: inline-flex; align-items: center; gap: 2px; }
+.pager-btn {
+  appearance: none;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: color 0.15s var(--ease), background 0.15s var(--ease);
+}
+.pager-btn:hover:not(:disabled) { color: var(--text); background: var(--hover-tint); }
+.pager-btn.active { color: var(--accent); background: var(--sheet-bg); box-shadow: inset 0 0 0 1px var(--glass-border); font-weight: 600; cursor: default; }
+.pager-btn:disabled:not(.active) { opacity: 0.35; cursor: not-allowed; }
+.pager-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.pager-gap { min-width: 20px; text-align: center; user-select: none; }
+.pager-cur { display: none; padding: 0 6px; font-variant-numeric: tabular-nums; color: var(--text); }
+.pager-jump label { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.pager-jump .field { width: 64px; text-align: center; }
+.pager[aria-busy="true"] { opacity: 0.7; }
+@media (pointer: coarse) { .pager-btn { min-width: 40px; height: 40px; } }
+@media (max-width: 520px) {
+  .pager-num, .pager-gap { display: none; }
+  .pager-cur { display: inline; }
+}

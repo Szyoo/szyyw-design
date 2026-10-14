@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pager · 手测</title>
+<!--
+  @szyyw/design 分页器的静态手测页（不进 package files）。
+  仓库根目录 `python3 -m http.server 8080`，打开 http://localhost:8080/demo/pager.html
+  ?scheme=light|dark&palette=aurora 可直接指定明暗 / 配色（截图用）。
+-->
+<script>
+  (function () {
+    var d = document.documentElement, q = new URLSearchParams(location.search);
+    var s = q.get("scheme"), p = q.get("palette");
+    if (s === "auto" || s === "dark" || s === "light") d.setAttribute("data-scheme", s);
+    if (p && p !== "default") d.setAttribute("data-palette", p);
+  })();
+</script>
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../components.css">
+<style>
+  .demo { max-width: 820px; margin: 0 auto; padding: 24px 16px 64px; }
+  .demo > section { padding: 18px 20px; margin-bottom: 16px; }
+  .demo h2 { margin: 0 0 4px; font-size: 15px; }
+  .demo .note { margin: 0 0 6px; font-size: 12px; color: var(--text-dim); }
+  .demo .log { font-size: 12px; color: var(--text-dim); margin-top: 6px; min-height: 1.4em; }
+</style>
+</head>
+<body>
+<div class="bg-layer" aria-hidden="true"></div>
+<div class="app-frame">
+  <main class="demo">
+    <h1 class="page-title grad-text">Pager</h1>
+    <section class="glass"><h2>1,234 条（zh）</h2><p class="note">每页条数、页码省略、跳页、← → 翻页；按「取数」模拟 setBusy 0.6 秒。</p>
+      <div id="p1"></div><div class="log" id="l1"></div></section>
+    <section class="glass"><h2>3 页（ja）</h2><div id="p2"></div></section>
+    <section class="glass"><h2>空（en，无每页条数）</h2><div id="p3"></div></section>
+  </main>
+</div>
+<script type="module">
+  import { mountPager } from "../pager.js";
+  const log = document.getElementById("l1");
+  const p1 = mountPager(document.getElementById("p1"), {
+    total: 1234, page: 5, pageSize: 50,
+    onChange: (s) => { log.textContent = JSON.stringify(s); p1.setBusy(true); setTimeout(() => p1.setBusy(false), 600); }
+  });
+  mountPager(document.getElementById("p2"), { total: 120, pageSize: 50, locale: "ja" });
+  mountPager(document.getElementById("p3"), { total: 0, locale: "en", pageSizes: [] });
+</script>
+</body>
+</html>

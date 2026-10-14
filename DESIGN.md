@@ -761,6 +761,16 @@ running 无 progress = 不定进度。选项：`color` `doneColor`（缺省 `--o
 选项：`pattern`（命名或自定义）`grid` 3|4 `shape` `color` `doneColor` `errorColor` `cellSize` `gap` `fontSize` `step` `idleOpacity` `glow` `glowColor`。
 用于替代长任务的「加载中…」；`role="status"`，状态变化时播报「文字 + 用时」。
 
+## 16.1 分页器 `.pager`（v0.20.0）
+
+`import { mountPager } from "@szyyw/design/pager"`；所有列表分页统一用它，应用不自写「上一页 / 加载更多」。
+
+- 结构：「共 N 条 · 第 a–b 条」+ 每页条数下拉（缺省 20 / 50 / 100 / 200）+ 首页 « / 上一页 ‹ / 页码（首尾与当前页两侧，中间省略号）/ 下一页 › / 末页 » + 跳页输入。
+- 交互：焦点在分页器内时 ← → 翻页；改每页条数保持当前第一条仍在页内；`setBusy(true)` 取数期间禁用全部控件（`aria-busy`）。
+- 窄屏（≤520px）页码收成「3 / 20」，首末与上下页按钮保留；触屏按钮 40px。
+- 只管界面：`onChange({ page, pageSize, reason })` 里取数，拿到新 total 后 `update({ total })`。服务端分页接口约定返回 `total`、`page`、`page_size`、`items`。
+- 公开类：`.pager`、`.pager-info`、`.pager-size`、`.pager-nav`、`.pager-tools`、`.pager-btn`（`.active`）、`.pager-gap`、`.pager-cur`、`.pager-jump`。
+
 ## 17. 出处与许可
 
 以下模块移植自 [React Bits](https://reactbits.dev)（David Haz），上游许可 **MIT + Commons Clause License Condition v1.0**
