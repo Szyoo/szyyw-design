@@ -1,6 +1,6 @@
 {
   "name": "@szyyw/design",
-  "version": "0.18.0",
+  "version": "0.19.0",
   "description": "szyyw.xyz design language — tokens, glass components, interactive dot-field background. Framework-agnostic CSS/JS, no build step.",
   "type": "module",
   "license": "MIT",
@@ -76,6 +76,46 @@
     "./overlay": {
       "types": "./overlay.d.ts",
       "default": "./overlay.js"
+    },
+    "./theme-background": {
+      "types": "./theme-background.d.ts",
+      "default": "./theme-background.js"
+    },
+    "./themes": {
+      "types": "./themes/index.d.ts",
+      "default": "./themes/index.js"
+    },
+    "./themes/*": {
+      "types": "./themes/*.d.ts",
+      "default": "./themes/*.js"
+    },
+    "./target-cursor": {
+      "types": "./target-cursor.d.ts",
+      "default": "./target-cursor.js"
+    },
+    "./gradual-blur": {
+      "types": "./gradual-blur.d.ts",
+      "default": "./gradual-blur.js"
+    },
+    "./branched-menu": {
+      "types": "./branched-menu.d.ts",
+      "default": "./branched-menu.js"
+    },
+    "./switch": {
+      "types": "./switch.d.ts",
+      "default": "./switch.js"
+    },
+    "./glide-select": {
+      "types": "./glide-select.d.ts",
+      "default": "./glide-select.js"
+    },
+    "./status-mark": {
+      "types": "./status-mark.d.ts",
+      "default": "./status-mark.js"
+    },
+    "./lattice-loader": {
+      "types": "./lattice-loader.d.ts",
+      "default": "./lattice-loader.js"
     }
   },
   "files": [
@@ -118,6 +158,23 @@
     "techtext.d.ts",
     "overlay.js",
     "overlay.d.ts",
+    "theme-background.js",
+    "theme-background.d.ts",
+    "target-cursor.js",
+    "target-cursor.d.ts",
+    "gradual-blur.js",
+    "gradual-blur.d.ts",
+    "branched-menu.js",
+    "branched-menu.d.ts",
+    "switch.js",
+    "switch.d.ts",
+    "glide-select.js",
+    "glide-select.d.ts",
+    "status-mark.js",
+    "status-mark.d.ts",
+    "lattice-loader.js",
+    "lattice-loader.d.ts",
+    "themes/",
     "fonts/"
   ]
 }

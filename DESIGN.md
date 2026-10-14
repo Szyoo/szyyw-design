@@ -9,15 +9,17 @@
 信息密度可以高，但视觉噪音必须低：细边框、低饱和、克制的动效。
 所有动效使用同一条缓动曲线 `--ease: cubic-bezier(0.22, 1, 0.36, 1)`——快出慢停，有弹性但不弹跳。
 
-## 2. 三层：主题 → 配色 → 明暗
+## 2. 三层：主题 → 配色 → 明暗（+ 鼠标效果）
 
-- **主题（theme）**：`html[data-theme]`。主题是**一整套**——背景效果、动效曲线、
-  光效（光晕/光斑）、配色族，不只是颜色。目前唯一主题 `nebula`（深空）：
-  DotField 点阵背景 + 毛玻璃层级 + 光晕跟随 + .spot 光斑。
-  新主题 = 新 token 块 +（按需）新的背景/光效模块；效果类参数尽量做成
-  token 旋钮（如 `--df-sparkle` / `--df-wave`），让主题只用 CSS 就能重配行为。
-- **配色（palette）**：`html[data-palette]`，主题的附属色彩变体，只覆盖 hue
-  相关 token（accent/bg/tint/df-*）。nebula 缺省青紫；附属配色 `aurora`（极光翠青）。
+- **主题（theme）**：`html[data-theme]`，决定**背景效果**。v0.19.0 起可插拔（§4.1）：`nebula`（星云，缺省，DotField 点阵）、
+  `cursor-grid`（光标网格）、`gradient-waves`（渐变波浪）、`side-rays`（侧光）、`pixel-blast`（像素爆破）、`particles`（粒子）。
+  切换主题时销毁旧背景、按需加载并挂上新背景，不刷新页面。毛玻璃层级、.spot 光斑与所有组件在各主题下一致。
+  效果类参数尽量做成 token 旋钮（如 `--df-sparkle` / `--df-wave`），让主题只用 CSS 就能重配行为。
+- **配色（palette）**：`html[data-palette]`，只覆盖 hue 相关 token（accent/bg/tint/df-*/th-*）。缺省青紫；`aurora`（极光翠青）。
+  v0.19.0 起**对所有主题通用**（tokens.css 的配色块本就不依赖 data-theme；`PALETTES[].theme` 只作来源标注）。
+  各主题从 token 取色，配色 / 明暗切换即时换色、不重建。
+- **鼠标效果（cursor，v0.19.0）**：`html[data-cursor]`，`default`（系统指针，不写属性）/ `target`（Target Cursor，§5「鼠标效果」）。
+  只在 `pointer: fine` 下生效，外观弹层里也只在精确指针设备上出现。
 - **明暗（scheme）**：`html[data-scheme]`，`dark`（缺省）/ `light` / `auto`（跟随系统）。
   实现：token 全部用 `light-dark()` 双值书写，scheme 只切换根节点的 `color-scheme`。
   auto = `color-scheme: light dark`，由系统决定取哪套，无需 JS 参与。
@@ -31,13 +33,19 @@
 三层的**选项表**与**纯函数**在 `@szyyw/design/appearance-data`（零 DOM、零 import，服务端可直接 import）：
 `THEMES` / `PALETTES`（含每个配色 `--bg` 的 `bg.dark` / `bg.light`）/ `SCHEMES` / `DEFAULT_APPEARANCE` /
 `normalizeAppearance` / `themeColorFor` / `readAppearanceFromCookies` / `appearanceAttrs`。
-客户端状态与「外观」弹层在 `@szyyw/design/appearance`。状态的唯一真相仍是 `<html>` 上的三个属性。
+客户端状态与「外观」弹层在 `@szyyw/design/appearance`。状态的唯一真相仍是 `<html>` 上的属性
+（`data-theme` / `data-palette` / `data-scheme`，v0.19.0 加 `data-cursor`）。
+
+v0.19.0 起存储键四项：`appearanceCookieNames(prefix)` → `{ theme, palette, scheme, cursor }`（如 `fl_cursor`）。
+`readAppearanceFromCookies` / `normalizeAppearance` / `appearanceAttrs` 都认 `cursor`，cursor 为 default 时不写 `data-cursor`；
+只传三项键名的旧调用照旧可用（cursor 用缺省名 `cursor`）。未知主题 id（含旧版本没有的主题）一律回退 `nebula`；
+配色不再随主题过滤。客户端的鼠标效果只在用户动过时落盘（旧应用不会多写一个 cookie）。
 
 1. **SSR 项目（Next 等）**：服务端读 cookie → 铺到 `<html>`，theme-color 也在服务端算，首屏不闪。
 
    ```ts
    import { readAppearanceFromCookies, appearanceAttrs, themeColorFor } from "@szyyw/design/appearance-data";
-   const COOKIES = { theme: "fl_theme", palette: "fl_palette", scheme: "fl_scheme" };
+   const COOKIES = { theme: "fl_theme", palette: "fl_palette", scheme: "fl_scheme", cursor: "fl_cursor" };
    const a = readAppearanceFromCookies((n) => jar.get(n)?.value, COOKIES);
    // <html lang="zh" {...appearanceAttrs(a)}>      —— palette 为 default 时不写 data-palette
    // theme-color：themeColorFor(a.palette, a.scheme)；auto 返回 { dark, light }，各配一条 media 查询
@@ -46,27 +54,32 @@
 2. **客户端对齐**：`configureScheme({ persist: "cookie", storageKey: "fl_scheme" })` +
    `configureAppearance({ persist: "cookie", storageKeys: { theme: "fl_theme", palette: "fl_palette" } })`。
    两者都是「`<html>` 上已有合法属性的项不覆盖，没有的才从存储恢复」。
-3. **静态页（无服务端）**：`<head>` 里、样式表之前内联一段同步脚本，从 localStorage 读三个键写到 `<html>`，
-   然后用 `persist: "localStorage"`（完整示例见 `demo/appearance.html`）：
+3. **静态页（无服务端）**：`<head>` 里、样式表之前内联一段同步脚本，从 localStorage 读键写到 `<html>`，
+   然后用 `persist: "localStorage"`（完整示例见 `demo/appearance.html`）。v0.19.0 推荐片段（多读一个 cursor）：
 
    ```html
    <script>
      (function () {
        var d = document.documentElement;
        try {
-         var t = localStorage.getItem("app:theme"), p = localStorage.getItem("app:palette"), s = localStorage.getItem("app:scheme");
+         var t = localStorage.getItem("app:theme"), p = localStorage.getItem("app:palette"),
+             s = localStorage.getItem("app:scheme"), c = localStorage.getItem("app:cursor");
          if (t) d.setAttribute("data-theme", t);
          if (p && p !== "default") d.setAttribute("data-palette", p);
          if (s === "auto" || s === "dark" || s === "light") d.setAttribute("data-scheme", s);
+         if (c && c !== "default") d.setAttribute("data-cursor", c);
        } catch (e) {}
      })();
    </script>
    ```
 
+   **旧片段（只恢复 theme / palette / scheme）不会坏**：没有 `data-cursor` 时 `configureAppearance` 会从存储补上；
+   片段写进去的未知主题 id 也由 `configureAppearance` 归一化回 nebula。光标由 JS 挂载、晚一拍出现也不闪，所以旧片段可以不改。
+
 4. **账号级持久化**归应用：`mountAppearancePanel({ onChange })` 里存库（🌗 改明暗也走这一个回调，别再另外订阅
    `onSchemeChange` 存一遍）；登录后把库里的值写回 cookie，换设备不用重设。
 5. **文案**（v0.12.0 起）：包内置 zh / ja / en（`appearance-text.js`），应用只传 `locale`，
-   不要再在应用的 i18n 里抄一份外观文案；个别词要改用 `labels` 逐键覆盖（`controls` 管背景参数控件名）。
+   不要再在应用的 i18n 里抄一份外观文案；个别词要改用 `labels` 逐键覆盖（`controls` 管主题参数控件名）。
    v0.13.0 起应用切换器 / 账户菜单 / 语言切换的文案也内置（`chrome-text.js`，同一套规则：未知语言回退中文、缺键按中文补齐）。
 6. **配色色值手工双写**：JS 不能 import CSS，`PALETTES[].bg` 与 tokens.css 的 `--bg: light-dark(L, D)` 各写一份。
    改 tokens.css 的配色块必须同步 appearance-data.js，并跑 `node scripts/check-tokens.mjs`（不一致退出码 1）。
@@ -84,12 +97,17 @@ z-index 50  .overlay         弹层遮罩（Portal 挂 body，避开 transform �
 z-index 51  .drawer          侧边抽屉（v0.13.0；要遮罩就配一个兄弟 .overlay）
 z-index 55  .menu            锚定下拉菜单（v0.13.0；抽屉 / 弹层里的 ⋯ 也要盖得住）
 z-index 60  .toast-region    操作反馈（v0.13.0；压在一切之上，不拦点击）
+z-index 62  .glide-select__menu  Glide Select 的选项菜单（v0.19.0，挂 body、fixed）
+最顶层      .target-cursor   Target Cursor（v0.19.0，fixed、pointer-events: none）
 ```
 
 玻璃三级：`--glass-bg`（卡片）→ `--inner-bg`（卡内嵌套）→ `--field-bg`（输入件）。
 弹层用更实的 `--sheet-bg`（92% 不透明），保证叠在任何内容上都可读。
 
 ## 4. DotField 点阵背景
+
+DotField 是缺省主题 `nebula` 的背景（`themes/nebula.js` 是它的主题适配器，§4.1）。旧 API `mountDotField` / `mountDotFieldSettings` /
+`restoreDotFieldSettings` 不变；nebula 的主题参数与旧「背景参数」同键、同存储（`szyyw:dotfield`）、同「只存动过的键」语义。
 
 参数缺省值（两个项目实测的平衡点）：
 
@@ -125,6 +143,83 @@ token 取色，并修掉了那个 transparent 灰晕。上游素材可用 shadcn
   `getPropertyValue("--df-from")` 只会拿到未展开的 `light-dark(...)` 字面量，
   解析必然失败、静默退回兜底色——v0.3.0 之前浅色模式与 aurora 配色其实从未生效。
   正确做法是把它套到真实的 `color` 属性上让浏览器算（`resolveTokenColor()`）
+
+### 4.1 背景主题（`themes/`、`theme-background`，v0.19.0）
+
+**注册表** `themes/index.js`：`THEME_REGISTRY = [{ id, labels: { zh, ja, en }, load: () => import("./<id>.js") }]`，
+`themeEntry(id)`、`loadTheme(id)`（同一 id 只加载一次，失败不缓存）、`pickLabel(labels, locale)`。零 DOM，服务端 import 无副作用。
+nebula 由 theme-background.js 静态引入（首帧同步挂上），其余**只加载当前主题**。
+`appearance-data.js` 的 `THEMES` 与注册表由 `scripts/check-tokens.mjs` 断言同序一致。
+
+**主题模块接口**（`themes/types.d.ts`）：
+
+```js
+export const meta = { id, labels: { zh, ja, en }, params: [ /* 见下 */ ] };
+export function mount(container, params, ctx) { return { update(params, info), reset?(params), destroy() }; }
+```
+
+- `params` 项类型：`range`（min / max / step / default）、`toggle`、`select`（options[].value / labels）、
+  `token`（值是 token 名，如 `"--accent"`；**颜色一律来自 token，不暴露自由取色**）、`color`（直接改写一个颜色 token，只给 nebula 兼容旧取色用）。
+  可选 `hints`（说明行）、`visibleWhen: { key, equals } | { key, notEquals }`（条件显示）。外观弹层按它自动生成控件。
+- `ctx`：`reducedMotion()`、`finePointer()`、`color(token) → [r, g, b, a]`（**r/g/b 0–255，a 0–1**，light-dark / color-mix 已求值；
+  取不到 `[0,0,0,0]`）、`onColorsChange(cb) → 退订`（主题 / 配色 / 明暗 / 行内 token 变化，同一帧合并）、`overrides`（用户动过的参数）。
+- `update(params, { changed, overrides })`：参数变化热更新；`reset` 可选（「恢复默认」时调用，不实现则以缺省值调 update）。
+- 约定：canvas `pointer-events: none`，指针在 window 上监听且只在 `pointer: fine` 下启用；标签页隐藏 / 不在视口时暂停；
+  `fps` 参数（背景缺省 30）；reduced-motion 下静态；destroy 移除 canvas / 监听 / rAF。
+- 颜色 token：主题需要专用色时在 tokens.css 为 default / aurora × light / dark 各加 `--th-<主题>-*`。
+  **token 的 alpha 是强度系数**：浅色模式用较低 alpha，叠在浅底上不刺眼、不抢正文。
+
+**运行时** `mountThemeBackground(container, { theme?, follow = true, persist, storageKey, storagePrefix })`（`./theme-background`）：
+跟随 `html[data-theme]` 切换；参数按主题分别持久化——nebula 用 `szyyw:dotfield`，其余 `szyyw:theme-params:<id>`，只存动过的键。
+句柄：`theme` / `requested` / `meta` / `ready` / `field`（nebula 时为 DotField 句柄）/ `status(id)` / `setTheme` / `params()` /
+`overrides(id?)` / `allOverrides()` / `setParams(patch)` / `resetParams()` / `subscribe(fn)` / `destroy()`。
+同模块还导出 `createThemeContext`、`tokenColor`、`parseCssColor`、`themeDefaults`、`sanitizeThemeParams`、`readThemeParams`。
+加载失败（文件缺失 / 网络 / 模块不合规 / 拿不到 WebGL）不抛错：状态记 `failed`，保留当前背景（首挂失败回退 nebula）；
+外观弹层把该主题 chip 置灰并提示，用户刚点选的会退回当前主题。
+
+**新增一个主题**：写 `themes/<id>.js`（+ `.d.ts`），在 `themes/index.js` 登记一行、在 `appearance-data.js` 的 `THEMES` 加 id、
+在 `appearance-text.js` 的 `themes` 加三语名字，把文件加进 `package.json` `files`（`themes/` 已整目录收录）与 `sync.sh` 的 `FILES`，
+跑 `node scripts/check-tokens.mjs`。
+
+**Canvas 主题的上游参数对照**（缺省值同上游，颜色改 token）：
+
+- `cursor-grid`（React Bits CursorGrid）：`cellSize radius falloff holdTime fadeDuration lineWidth maxOpacity fillOpacity gridOpacity cellRadius clickPulse pulseSpeed`
+  同名保留；`color`（hex）→ token 选择（缺省 `--accent`）；`gridOpacity` 缺省 0 → 0.08（触屏 / 减少动效时不至于全空）；新增 `fps`（30）。
+- `particles`（React Bits Particles，WebGL2 优先、降级 WebGL1 + ANGLE_instanced_arrays，都没有则不画）：`particleCount particleSpread speed
+  moveParticlesOnHover particleHoverFactor alphaParticles particleBaseSize sizeRandomness cameraDistance disableRotation shape glow twinkle
+  depthOfField connections connectionDistance hoverEffect hoverRadius clickBurst drift driftSpeed variation intro opacity paused` 同名保留；
+  `particleColors`（数组）→ `colorA` / `colorB` 两个 token（缺省 `--accent` / `--accent2`）；`lightMode`（布尔）→ `auto | on | off`，
+  auto 按解析后的 `--bg` 亮度；`pixelRatio` 0 = 跟随设备；新增 `fps`（30）。
+
+### 4.2 WebGL 主题（`gradient-waves` / `side-rays` / `pixel-blast`，v0.19.0）
+
+三个主题按 §4.1 接口写（`mount` 另返回 `webgl` 布尔），共用内部模块 `themes/_gl.js`（不单独导出，但必须随包分发）：
+
+- **上下文**：先 `webgl2` 后 `webgl`；着色器源码统一写 GLSL ES 1.00，WebGL2 下自动加 `#version 300 es` 头（宏替换
+  `attribute/varying/gl_FragColor/texture2D`），WebGL1 需要 `fwidth` 时自动开 `OES_standard_derivatives`。都拿不到或着色器编译失败：
+  `mount` 不抛错，container 留 `background: var(--bg)`，返回 `webgl: false`，由框架决定回退。
+- **画布**：铺满 container、`pointer-events: none`；像素比 = `min(devicePixelRatio, maxDpr)`（参数，缺省 1.5）；ResizeObserver +
+  window resize（DPR 变化）。全部输出**预乘 alpha**。
+- **丢上下文**：`webglcontextlost` 时 `preventDefault` 并停画，`webglcontextrestored` 后重建程序 / 缓冲 / 纹理继续，canvas 不换。
+- **帧循环**：`fps` 限帧（缺省 30）；时间按真实间隔累加、单帧最多补 100ms（暂停恢复不跳）；标签页隐藏、container 不在视口时停 rAF；
+  reduced-motion 时不进循环，只在挂载 / 参数变化 / 换色时画一帧。
+- **取色**：颜色参数是 `type: "token"`（options：主题自有 `--th-*` + `--accent` / `--accent2` / `--df-from` / `--df-to` / `--text` / `--text-dim`），
+  经 `ctx.color()` 解析后归一到 0–1，`onColorsChange` 时即时换色、不重建。
+- **参数热更新**：除 pixel-blast 的 `antialias`（上下文属性，内部重建）外都只改 uniform。
+- 新 token：`--th-gradient-waves-horizon / -wave / -crest`、`--th-side-rays-1 / -2`、`--th-pixel-blast-color`。
+
+参数对照（上游 prop → 本包 key，缺省值同上游；三者都另有本包新增的 `fps`（10–60，缺省 30）与 `maxDpr`（0.5–2，缺省 1.5））：
+
+| 主题（上游） | 参数 |
+|---|---|
+| `gradient-waves`（GradientWaves） | `horizonColor / waveColor / crestColor`（token，缺省 `--th-gradient-waves-*`）、`speed` 0.4、`amplitude` 2.5、`waveScale` 0.6、`waveRatio` 0.9、`swell` 35、`turbulence` 20、`tilt` 1.11（弧度）、`zoom` 1、`height` 5.5、`fogDepth` 15、`detail` low / **medium** / high（步进 40 / 70 / 110）、`brightness` 1、`opacity` 1、`mouseInteraction` on、`parallaxStrength` 0.5、`grain` on、`grainIntensity` 0.05 |
+| `side-rays`（SideRays） | `speed` 2.5、`rayColor1 / rayColor2`（token，缺省 `--th-side-rays-1 / -2`）、`intensity` 2、`spread` 2、`origin` **top-right** / top-left / bottom-right / bottom-left、`tilt` 0（度，−90–90）、`saturation` 1.5、`blend` 0.75、`falloff` 1.6、`opacity` 1 |
+| `pixel-blast`（PixelBlast） | `variant` **square** / circle / triangle / diamond、`pixelSize` 3、`color`（token，缺省 `--th-pixel-blast-color`）、`antialias` on、`patternScale` 2、`patternDensity` 1、`pixelSizeJitter` 0、`enableRipples` on（点击涟漪）、`rippleIntensityScale` 1、`rippleThickness` 0.1、`rippleSpeed` 0.3、`liquid` off、`liquidStrength` 0.1、`liquidRadius` 1、`liquidWobbleSpeed` 4.5、`speed` 0.5、`edgeFade` 0.5、`noiseAmount` 0、`transparent` on（关 = 底色取 `--bg`，上游是黑）、`autoPauseOffscreen` on |
+
+与上游的差异（都是有意的）：ogl / three / postprocessing → 原生 WebGL；pixel-blast 开 `liquid` 或 `noiseAmount > 0` 时先画进帧缓冲，
+第二遍全屏着色器做 UV 扭曲（拖尾纹理 = 64×64 的 2D 画布，同上游）与噪点，都关时一遍直出；side-rays 上游每次改参数都重建上下文，这里只改 uniform；
+pixel-blast 时间按 `speed` 积分（上游改速度时相位会跳）、液态拖尾按真实时间老化（上游按帧数）；gradient-waves 鼠标缓动按真实时间折算；
+指针都在 window 上监听（上游监听 canvas），只对精确指针开启。
 
 ## 5. 右上角工具位（.corner-tools）
 
@@ -199,12 +294,30 @@ token 取色，并修掉了那个 transparent 灰晕。上游素材可用 shadcn
 `mountAppearancePanel()`（v0.10.0），面板根节点 `glass corner-panel settings-panel appearance-panel`，
 宽度与 ≥720px 两列网格沿用 `.settings-panel`。从上到下：
 
-- **配色行**：当前主题下的配色 chip（`.chip` / `.chip-row`）。主题只有一个时**不渲染主题行**，别为唯一主题留空行
+- **主题行**（v0.19.0，有主题背景时）：按注册表列出，名字优先用 `labels.themes`，其次注册表 / meta 的三语名；
+  加载失败的主题 chip 置灰，原因写在 title 与下方提示行
+- **配色行**：配色 chip（`.chip` / `.chip-row`），v0.19.0 起对所有主题通用
 - **明暗行**：跟随系统 / 深色 / 浅色。与 🌗 并列——🌗 是一键循环的快捷入口，弹层是完整设置；
   两者经 scheme.js 的事件互相同步
-- **背景参数**（传了 `field` 才有）：`<details class="appearance-advanced">` 折叠段，`summary` 用 `.ctl-label`；
-  内容就是下面「背景参数」的全部控件与语义（同一份代码），「恢复默认 / 保存」在折叠段底部
+- **鼠标效果行**（v0.19.0，仅 `pointer: fine`）：默认 / Target Cursor；`cursor: false` 可隐藏
+- **主题参数**：`<details class="appearance-advanced">` 折叠段（替代旧「背景参数」段），`summary` 用 `.ctl-label`；
+  按当前主题 `meta.params` 自动生成控件（range / toggle / select / token），换主题即重建；
+  nebula 时就是下面「背景参数」的全部控件与语义；「恢复默认」只作用于当前主题，「保存」在折叠段底部
 - **版本行**（`dotField.update !== false`）：同下「版本检测」
+
+v0.19.0 接口要点：
+
+- `mountAppearancePanel({ background })`：新写法，传 `mountThemeBackground()` 的句柄；旧写法 `{ field }`（DotField 句柄）照旧可用，
+  只有 nebula 的参数段、没有主题行。
+- `dotField.onSave(values, info)`：`values` 仍是当前主题动过的键（nebula 时与旧版完全相同，可直接喂 `restoreDotFieldSettings`）；
+  新增第二参数 `info = { theme, params, all }`（`all` = 各主题动过的参数），想按主题存服务端就用它。
+  `dotField.storagePrefix`：非 nebula 主题的参数存储前缀，缺省 `szyyw:theme-params:`。
+- `onChange(appearance, changed)`：`appearance` 多了 `cursor` 与 `themeParams`（当前主题动过的参数）；主题参数改动以
+  `changed = ["themeParams"]` 去抖（600ms）通知一次。只读 theme / palette / scheme 的旧代码不受影响。
+- `mountAppearance()` 的返回值新增 `background`（主题背景句柄）；`field` 改为 getter：当前主题是 nebula 时为 DotField 句柄，否则 null。
+- 文案新增（appearance-text，zh / ja / en）：`themeParams` `cursor` `cursors.{default,target}` `unavailable` `loading`
+  `themeFailed` `cursorFailed` `noParams`，`themes` 补齐六个主题名。参数控件名来自各主题 `meta.params[].labels`，
+  `labels.controls[key]` 仍可逐键覆盖（说明行 `${key}Hint`）；旧 `labels.background` 若给了，作为主题参数段标题的回退。
 
 改配色后 `setAppearance` 会调 `refreshThemeColor()`（scheme.js）重算 `<meta name="theme-color">`，不需要整页刷新。
 
@@ -220,7 +333,14 @@ token 取色，并修掉了那个 transparent 灰晕。上游素材可用 shadcn
 
 图标用调色板不用齿轮：这里调的是外观/主题，齿轮会被读成系统设置。
 
-#### 背景参数（.settings-panel，`mountDotFieldSettings` 或外观弹层的折叠段）
+#### 鼠标效果（`data-cursor`，v0.19.0）
+
+外观弹层（或 `mountCursorEffect()`）挂着时，`data-cursor="target"` → 按需 `import("./target-cursor.js")` 并 `mountTargetCursor(options)`；
+选回默认 → `destroy()`，系统光标与 DOM 完全恢复。只在 `pointer: fine` 下生效。加载器与选项可换：`configureCursorEffect({ load, options })`
+（`mountAppearance` / `mountChrome` 的 `appearance.cursorEffect` 同义）。`getCursorEffectStatus()` → `off | loading | active | failed`；
+加载失败时弹层把 Target Cursor 置灰并提示。引用计数：`setLocale` 重挂弹层不会让光标闪一下。Target Cursor 的参数见 §16。
+
+#### 背景参数（.settings-panel，`mountDotFieldSettings` 或外观弹层 nebula 主题的参数段）
 
 实时调点阵，来自 `@szyyw/design/settings`。
 v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一成和其余弹层一样。
@@ -358,6 +478,7 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
 - 禁用的 `.btn` 是实底「熄灭」态（`--inner-bg` + 描边），不是半透明渐变——半透明紫挨着输入框看着像粘连。
   项目给 `.btn` 加了自己的底色变体（如 `.btn.danger { background: … }`）时写成 `:not(:disabled)`，
   否则禁用态会被盖成可点的样子。
+- 开关 `.switch`（v0.19.0 Squish 动效、可选拖动增强）与下拉 Glide Select（原生 `<select>` 的渐进增强）见 §16。
 
 ## 11. 公开类与内部类
 
@@ -381,13 +502,19 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
 - v0.17.0 新增（§15）：`.field-wrap` `.field-clear` `.u-*` 工具类 `.w-sm/.w-md/.w-lg` `.sub-hint` `.inset-list` `.row-hover` `.chip-group` `.chip-group-label` `.field-inset` `.field-inset-btn` `.icon-grid` `.icon-cell` `.btn-icon` `.msg-list` `.msg-item` `.msg-dot` `.msg-text` `.msg-title` `.msg-body` `.msg-time` `.back-link`；JS `./overlay`（`mountOverlay`）
 - v0.18.0：`.app-title` 改为新标题字样（§7「标题字样」，有意的可见变化），新增 `.wordmark`（同字样、不设字号）；
   `components.css` 新增 `@font-face "Geist"`（`fonts/`）；`mountChrome` 的 `techText` 缺省开启（`.app-title, .wordmark`，跟进后插入的元素）
+- v0.19.0 新增（§16）：`.glide-select`（`__trigger` `__label` `__chevron` `__menu` `__list` `__group` `__group-label` `__pill` `__option` `__name` `__tag` `__check`）
+  `.glide-native` `.status-mark`（`__glyph` `__track` `__ring` `__check` `__cross` `__label` `__strike` `__sr`）
+  `.lattice-loader`（`__grid` `__layer` `__run` `__mark` `__cell` `__label` `__text` `__timer` `__sr`）`.branched-menu*`；
+  `.switch.is-dragging`（switch.js 拖动中）；toast 卡片内部结构 `.toast-slot` `.toast-gate` `.toast-icon` `.toast-body` `.toast-title` `.toast-text` `.toast-action` `.toast-close` `.toast-fuse`；
+  属性 `html[data-cursor]`、`data-glide` `data-status` `data-gradual-blur`、`data-cursor-label`；token `--th-*`、`--sw-*`；
+  JS `./theme-background` `./themes` `./themes/<id>` `./target-cursor` `./gradual-blur` `./branched-menu` `./switch` `./glide-select` `./status-mark` `./lattice-loader`
 - v0.15.0 新增（§14）：JS `./techtext`（`mountTechText` `enhanceTechText` `DEFAULTS`）、`mountChrome({ techText })` 与 `handle.techText`；
   类 `.tech-text`（JS 加在被增强的元素上，可用来写选中色等外观）。`.tech-text-canvas` 是内部实现，别套用
 
 **内部实现**（只给包里的 JS 组件用，结构和定位随版本变，**项目不要借用这些类名去套自己的元素**，
 也不要在自己的 CSS 里覆写）：
 
-- `.settings-panel` `.settings-toggle` `.appearance-*` `.panel-body` `.panel-foot` `.ctl*` `.update-*`
+- `.settings-panel` `.settings-toggle` `.appearance-*`（含 v0.19.0 的 `.appearance-status`）`.theme-param-choice` `.panel-body` `.panel-foot` `.ctl*` `.update-*`
   （外观 / 背景参数弹层；v0.9.0 把 `.settings-panel` 的定位挪给 `.corner-panel`，借用它的门户抽屉因此摊到了页面底部）
 - `.corner-tools` `.scheme-toggle` `.locale-toggle` `.locale-menu*` `.app-switcher*` `.account-*` `.guest-note`
   （`.corner-tools` 容器由 corner.js 管，别手写；按钮用 `createCornerButton`）
@@ -408,7 +535,7 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
 | `.callout` + `.ok/.warn/.err/.info` | 提示条：tint 底 + 同色描边；首个 `<strong>` 着语义色；info 跟 accent | 各处内联 style 的提示块 |
 | `.tabs > .tab` | 选中 `.active` 或 `[aria-selected="true"]`；`.tabs.compact` 紧凑；`.tabs.scroll` 不换行横滚 | jppost / 某看板类应用 `.nav-tabs .tab`（样子一致）、portal `.tab-bar .tab-btn` |
 | `.seg > button` | 分段控件，选中 `.active` 或 `aria-pressed="true"` | 某看板类应用 `.mode-switch`、portal `.lay-seg`（cosme 的 `.acct-seg` 是账号进度条的色段，不是分段控件，不在此列） |
-| `toast()`（toast.js） | `toast(msg, { tone, timeout })`，底部居中堆叠、点击关闭、aria-live；有底部导航时设 `--toast-offset` | portal `toast.jsx`、某控制台类 / 看板类应用 `.toast` |
+| `toast()`（toast.js） | `toast(msg, { tone, timeout })`，底部居中堆叠、aria-live；有底部导航时设 `--toast-offset`。v0.19.0 起为 Swipe Toast（下滑关闭，§16） | portal `toast.jsx`、某控制台类 / 看板类应用 `.toast` |
 | `.field.small` | 紧凑输入（14px、6px 10px）；触屏 / ≤640px 仍 16px 防 iOS 缩放 | portal `.field-small`、某看板类应用 `select.field.small` |
 | `.field:disabled` / `.switch:disabled` | 熄灭态 | — |
 | `.spinner`（`.lg`） | 跟随文字色与字号；减少动效时停转但可见 | 各自的「加载中…」文字 / 自写转圈 |
@@ -559,3 +686,99 @@ const h = mountTechText(el, options);               // → { refresh(), destroy(
 逐段取色、按字号缩放、共享 rAF / 30fps / 离屏暂停、同步首帧、触屏拖拽、reduced-motion / forced-colors / 打印处理。
 Commons Clause 一节写的是「可以作为应用 / 网站的一部分使用（含商用），但不得出售、再许可或再分发组件本身」；
 包作者知情，决定把移植版随本包（个人站点的设计包）发布、供自己的站点使用。其他使用者请自行评估上游许可。
+
+## 16. 交互组件与控件（v0.19.0）
+
+全部框架无关 ESM + 手写 `.d.ts`，颜色只从 token，尊重 `prefers-reduced-motion`；出处见 §17。手测页
+`demo/swipe-toast.html` `target-cursor.html` `gradual-blur.html` `branched-menu.html` `squish-switch.html` `glide-select.html` `status-mark.html` `lattice-loader.html`。
+
+### Swipe Toast（`./toast`，升级）
+
+`toast(message, { tone, timeout })` / `clearToasts()` 调用方式与语义不变，外观与交互升级：下滑关闭、底边剩余时间引线
+（悬停 / 按住 / 聚焦 / 标签页隐藏时暂停）、按 tone 的内置 SVG 图标、Esc 关闭、堆叠折叠动画。
+新增可选项：`title`、`action: { label, onClick }`、`icon`（Node / SVG 标记 / false）、`closeButton`、`pauseOnHover`、`onClose(reason)`。
+DOM：`.toast-region > .toast-slot > .toast-gate > .toast`（卡片仍是 `.toast.<tone>`，即 `toast()` 返回的 `el`）；卡片内 `.toast-icon` /
+`.toast-body`（`.toast-title` / `.toast-text`）/ `.toast-action` / `.toast-close` / `.toast-fuse`。色取 `--toast-tone`
+（ok→`--ok`、warn→`--warn`、err→`--err`、info→`--accent`）；位置仍是底部居中，`--toast-offset` 让位底部导航。
+
+### Target Cursor（`./target-cursor`）
+
+`mountTargetCursor(options) → { update(opts), destroy() }`：四角取景框吸附可交互元素，仅 `pointer: fine`；一般经外观弹层的「鼠标效果」开关（§5）。
+参数沿用上游名：`targetSelector`（缺省 `.cursor-target, a, button, [role=button]`，别名 `selector`）、`cursorColor` / `cursorColorOnTarget`
+（缺省 `var(--accent)` / `var(--accent2)`，吸附时 oklab 混合）、`spinDuration`、`hoverDuration`、`parallaxOn`、`hideDefaultCursor`、`size`、
+`cornerSize`、`thickness`、`padding`、`matchRadius`、`dotSize`、`blendMode`（缺省 `normal`，上游 `difference`）、`showLabel`（读目标的
+`data-cursor-label`）、`clickEffect`、`container`。destroy 后恢复系统光标并移除全部 DOM / 样式。
+
+### Gradual Blur（`./gradual-blur`）
+
+`mountGradualBlur(target, options)` / `enhanceGradualBlur(root?)`：可选的边缘渐进模糊，**不默认挂到任何页面**。
+目标 = 元素（模糊带是它的兄弟节点，贴着可视区边缘）或 `window` / `document` / `"page"`（固定在视口边缘）。
+声明式：`data-gradual-blur="top|bottom|both"` + `data-gradual-blur-<短横线参数名>`。参数：`position`（`top|bottom|both|left|right`）、
+`strength`、`height`、`width`、`divCount`、`exponential`、`zIndex`、`animated`（false / true / "scroll"）、`duration`、`easing`、`opacity`、`curve`、
+`responsive` + `mobile|tablet|desktop` `Height|Width`、`preset`、`hoverIntensity`、`onAnimationComplete`、`className`、`style`；
+新增 `edgeFade`（px，缺省 64：离开边缘多远才完全显现，0 = 常驻）。
+
+### Branched Menu（`./branched-menu`，备用）
+
+`mountBranchedMenu(container, { sections: [{ label, icon?, value?, items: [{ label, value, icon? }] }], value?, onSelect?, … }) → { set, toggle, destroy }`，
+目前不接入现有界面。上游参数全保留（`defaultOpen` / `onToggle` / `color` / `accentColor` / `lineColor` / `width` / `rowHeight` / `indent` / `trunk` /
+`radius` / `lineWidth` / `fontSize` / `drawDuration` / `foldDuration` / `className`）；`icon` 取内置名（`ICONS`：install / rocket / settings / paint /
+pointer / font / layers / bell）、SVG 标记或 Node。
+
+### Squish Switch（`.switch` + 可选 `./switch`）
+
+- 标记仍是 `<input type="checkbox" class="switch">`，布局零变化（40×22，flex: none）。纯 CSS：颜色渐变、按下滑块横向压扁、
+  悬停轻微膨胀（仅 `hover: hover`）、滑块带过冲回弹地滑动；新增 `:focus-visible` 描边；reduced-motion 下无位移动效。
+  可调变量 `--sw-w / --sw-h / --sw-inset / --sw-r / --sw-dur / --sw-fade / --sw-squish / --sw-hover`。
+- `enhanceSwitches(root?, options?)`：指针拖动（跟手）、拖动时按速度横向拉伸、松手按落点（过半）切换并回弹。语义与原生 checkbox 一致：
+  点击 / 空格 / label / 表单 / reset 全是浏览器原生；拖动只在落点与当前状态不同时产生一次原生 click → `input` / `change`，Esc 或取消还原。
+  选项（也可写 `data-stretch` / `data-hover-scale` / `data-speed` / `data-color-duration` / `data-width` / `data-height` / `data-radius`）：
+  `stretch` 36、`hoverScale` 1.035、`speed` 50、`colorDuration` 200、`width` / `height` / `radius`。
+- 对照上游 SquishSwitch：`checked/defaultChecked/onChange` = 原生 checkbox；`label` = 外层 `<label>`；颜色改为 token；其余尺寸 / 速度参数保留。
+
+### Glide Select（`./glide-select`）
+
+- `<select class="field" data-glide>` + `enhanceSelects()`；或 `enhanceSelect(el, options) → { refresh(), destroy() }`。不支持 `multiple`。
+- 原生 select 视觉隐藏（`.glide-native`）但留在 DOM，是真实数据源：选中时写 `selectedIndex` 并派发冒泡的 `input`、`change`；外部写 `value` /
+  `selectedIndex` 自动同步且不派发事件（不与受控组件回环）；option 列表 / disabled / 文案 / `data-tag` 由 MutationObserver 同步；`form.reset()`、`<label for>` 都处理。
+- 触发器：`select.field` → 触发器带 `.field`（+ `.small`）沿用 `.field` 外观；非 `.field` → 紧凑玻璃小块（`size` sm / md / lg）。
+- 菜单挂 `<body>` fixed 定位（不被 `.table-wrap` 裁、不被 `.glass` 的 backdrop-filter 困住），放不下自动翻转，过长出滚动条；页面滚动 / 缩放关闭。
+- 键盘 ↑↓ Home End Enter / Space Esc Tab + 字母前缀跳转；`role=combobox` + `aria-activedescendant`、`listbox` / `option` / `group`。
+- 选项（`data-glide-<kebab>` 同名）：`placeholder` `showTags`（option 的 `data-tag`）`accent` `surface` `highlight` `text`（token 名或 CSS 颜色）`size` `radius`
+  `menuWidth`（缺省改为「不小于触发器、按内容」）`placement` `align` `popDuration` `glideDuration` `rememberPosition` `ariaLabel` `className`。
+
+### Status Mark（`./status-mark`）
+
+`mountStatusMark(el, { status, progress, label, … }) → { set(partial), destroy() }`；声明式 `<span class="status-mark" data-status="running" data-progress="0.4" data-label="…">`
++ `enhanceStatusMarks()`（挂载后监听这三个属性）。status：`pending` `running` `done` `failed` `cancelled`（别名 `idle` = pending、`error` = failed），
+running 无 progress = 不定进度。选项：`color` `doneColor`（缺省 `--ok`）`errorColor`（缺省 `--err`）`size` `strokeWidth` `dashes` `fontSize` `spinDuration`
+`arcLength` `drawDuration` `fillOpacity` `strike` `strikeDelay`，另加 `texts`（读屏文字覆盖）。reduced-motion：不转圈（不定进度改呼吸）、勾叉直接出现。
+
+### Lattice Loader（`./lattice-loader`）
+
+`mountLatticeLoader(el, { label, doneLabel, errorLabel, status, showTimer, elapsed, … }) → { set(partial), destroy() }`：方格波浪 + 实时秒表
+（`tabular-nums`，100ms 刷新）；`status` 切到 `done` / `error` 时方格拼成 ✓ / ✕ 并定格用时，切回 `working` 从 0 重计；给了 `elapsed`（秒）就由外部控制秒表。
+选项：`pattern`（命名或自定义）`grid` 3|4 `shape` `color` `doneColor` `errorColor` `cellSize` `gap` `fontSize` `step` `idleOpacity` `glow` `glowColor`。
+用于替代长任务的「加载中…」；`role="status"`，状态变化时播报「文字 + 用时」。
+
+## 17. 出处与许可
+
+以下模块移植自 [React Bits](https://reactbits.dev)（David Haz），上游许可 **MIT + Commons Clause License Condition v1.0**
+（v0.19.0 新增的移植文件头都注明了出处；DotField 的来历见 §4）：
+
+| 本包 | 上游组件 |
+|---|---|
+| `dotfield.js`（主题 nebula） | DotField |
+| `techtext.js` | TechText |
+| `themes/cursor-grid.js` · `themes/particles.js` | CursorGrid · Particles |
+| `themes/gradient-waves.js` · `themes/side-rays.js` · `themes/pixel-blast.js` | GradientWaves · SideRays · PixelBlast |
+| `target-cursor.js` · `gradual-blur.js` · `branched-menu.js` · `toast.js`（Swipe Toast 外观与交互） | TargetCursor · GradualBlur · BranchedMenu · SwipeToast |
+| `.switch` + `switch.js` · `glide-select.js` · `status-mark.js` · `lattice-loader.js` | SquishSwitch · GlideSelect · StatusMark · LatticeLoader |
+
+Commons Clause 一节的大意是「可以作为应用 / 网站的一部分使用（含商用），但不得出售、再许可或再分发组件本身」。
+包作者知情，决定把移植版随本包（个人站点的设计包）发布、供自己的站点使用；其他使用者请自行评估上游许可。
+上游原件可按 `components.json` 的 `@react-bits` registry 取到 `reference/reactbits/`（已 gitignore，不随包分发），只作参考、不作依赖。
+移植时 React state / effect → 闭包，`motion` → CSS transition / Web Animations，`ogl` / `three` / `postprocessing` → 原生 WebGL，零运行时依赖。
+
+其他第三方素材：Branched Menu 内置图标取自 Hugeicons 免费集（MIT，Copyright (c) 2025 Hugeicons），以内联 SVG 收录；
+字体 Geist（SIL OFL 1.1，`fonts/OFL.txt`，见 §7）。

@@ -1,5 +1,47 @@
 # Changelog
 
+## v0.19.0 — 2026-10-14
+
+**背景主题可插拔、鼠标效果、一批交互组件与控件**（DESIGN.md §2、§4.1–§4.2、§5、§16、§17）。纯新增为主；可见变化是 toast 与 `.switch` 的新外观。
+
+**新增**
+- 背景主题：`html[data-theme]` 取值扩展为 `nebula`（缺省）/ `cursor-grid`（光标网格）/ `gradient-waves`（渐变波浪）/ `side-rays`（侧光）/
+  `pixel-blast`（像素爆破）/ `particles`（粒子），新增 5 个；切换不刷新页面，只加载当前主题。上游参数全部保留，**每个主题的参数都在外观弹层里可调**
+  （按主题 `meta.params` 自动生成控件），每个主题分别持久化。WebGL 主题为原生 WebGL2（降级 WebGL1）、零依赖，带 fps / DPR 上限、
+  视口外与隐藏标签页暂停、丢上下文恢复；颜色全部取自 token，配色 / 明暗切换即时换色。
+- 新模块 `./theme-background`（`mountThemeBackground` 等）、`./themes`（注册表 `THEME_REGISTRY` / `loadTheme`）与 `./themes/<id>`（主题模块接口见 `themes/types.d.ts`）。
+- 新 token：`--th-gradient-waves-horizon / -wave / -crest`、`--th-side-rays-1 / -2`、`--th-pixel-blast-color`（default / aurora × light / dark）。
+- 鼠标效果 `html[data-cursor]`：默认 / Target Cursor，外观弹层里切换（仅精确指针设备），选回默认完全恢复系统光标；随外观持久化（`<prefix>cursor`）。
+  `./appearance` 新增 `configureCursorEffect`、`mountCursorEffect`、`getCursorEffectStatus`，`./appearance-data` 新增 `CURSORS`。
+- `./target-cursor`（`mountTargetCursor`）、`./gradual-blur`（`mountGradualBlur` / `enhanceGradualBlur`，不默认挂到任何页面）、
+  `./branched-menu`（`mountBranchedMenu`，备用组件，未接入现有界面）。
+- Swipe Toast：`toast()` 新增可选项 `title`、`action`、`icon`、`closeButton`、`pauseOnHover`、`onClose(reason)`。
+- Squish Switch：`./switch` 的 `enhanceSwitches()` 为 `.switch` 加指针拖动、速度拉伸与回弹（可选）；`.switch` 新增 `--sw-*` 旋钮与 `:focus-visible` 描边。
+- `./glide-select`（`enhanceSelect` / `enhanceSelects`，原生 `<select>` 的渐进增强）、`./status-mark`（`mountStatusMark` / `enhanceStatusMarks`）、
+  `./lattice-loader`（`mountLatticeLoader`，方格波浪 + 秒表）。新公开类见 DESIGN.md §11。
+- DESIGN.md §17「出处与许可」：React Bits 移植件（MIT + Commons Clause）与 Hugeicons 图标的统一说明。
+
+**可见变化**
+- toast 换成 Swipe Toast 外观：卡片带标题 / 描述排版、按 tone 的线性图标（不再是实心圆点）、底边剩余时间引线，可下滑或 Esc 关闭；
+  `toast(message, { tone, timeout })` / `clearToasts()` 的调用与语义不变。components.css 中段被覆盖的旧 toast 规则与 `@keyframes toast-in / toast-out` 已删除。
+- `.switch` 换成 Squish 动效（颜色渐变、按下压扁、过冲回弹），标记、尺寸与布局不变；`prefers-reduced-motion` 下无位移动效。
+- 外观弹层：新增主题行与鼠标效果行；「背景参数」段改为通用「主题参数」段。
+- 配色对所有主题通用（不再随主题过滤）。
+
+**兼容**
+- nebula 参数沿用 `szyyw:dotfield`（其余主题 `szyyw:theme-params:<id>`）；`mountDotField` / `mountDotFieldSettings` / `restoreDotFieldSettings` /
+  `mountAppearancePanel({ field })` 不变；`dotField.onSave` 第一个参数不变，新增第二参数 `{ theme, params, all }`；
+  `onChange` 的 appearance 多了 `cursor` 与 `themeParams`。`mountAppearance()` 返回值新增 `background`，`field` 在非 nebula 主题时为 null。
+- `appearanceCookieNames` / `readAppearanceFromCookies` / `normalizeAppearance` / `appearanceAttrs` 增加 cursor，只传三项键名的旧调用照旧可用；未知主题 id 回退 nebula。
+- 静态页首屏片段推荐多读一个 cursor 键（DESIGN.md §2.1），旧片段可继续使用。
+- `corner.css` 重新生成（`.switch` 新规则）。
+
+**升级提示**
+- **vendored 项目必须用 v0.19.0 的 `sync.sh`**：`appearance.js` 现在静态依赖 `theme-background.js`、`themes/index.js`、`themes/nebula.js`，
+  用旧清单同步会让外观整体加载失败。新清单含 `themes/` 子目录（含 WebGL 主题共用的 `themes/_gl.js`）与全部新模块。
+- CDN 项目只改版本号即可（模块之间相对 import，主题按需加载）。
+- 自己在 CSS 里覆写过 `.toast` / `.toast-icon` / `.switch` 外观的应用检查一下效果。
+
 ## v0.18.0 — 2026-10-14
 
 **新标题字样**（取自门户主页左上角，DESIGN.md §7「标题字样」）。`.app-title` 的外观是**有意的可见变化**，其余类与函数行为不变。

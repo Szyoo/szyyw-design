@@ -5,7 +5,7 @@
    - 着色器：源码统一写 GLSL ES 1.00，WebGL2 下自动加 300 es 头（同 three.js 的宏做法）
    - 全屏三角形、uniform 位置缓存
    - 帧循环：fps 上限、标签页隐藏 / 视口外暂停、reduced-motion 只按需画一帧、空闲不空跑 rAF
-   - 取色：ctx.color(token) → [r,g,b,a]（0–1）；没有 ctx 时自带一个读 CSS token 的实现
+   - 取色：ctx.color(token) → [r,g,b,a]（r/g/b 0–255、a 0–1），tokenColor() 归一到 0–1；没有 ctx 时自带一个读 CSS token 的实现
    ============================================================ */
 
 import { resolveTokenColor } from "../dotfield.js";
@@ -20,6 +20,18 @@ function parseRgb(text) {
   return [+m[1], +m[2], +m[3], a];
 }
 
+/** color-mix() 的计算值是 color(srgb r g b / a)（分量 0–1）→ 换成 0–255 刻度 */
+function parseColorText(text) {
+  const rgb = parseRgb(text);
+  if (rgb) return rgb;
+  const m = /^color\(\s*srgb\s+([\d.e-]+)\s+([\d.e-]+)\s+([\d.e-]+)\s*(?:\/\s*([\d.]+%?)\s*)?\)$/i.exec((text || "").trim());
+  if (!m) return null;
+  let a = m[4] === undefined ? 1 : parseFloat(m[4]);
+  if (m[4] && m[4].endsWith("%")) a /= 100;
+  const ch = (v) => Math.min(255, Math.max(0, v * 255));
+  return [ch(+m[1]), ch(+m[2]), ch(+m[3]), a];
+}
+
 /**
  * 主题没拿到框架的 ctx 时用的缺省实现（单独挂载 / 手测页）。
  * 与外观框架约定一致：color() 返回 [r,g,b,a]，r/g/b 为 0–255、a 为 0–1。
@@ -28,7 +40,7 @@ export function defaultThemeContext() {
   const mqlMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   return {
     reducedMotion: () => mqlMotion.matches,
-    color: (name) => parseRgb(resolveTokenColor(name)) ?? [0, 0, 0, 0],
+    color: (name) => parseColorText(resolveTokenColor(name)) ?? [0, 0, 0, 0],
     onColorsChange(cb) {
       const mo = new MutationObserver(() => cb());
       mo.observe(document.documentElement, {
@@ -45,12 +57,11 @@ export function defaultThemeContext() {
   };
 }
 
-/** token → [r,g,b,a]，全部归一到 0–1（r/g/b 任一 > 1 视为 0–255 刻度） */
+/** token → [r,g,b,a]，全部归一到 0–1（ctx.color 按约定给 r/g/b 0–255、a 0–1） */
 export function tokenColor(ctx, name) {
   const c = (ctx && ctx.color && ctx.color(name)) || null;
   if (!c || c.length < 3) return [0, 0, 0, 0];
-  const big = c[0] > 1 || c[1] > 1 || c[2] > 1;
-  const k = big ? 1 / 255 : 1;
+  const k = 1 / 255;
   return [c[0] * k, c[1] * k, c[2] * k, c.length > 3 && Number.isFinite(c[3]) ? c[3] : 1];
 }
 

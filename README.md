@@ -1,16 +1,18 @@
 # @szyyw/design
 
-szyyw.xyz 设计语言的共享实现：design tokens、玻璃组件层、右上角工具位（明暗 / 外观 / 语言 / 应用切换器 / 账户菜单）、交互式点阵背景、TechText 字标。
+szyyw.xyz 设计语言的共享实现：design tokens、玻璃组件层、右上角工具位（明暗 / 外观 / 语言 / 应用切换器 / 账户菜单）、可插拔背景主题、TechText 字标与交互组件。
 纯 CSS/JS、零依赖、无构建步骤，React 与非 React 项目（Flask / 静态页）都能用。设计规范见 [DESIGN.md](DESIGN.md)。
 
 ## 功能
 
-- `tokens.css`：颜色、字号、间距等 token；主题 `data-theme` → 配色 `data-palette` → 明暗 `data-scheme` 三层
+- `tokens.css`：颜色、字号、间距等 token；主题 `data-theme` → 配色 `data-palette` → 明暗 `data-scheme` 三层，外加鼠标效果 `data-cursor`
 - `components.css`：玻璃面板、按钮、表单、标签页、分段、表格、抽屉、弹层等公开类（清单见 DESIGN.md §11–§13）
 - `corner.css`：只含工具位及其弹层，给有自己样式体系、不加载 `components.css` 的应用
 - 右上角工具位：`mountChrome` 一次挂齐，也可逐个挂；项目自己的按钮插进同一条
 - 外观持久化（cookie / localStorage）与 SSR 首屏不闪
-- 点阵背景 DotField、toast、行菜单、TechText 字标
+- 背景主题：星云（DotField 点阵，缺省）、光标网格、渐变波浪、侧光、像素爆破、粒子；参数全部可在外观弹层里调
+- 鼠标效果：默认 / Target Cursor
+- 组件：Swipe Toast、行菜单、TechText 字标、Squish Switch、Glide Select、Status Mark、Lattice Loader、Gradual Blur、Branched Menu
 - 内置 zh / ja / en 文案
 
 ## 安装
@@ -20,30 +22,30 @@ npm（钉精确 tag）：
 ```jsonc
 // package.json
 "dependencies": {
-  "@szyyw/design": "github:Szyoo/szyyw-design#v0.18.0"
+  "@szyyw/design": "github:Szyoo/szyyw-design#v0.19.0"
 }
 ```
 
 CDN（无构建步骤的项目，免 vendoring）：每个 `vX.Y.Z` tag 发布到 `https://design.szyyw.xyz/vX.Y.Z/`，内容即该 tag 的 `git archive`，发布后不再改写（`Cache-Control: immutable`，CORS `*`）。
 
 ```html
-<link rel="stylesheet" href="https://design.szyyw.xyz/v0.18.0/tokens.css">
-<link rel="stylesheet" href="https://design.szyyw.xyz/v0.18.0/components.css">
+<link rel="stylesheet" href="https://design.szyyw.xyz/v0.19.0/tokens.css">
+<link rel="stylesheet" href="https://design.szyyw.xyz/v0.19.0/components.css">
 <script type="module">
-  import { mountChrome } from "https://design.szyyw.xyz/v0.18.0/chrome.js";
+  import { mountChrome } from "https://design.szyyw.xyz/v0.19.0/chrome.js";
   mountChrome({ /* … */ });
 </script>
 ```
 
 - URL 写完整的 `vX.Y.Z`，同一页所有文件同一版本（模块之间相对 import，混版本会各加载一份）；建议集中成模板变量 `DESIGN_VERSION`。
 - 不要引用 `/latest/`：它只是给人浏览的软链，随时跳版本、只缓存 5 分钟。
-- 目录不可列出，文件名以 package.json 的 `files` / `exports` 为准。
+- 目录不可列出，文件名以 package.json 的 `files` / `exports` 为准（含子目录 `themes/`、`fonts/`）。
 
 vendoring（复制到项目目录）：只用上游 `sync.sh`，从目标 tag 取脚本，文件清单与该版本一致：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Szyoo/szyyw-design/v0.18.0/sync.sh \
-  | sh -s -- ./static/vendor/szyyw-design v0.18.0
+curl -fsSL https://raw.githubusercontent.com/Szyoo/szyyw-design/v0.19.0/sync.sh \
+  | sh -s -- ./static/vendor/szyyw-design v0.19.0
 ```
 
 它复制运行时文件（清单见 `sync.sh` 的 `FILES`）并写 / 刷新 `VENDORED.md`；第二个参数用 `--local` 可从本机 clone 同步未发版改动。
@@ -111,7 +113,7 @@ const h = mountTechText(el, { specks: 6, sweep: true });     // 单个元素；s
 ```
 
 字体 Geist 随包分发（`fonts/Geist-Variable.woff2`，SIL OFL 1.1，许可见 `fonts/OFL.txt`），`components.css` 用相对 URL `fonts/…` 引用：
-CDN 直引、打包器（Vite / Next）从 `node_modules` 打包、`sync.sh` 同步（v0.18.0 起清单含 `fonts/`）都能加载。
+CDN 直引、打包器（Vite / Next）从 `node_modules` 打包、`sync.sh` 同步（v0.19.0 起清单含 `fonts/`）都能加载。
 自己复制文件时要连 `fonts/` 目录一起放在 `components.css` 旁边；缺了字体时标题回退到正文字体链（Inter / 系统字体），不影响使用。
 
 ### 分开挂
@@ -129,8 +131,10 @@ const appearance = mountAppearance({
   background: document.querySelector(".bg-layer"),
   cookiePrefix: "app_",
   locale: "zh",
-  onChange: (a) => savePrefs(a)
+  onChange: (a) => savePrefs(a)                // a：theme / palette / scheme / cursor / themeParams
 });
+// 右上角外观弹层可切换主题与鼠标效果，「主题参数」按当前主题生成；
+// appearance.background 是主题背景句柄（setParams / resetParams / subscribe …），见 DESIGN.md §4.1
 
 // 或更细：明暗切换（auto → light → dark）+ 外观弹层
 import { configureScheme, mountSchemeToggle } from "@szyyw/design/scheme";
@@ -162,12 +166,30 @@ import { mountLocaleToggle } from "@szyyw/design/locale-toggle";
 
 ```ts
 import { readAppearanceFromCookies, appearanceAttrs, themeColorFor } from "@szyyw/design/appearance-data";
-const a = readAppearanceFromCookies((n) => cookies().get(n)?.value, { theme: "app_theme", palette: "app_palette", scheme: "app_scheme" });
+const a = readAppearanceFromCookies((n) => cookies().get(n)?.value, appearanceCookieNames("app_"));  // theme / palette / scheme / cursor
 // <html {...appearanceAttrs(a)}>；theme-color = themeColorFor(a.palette, a.scheme)（auto 时返回 { dark, light }）
-// 存储键名：appearanceCookieNames("app_")
+// 存储键名：appearanceCookieNames("app_") → { theme, palette, scheme, cursor }
 ```
 
-静态页的内联脚本写法见 DESIGN.md §2.1。
+静态页首屏片段（`<head>` 里、样式表之前；`app:` 换成自己的 `cookiePrefix`）：
+
+```html
+<script>
+  (function () {
+    var d = document.documentElement;
+    try {
+      var t = localStorage.getItem("app:theme"), p = localStorage.getItem("app:palette"),
+          s = localStorage.getItem("app:scheme"), c = localStorage.getItem("app:cursor");
+      if (t) d.setAttribute("data-theme", t);
+      if (p && p !== "default") d.setAttribute("data-palette", p);
+      if (s === "auto" || s === "dark" || s === "light") d.setAttribute("data-scheme", s);
+      if (c && c !== "default") d.setAttribute("data-cursor", c);
+    } catch (e) {}
+  })();
+</script>
+```
+
+只读 theme / palette / scheme 的旧片段仍可用（鼠标效果由 JS 补上），细节见 DESIGN.md §2.1。
 
 ### 主题与明暗
 
@@ -175,9 +197,26 @@ const a = readAppearanceFromCookies((n) => cookies().get(n)?.value, { theme: "ap
 <html data-theme="nebula" data-palette="aurora" data-scheme="auto">
 ```
 
-- `data-theme`：主题（背景 / 动效 / 光效 / 配色族），目前只有 `nebula`
-- `data-palette`：主题的配色，nebula 缺省青紫，可选 `aurora`（极光翠青）
+- `data-theme`：背景主题，`nebula`（缺省）| `cursor-grid` | `gradient-waves` | `side-rays` | `pixel-blast` | `particles`；只加载当前主题，未知值回退 `nebula`
+- `data-palette`：配色，缺省青紫，可选 `aurora`（极光翠青），对所有主题通用
 - `data-scheme`：`dark`（缺省）| `light` | `auto`（跟随系统，靠 `color-scheme` + `light-dark()`，无需 JS）
+- `data-cursor`：鼠标效果，缺省不写（系统指针）| `target`（Target Cursor，仅精确指针设备）
+
+### 交互组件与控件
+
+```js
+import { toast } from "@szyyw/design/toast";
+toast("已保存", { tone: "ok", title: "完成", action: { label: "撤销", onClick: undo } });   // 下滑或 Esc 关闭
+
+import { enhanceSwitches } from "@szyyw/design/switch";            // <input type="checkbox" class="switch"> 可拖动
+import { enhanceSelects } from "@szyyw/design/glide-select";       // <select class="field" data-glide>
+import { enhanceStatusMarks } from "@szyyw/design/status-mark";    // <span class="status-mark" data-status="running">
+import { mountLatticeLoader } from "@szyyw/design/lattice-loader";
+enhanceSwitches(); enhanceSelects(); enhanceStatusMarks();
+const loader = mountLatticeLoader(el, { label: "处理中" });  loader.set({ status: "done" });
+```
+
+`.switch` 不挂 JS 也有 Squish 动效；Gradual Blur、Branched Menu、Target Cursor 的用法见 DESIGN.md §16，手测页在 `demo/`。
 
 ### 表单排版
 
@@ -196,17 +235,26 @@ const a = readAppearanceFromCookies((n) => cookies().get(n)?.value, { theme: "ap
 |---|---|
 | `./tokens.css` · `./components.css` · `./corner.css` | 样式 |
 | `./chrome` | `mountChrome` |
-| `./appearance` | `mountAppearance`、`configureAppearance`、`mountAppearancePanel`、`openAppearancePanel`、`getAppearance` / `setAppearance` / `onAppearanceChange` |
-| `./appearance-data` | `THEMES`、`PALETTES`、`SCHEMES`、`DEFAULT_APPEARANCE`、`APPEARANCE_COOKIES`、`appearanceCookieNames`、`normalizeAppearance`、`readAppearanceFromCookies`、`appearanceAttrs`、`themeColorFor`（零 DOM） |
+| `./appearance` | `mountAppearance`、`configureAppearance`、`mountAppearancePanel`、`openAppearancePanel`、`getAppearance` / `setAppearance` / `onAppearanceChange`、`configureCursorEffect`、`mountCursorEffect`、`getCursorEffectStatus` |
+| `./appearance-data` | `THEMES`、`PALETTES`、`SCHEMES`、`CURSORS`、`DEFAULT_APPEARANCE`、`APPEARANCE_COOKIES`、`appearanceCookieNames`、`normalizeAppearance`、`readAppearanceFromCookies`、`appearanceAttrs`、`themeColorFor`（零 DOM） |
 | `./appearance-text` · `./chrome-text` | 内置文案（`appearanceText`、`chromeText`、`chromeLocale`、`roleLabel`） |
 | `./scheme` | `configureScheme`、`mountSchemeToggle`、`getScheme` / `setScheme` / `cycleScheme` / `onSchemeChange`、`refreshThemeColor`、`destroyScheme` |
 | `./dotfield` | `mountDotField`、`attachSpot`、`resolveTokenColor`、`DEFAULTS` |
+| `./theme-background` | `mountThemeBackground`、`createThemeContext`、`tokenColor`、`parseCssColor`、`themeDefaults`、`sanitizeThemeParams`、`readThemeParams` |
+| `./themes` · `./themes/<id>` | 注册表 `THEME_REGISTRY`、`themeEntry`、`loadTheme`、`pickLabel`；各主题模块 `meta` / `mount`（`themes/_gl.js` 为 WebGL 主题共用的内部模块） |
+| `./target-cursor` | `mountTargetCursor`、`DEFAULTS` |
 | `./settings` | `restoreDotFieldSettings`、`mountDotFieldSettings`、`checkDesignUpdate` |
 | `./corner` | `CORNER_ORDER`、`mountCornerTool`、`createCornerButton`、`claimCornerPanel`、`cornerRail`、`syncCornerRail` |
 | `./switcher` | `mountAppSwitcher`、`SWITCHER_ORDER`；转导出 `mountAccountMenu`、`ACCOUNT_ORDER` |
 | `./account` | `mountAccountMenu`、`ACCOUNT_ORDER` |
 | `./locale-toggle` | `mountLocaleToggle` |
-| `./toast` | `toast`、`clearToasts` |
+| `./toast` | `toast`、`clearToasts`（Swipe Toast） |
+| `./switch` | `enhanceSwitches` |
+| `./glide-select` | `enhanceSelect`、`enhanceSelects` |
+| `./status-mark` | `mountStatusMark`、`enhanceStatusMarks` |
+| `./lattice-loader` | `mountLatticeLoader` |
+| `./gradual-blur` | `mountGradualBlur`、`enhanceGradualBlur`、`DEFAULTS`、`PRESETS`、`CURVE_FUNCTIONS` |
+| `./branched-menu` | `mountBranchedMenu`、`ICONS`、`DEFAULTS` |
 | `./menu` | `attachMenu` |
 | `./techtext` | `enhanceTechText`、`mountTechText`、`runningCount`、`DEFAULTS` |
 | `./overlay` | `mountOverlay`（遮罩点击 / Esc 关闭 + body 滚动锁引用计数） |
@@ -227,14 +275,16 @@ const a = readAppearanceFromCookies((n) => cookies().get(n)?.value, { theme: "ap
 
 ```bash
 python3 -m http.server 8080        # 仓库根目录；手测页在 /demo/*.html
-node scripts/check-tokens.mjs      # tokens.css 配色块与 appearance-data.js 的 PALETTES 一致
+node scripts/check-tokens.mjs      # tokens.css 配色块与 PALETTES 一致；THEMES 与主题注册表一致
 node scripts/build-corner-css.mjs  # 由 components.css 的 @corner 段与公开类重新生成 corner.css；--check 只检查
 ```
 
 - 改 `tokens.css` 的配色块（`:root` 或 `:root[data-palette=…]`）要同步 `appearance-data.js` 的 `PALETTES` 并跑 `check-tokens`。
 - 改 `components.css` 的 `@corner:begin` … `@corner:end` 段或弹层用到的公开类后重新生成 `corner.css`。
+- 新增运行时文件要同时加进 `package.json` 的 `files`（`exports` 按需）与 `sync.sh` 的 `FILES`；`appearance.js` 静态依赖 `theme-background.js`、`themes/index.js`、`themes/nebula.js`。
+- 主题手测页 `demo/themes.html`（`?cursorStub=1` 用页内桩代替 target-cursor.js）、`demo/themes-webgl.html`。
 - 发版：`package.json` 与 `version.js` 的版本号同步改（版本检测读后者），再打 `vX.Y.Z` tag。变更记录见 [CHANGELOG.md](CHANGELOG.md)。
 
 ## 许可
 
-MIT，见 [LICENSE](LICENSE)。
+MIT，见 [LICENSE](LICENSE)。部分模块移植自 React Bits（MIT + Commons Clause），出处与许可见 DESIGN.md §17。

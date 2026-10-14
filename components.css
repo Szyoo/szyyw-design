@@ -1485,10 +1485,6 @@ table.tbl {
   pointer-events: auto;
   display: flex;
   align-items: center;
-  gap: 10px;
-  max-width: 100%;
-  padding: 10px 16px 10px 12px;
-  border-radius: 12px;
   border: 1px solid var(--glass-border);
   background: var(--sheet-bg);
   -webkit-backdrop-filter: blur(14px);
@@ -1497,38 +1493,10 @@ table.tbl {
   color: var(--text);
   font-size: 14px;
   line-height: 1.45;
-  cursor: pointer;
-  animation: toast-in 0.28s var(--ease) both;
 }
-.toast.leaving { animation: toast-out 0.22s var(--ease) both; }
 .toast-text { min-width: 0; overflow-wrap: anywhere; }
-.toast-icon {
-  flex: none;
-  width: 22px;
-  height: 22px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--on-accent);
-  background: var(--accent);
-}
-.toast.ok { border-color: color-mix(in srgb, var(--ok) 55%, transparent); }
-.toast.ok .toast-icon { background: var(--ok); }
-.toast.warn { border-color: color-mix(in srgb, var(--warn) 55%, transparent); }
-.toast.warn .toast-icon { background: var(--warn); }
-.toast.err { border-color: color-mix(in srgb, var(--err) 60%, transparent); }
-.toast.err .toast-icon { background: var(--err); color: var(--on-err); }
-.toast.info { border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
-
-@keyframes toast-in {
-  from { opacity: 0; transform: translateY(14px) scale(0.96); }
-  to { opacity: 1; transform: none; }
-}
-@keyframes toast-out {
-  to { opacity: 0; transform: translateY(8px) scale(0.98); }
-}
+.toast-icon { flex: none; }
+/* 卡片外观、tone 配色、图标与进出动画见文件末尾「interactions」段（Swipe Toast） */
 
 /* ---------- 表单补充 ----------
    .field.small：紧凑高度（表格行内筛选、工具条）。触屏 / 窄屏仍回到 16px——iOS 聚焦小于 16px 会缩放页面 */
@@ -1821,7 +1789,7 @@ select.field.small { padding-right: 30px; }
 
 /* v0.13.0 新组件的减少动效 */
 @media (prefers-reduced-motion: reduce) {
-  .toast, .toast.leaving, .menu, .drawer { animation: none; }
+  .menu, .drawer { animation: none; }
   .spinner { animation: none; }
 }
 
@@ -2064,7 +2032,7 @@ select.field.small { padding-right: 30px; }
    Target Cursor / Gradual Blur 自带内联样式，不在这里。 */
 
 /* ---------- toast · Swipe Toast ----------
-   覆盖文件中段的旧 toast 规则（旧规则保留不动，见 docs-pending/interactions.md）。
+   文件中段的 toast 段只留定位、玻璃底与排版，其余都在这里。
    结构：.toast-region > .toast-slot（折叠高度）> .toast-gate > .toast（卡片）。
    卡片可下滑关闭，底边 .toast-fuse 是剩余时间的细引线；颜色取自 --toast-tone（随 tone 换 token）。 */
 .toast-region { gap: 0; }
@@ -2106,18 +2074,11 @@ select.field.small { padding-right: 30px; }
 .toast.warn { --toast-tone: var(--warn); border-color: color-mix(in srgb, var(--warn) 30%, var(--glass-border)); }
 .toast.err { --toast-tone: var(--err); border-color: color-mix(in srgb, var(--err) 34%, var(--glass-border)); }
 .toast.info { --toast-tone: var(--accent); border-color: color-mix(in srgb, var(--accent) 30%, var(--glass-border)); }
-.toast .toast-icon,
-.toast.ok .toast-icon,
-.toast.warn .toast-icon,
-.toast.err .toast-icon {
+.toast .toast-icon {
   display: inline-flex;
   width: 18px;
   height: 18px;
-  border-radius: 0;
-  background: none;
   color: var(--toast-tone);
-  font-size: inherit;
-  font-weight: inherit;
 }
 .toast-icon svg { width: 100%; height: 100%; }
 .toast-body { display: flex; flex: 1 1 auto; flex-direction: column; gap: 1px; min-width: 0; }

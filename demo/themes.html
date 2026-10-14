@@ -8,7 +8,7 @@
   @szyyw/design 可插拔背景主题 + 鼠标效果的静态手测页（不进 package files）。
   ES module 不能 file:// 直开：在仓库根目录 `python3 -m http.server 8080`，
   打开 http://localhost:8080/demo/themes.html
-  加 ?cursorStub=1：鼠标效果用页内的最小桩代替 target-cursor.js（该文件尚未就位时验证开关流程）。
+  加 ?cursorStub=1：鼠标效果用页内的最小桩代替 target-cursor.js（不加载真实光标模块，只验证开关流程）。
 -->
 <script>
   // 首屏不闪（v0.19.0 推荐片段：多恢复 data-cursor；data-theme 交给 configureAppearance 校验）
@@ -97,7 +97,7 @@
   };
   window.__log = [];
 
-  // ?cursorStub=1：target-cursor.js 未就位时，用一个跟随指针的方框验证「开 → 挂载 / 关 → 销毁」流程
+  // ?cursorStub=1：不加载 target-cursor.js，用一个跟随指针的方框验证「开 → 挂载 / 关 → 销毁」流程
   const stub = new URLSearchParams(location.search).has("cursorStub");
   const stubLoader = async () => ({
     mountTargetCursor() {
@@ -161,7 +161,7 @@
     for (const b of quickBtns) {
       b.classList.toggle("active", b.dataset.value === bg.theme);
       b.disabled = bg.status(b.dataset.value) === "failed";
-      b.title = b.disabled ? "加载失败（文件未就位）" : "";
+      b.title = b.disabled ? "加载失败（文件缺失或不可用）" : "";
     }
   }
   bg.subscribe((ev) => {
