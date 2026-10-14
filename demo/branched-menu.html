@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Branched Menu · 手测</title>
+<!-- 手测页（不进 package files）：仓库根目录 python3 -m http.server 8080，打开 http://localhost:8080/demo/branched-menu.html -->
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../components.css">
+<style>
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, sans-serif; }
+  .demo { max-width: 860px; margin: 0 auto; padding: 16px 16px 64px; }
+  .demo > section { padding: 18px 20px; margin-bottom: 16px; }
+  .demo h1 { font-size: 18px; margin: 0 0 12px; }
+  .demo h2 { margin: 0 0 4px; font-size: 15px; }
+  .demo .note { margin: 0 0 12px; font-size: 12px; color: var(--text-dim); }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .row label { font-size: 12px; color: var(--text-dim); display: inline-flex; gap: 6px; align-items: center; }
+    .box { padding: 8px 4px; }
+</style>
+</head>
+<body>
+<main class="demo">
+  <h1>Branched Menu</h1>
+  <div class="bar" id="bar">
+    <button class="btn-ghost btn-small" type="button" data-scheme="dark">dark</button>
+    <button class="btn-ghost btn-small" type="button" data-scheme="light">light</button>
+    <button class="btn-ghost btn-small" type="button" data-palette="default">默认配色</button>
+    <button class="btn-ghost btn-small" type="button" data-palette="aurora">aurora</button>
+  </div>
+
+  <section class="glass">
+    <h2>默认</h2>
+    <div class="box" id="m1"></div>
+    <p class="note">当前值：<span id="v1"></span>　<button class="btn btn-small" id="set" type="button">set("toasts")</button></p>
+  </section>
+  <section class="glass">
+    <h2>叶子 + 分组图标 + 自定义参数</h2>
+    <div class="box" id="m2"></div>
+  </section>
+
+</main>
+<script type="module">
+  const root = document.documentElement;
+  document.getElementById("bar").addEventListener("click", (e) => {
+    const b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.scheme) root.setAttribute("data-scheme", b.dataset.scheme);
+    if (b.dataset.palette) { if (b.dataset.palette === "default") root.removeAttribute("data-palette"); else root.setAttribute("data-palette", b.dataset.palette); }
+  });
+
+  import { mountBranchedMenu } from "../branched-menu.js";
+  const $ = (id) => document.getElementById(id);
+  const sections = [
+    { label: "Getting started", items: [
+      { label: "Installation", value: "install", icon: "install" }, { label: "Quick start", value: "quick", icon: "rocket" },
+      { label: "Configuration", value: "config", icon: "settings" }, { label: "Theming", value: "theming", icon: "paint" } ] },
+    { label: "Components", items: [
+      { label: "Buttons", value: "buttons", icon: "pointer" }, { label: "Typography", value: "typography", icon: "font" },
+      { label: "Overlays", value: "overlays", icon: "layers" }, { label: "Toasts", value: "toasts", icon: "bell" } ] },
+  ];
+  const m1 = mountBranchedMenu($("m1"), { sections, onSelect: (v) => ($("v1").textContent = v) });
+  $("v1").textContent = "install";
+  $("set").addEventListener("click", () => { m1.set("toasts"); $("v1").textContent = "toasts"; });
+  mountBranchedMenu($("m2"), {
+    sections: [{ label: "概览", value: "home", icon: "layers" }, ...sections.map((s, i) => ({ ...s, icon: i ? "bell" : "rocket" })), { label: "关于", value: "about" }],
+    value: "home", defaultOpen: [0, 1], accentColor: "var(--accent2)", rowHeight: 40, drawDuration: 600, width: 280,
+  });
+
+</script>
+</body>
+</html>

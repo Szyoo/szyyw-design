@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Target Cursor · 手测</title>
+<!-- 手测页（不进 package files）：仓库根目录 python3 -m http.server 8080，打开 http://localhost:8080/demo/target-cursor.html -->
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../components.css">
+<style>
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, sans-serif; }
+  .demo { max-width: 860px; margin: 0 auto; padding: 16px 16px 64px; }
+  .demo > section { padding: 18px 20px; margin-bottom: 16px; }
+  .demo h1 { font-size: 18px; margin: 0 0 12px; }
+  .demo h2 { margin: 0 0 4px; font-size: 15px; }
+  .demo .note { margin: 0 0 12px; font-size: 12px; color: var(--text-dim); }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .row label { font-size: 12px; color: var(--text-dim); display: inline-flex; gap: 6px; align-items: center; }
+  
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+  .card { padding: 22px 12px; text-align: center; border-radius: 14px; border: 1px solid var(--glass-border); background: var(--inner-bg); }
+  .scope { height: 140px; border: 1px dashed var(--glass-border); border-radius: 14px; padding: 12px; }
+
+</style>
+</head>
+<body>
+<main class="demo">
+  <h1>Target Cursor</h1>
+  <div class="bar" id="bar">
+    <button class="btn-ghost btn-small" type="button" data-scheme="dark">dark</button>
+    <button class="btn-ghost btn-small" type="button" data-scheme="light">light</button>
+    <button class="btn-ghost btn-small" type="button" data-palette="default">默认配色</button>
+    <button class="btn-ghost btn-small" type="button" data-palette="aurora">aurora</button>
+  </div>
+
+  <section class="glass">
+    <h2>吸附目标</h2>
+    <p class="note">需要鼠标（pointer: fine）。.cursor-target / a / button / [role=button] 都吸附；卡片带 data-cursor-label 时框上方出文字；按下收缩。</p>
+    <div class="grid">
+      <div class="card cursor-target" data-cursor-label="卡片 A">卡片 A（圆角 14）</div>
+      <div class="card cursor-target" data-cursor-label="卡片 B" style="border-radius:0">卡片 B（直角）</div>
+      <a class="card" href="#" onclick="return false">普通链接</a>
+      <button class="btn" type="button">按钮</button>
+      <button class="btn-ghost" type="button" data-cursor-label="幽灵按钮">幽灵按钮</button>
+    </div>
+  </section>
+  <section class="glass">
+    <h2>参数</h2>
+    <div class="row">
+      <label>自转秒数 <input id="spin" type="range" min="0" max="8" step="0.5" value="2"></label>
+      <label>吸附时长 <input id="hover" type="range" min="0.05" max="0.8" step="0.05" value="0.2"></label>
+      <label>框大小 <input id="size" type="range" min="16" max="80" value="36"></label>
+      <label>线宽 <input id="thick" type="range" min="1" max="8" value="3"></label>
+      <label><input id="parallax" type="checkbox" checked> 视差</label>
+      <label><input id="hide" type="checkbox" checked> 隐藏系统光标</label>
+      <label><input id="click" type="checkbox" checked> 按压效果</label>
+      <label>混合 <select id="blend"><option>normal</option><option>difference</option></select></label>
+    </div>
+    <div class="row"><button class="btn btn-small" id="toggle" type="button">卸载 / 重新挂载</button><span class="note" id="state"></span></div>
+  </section>
+  <section class="glass">
+    <h2>container 限定</h2>
+    <p class="note">下面这块单独挂一个实例（container），只在框内生效。</p>
+    <div class="scope" id="scope"><button class="btn btn-small" type="button">框内按钮</button></div>
+  </section>
+
+</main>
+<script type="module">
+  const root = document.documentElement;
+  document.getElementById("bar").addEventListener("click", (e) => {
+    const b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.scheme) root.setAttribute("data-scheme", b.dataset.scheme);
+    if (b.dataset.palette) { if (b.dataset.palette === "default") root.removeAttribute("data-palette"); else root.setAttribute("data-palette", b.dataset.palette); }
+  });
+
+  import { mountTargetCursor } from "../target-cursor.js";
+  let c = mountTargetCursor({ spinDuration: 2 });
+  const scoped = mountTargetCursor({ container: document.getElementById("scope"), cursorColor: "var(--ok)", cursorColorOnTarget: "var(--warn)", spinDuration: 0 });
+  const $ = (id) => document.getElementById(id);
+  const upd = () => c?.update({ spinDuration: +$("spin").value, hoverDuration: +$("hover").value, size: +$("size").value, thickness: +$("thick").value,
+    parallaxOn: $("parallax").checked, hideDefaultCursor: $("hide").checked, clickEffect: $("click").checked, blendMode: $("blend").value });
+  for (const el of document.querySelectorAll(".row input, .row select")) el.addEventListener("input", upd);
+  $("toggle").addEventListener("click", () => { if (c) { c.destroy(); c = null; } else { c = mountTargetCursor(); upd(); } $("state").textContent = c ? "已挂载" : "已卸载（系统光标恢复）"; });
+  window.__tc = { count: () => document.querySelectorAll(".target-cursor").length };
+
+</script>
+</body>
+</html>

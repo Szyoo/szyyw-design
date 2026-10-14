@@ -2022,3 +2022,290 @@ select.field.small { padding-right: 30px; }
 .appearance-status { margin-top: -2px; }
 /* 选项类参数（select / token）的 chip 一行放不下两列：横跨整行 */
 .appearance-advanced-body > .theme-param-choice { grid-column: 1 / -1; }
+
+/* ===== interactions ===== */
+/* v0.19.0 交互组件：Swipe Toast（toast.js 的新外观）、Branched Menu（branched-menu.js）。
+   Target Cursor / Gradual Blur 自带内联样式，不在这里。 */
+
+/* ---------- toast · Swipe Toast ----------
+   覆盖文件中段的旧 toast 规则（旧规则保留不动，见 docs-pending/interactions.md）。
+   结构：.toast-region > .toast-slot（折叠高度）> .toast-gate > .toast（卡片）。
+   卡片可下滑关闭，底边 .toast-fuse 是剩余时间的细引线；颜色取自 --toast-tone（随 tone 换 token）。 */
+.toast-region { gap: 0; }
+.toast-slot {
+  display: grid;
+  grid-template-rows: 1fr;
+  pointer-events: none;
+  transition: grid-template-rows 0.4s var(--ease);
+  animation: toast-slot-in 0.4s var(--ease) backwards;
+}
+.toast-slot.leaving { grid-template-rows: 0fr; transition-duration: 0.28s; }
+.toast-gate { min-height: 0; display: flow-root; }
+.toast {
+  --toast-tone: var(--accent);
+  position: relative;
+  overflow: hidden;
+  margin-top: 8px;
+  gap: 10px;
+  width: max-content;
+  min-width: min(240px, calc(100vw - 32px));
+  max-width: min(380px, calc(100vw - 32px));
+  padding: 13px 14px;
+  border-radius: 12px;
+  border-color: color-mix(in srgb, var(--toast-tone) 30%, var(--glass-border));
+  font-size: 13.5px;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+  animation: toast-sheet-in 0.4s var(--ease) backwards;
+}
+.toast.leaving { animation: toast-sheet-out 0.3s var(--ease) both; }
+.toast[data-swiping] { cursor: grabbing; }
+.toast:focus-visible { box-shadow: var(--pop-shadow), 0 0 0 2px color-mix(in srgb, var(--toast-tone) 55%, transparent); }
+.toast.ok { --toast-tone: var(--ok); border-color: color-mix(in srgb, var(--ok) 30%, var(--glass-border)); }
+.toast.warn { --toast-tone: var(--warn); border-color: color-mix(in srgb, var(--warn) 30%, var(--glass-border)); }
+.toast.err { --toast-tone: var(--err); border-color: color-mix(in srgb, var(--err) 34%, var(--glass-border)); }
+.toast.info { --toast-tone: var(--accent); border-color: color-mix(in srgb, var(--accent) 30%, var(--glass-border)); }
+.toast .toast-icon,
+.toast.ok .toast-icon,
+.toast.warn .toast-icon,
+.toast.err .toast-icon {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  border-radius: 0;
+  background: none;
+  color: var(--toast-tone);
+  font-size: inherit;
+  font-weight: inherit;
+}
+.toast-icon svg { width: 100%; height: 100%; }
+.toast-body { display: flex; flex: 1 1 auto; flex-direction: column; gap: 1px; min-width: 0; }
+.toast-title { font-weight: 600; line-height: 1.45; overflow-wrap: anywhere; }
+.toast-desc { color: var(--text-dim); font-size: 13px; line-height: 1.4; }
+.toast-action,
+.toast-close {
+  flex: none;
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+  outline: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.16s var(--ease), background-color 0.16s ease, opacity 0.16s ease;
+}
+.toast-action {
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--toast-tone) 16%, transparent);
+  color: var(--toast-tone);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.toast-close {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-dim);
+}
+.toast-close::before { content: ""; position: absolute; inset: -8px; }
+.toast-action:active,
+.toast-close:active { transform: scale(0.96); }
+.toast-action:focus-visible,
+.toast-close:focus-visible { box-shadow: 0 0 0 2px color-mix(in srgb, var(--toast-tone) 55%, transparent); }
+@media (hover: hover) and (pointer: fine) {
+  .toast-action:hover { background: color-mix(in srgb, var(--toast-tone) 26%, transparent); }
+  .toast-close:hover { background: var(--hover-tint); color: var(--text); }
+}
+/* 引线：随剩余时间从右往左烧短（scaleX 由 WAAPI 驱动），两端渐隐 */
+.toast-fuse {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--toast-tone) 0%, transparent) 0%,
+    color-mix(in srgb, var(--toast-tone) 24%, transparent) 9%,
+    color-mix(in srgb, var(--toast-tone) 58%, transparent) 18%,
+    color-mix(in srgb, var(--toast-tone) 88%, transparent) 28%,
+    var(--toast-tone) 38%,
+    var(--toast-tone) 62%,
+    color-mix(in srgb, var(--toast-tone) 88%, transparent) 72%,
+    color-mix(in srgb, var(--toast-tone) 58%, transparent) 82%,
+    color-mix(in srgb, var(--toast-tone) 24%, transparent) 91%,
+    color-mix(in srgb, var(--toast-tone) 0%, transparent) 100%
+  );
+  transform-origin: left center;
+  pointer-events: none;
+}
+.toast[data-fuse="none"] .toast-fuse { display: none; }
+
+@keyframes toast-slot-in { from { grid-template-rows: 0fr; } }
+@keyframes toast-sheet-in {
+  from { opacity: 0; transform: translateY(100%); }
+}
+@keyframes toast-sheet-out {
+  to { opacity: 0; transform: translateY(60%); }
+}
+@keyframes toast-fade-in { from { opacity: 0; } }
+@keyframes toast-fade-out { to { opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .toast-slot, .toast-slot.leaving { transition: none; animation: none; }
+  .toast { animation: toast-fade-in 0.2s ease backwards; }
+  .toast.leaving { animation: toast-fade-out 0.2s ease both; }
+  .toast-action, .toast-close { transition: none; }
+}
+
+/* ---------- Branched Menu（branched-menu.js）----------
+   分组标题 + 展开的子项，一根主干线向各子项分出圆角支线；选中项的支线被「描」成强调色。
+   颜色缺省取 token；mountBranchedMenu 的 color / accentColor / lineColor 只写行内变量覆盖。 */
+.branched-menu {
+  --bm-w: 240px;
+  --bm-ink: var(--text);
+  --bm-accent: var(--accent);
+  --bm-line: color-mix(in srgb, var(--text-dim) 42%, transparent);
+  --bm-font: 14px;
+  --bm-row: 36px;
+  --bm-indent: 40px;
+  --bm-line-w: 1.5;
+  --bm-draw: 400ms;
+  --bm-fold: 300ms;
+  --bm-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --bm-muted: color-mix(in srgb, var(--bm-ink) 55%, transparent);
+
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: fit-content;
+  max-width: min(var(--bm-w), 100%);
+  padding-left: 14px;
+  color: var(--bm-ink);
+  font-family: inherit;
+  font-size: var(--bm-font);
+  line-height: 1.2;
+}
+.branched-menu::before {
+  content: "";
+  position: absolute;
+  top: 8px;
+  bottom: 0;
+  left: 0;
+  width: 2px;
+  border-radius: 1px;
+  background: linear-gradient(
+    to bottom,
+    var(--bm-line) 0%,
+    var(--bm-line) 55%,
+    color-mix(in srgb, var(--bm-line) 0%, transparent) 100%
+  );
+}
+.branched-menu__marker {
+  position: absolute;
+  top: -1px;
+  left: 0;
+  z-index: 1;
+  width: 2px;
+  height: 16px;
+  border-radius: 1px;
+  background: var(--bm-accent);
+  opacity: 0;
+  transition: top 220ms var(--bm-ease-out), opacity 150ms ease;
+}
+.branched-menu__marker[data-on] { opacity: 1; }
+.branched-menu__section { display: flex; flex-direction: column; }
+.branched-menu__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 9px 0;
+  border: 0;
+  background: none;
+  color: var(--bm-muted);
+  font: inherit;
+  font-size: calc(var(--bm-font) + 1px);
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 200ms ease;
+}
+.branched-menu__section[data-open] .branched-menu__head,
+.branched-menu__head[data-active] { color: var(--bm-ink); }
+.branched-menu__head:focus-visible,
+.branched-menu__item:focus-visible { color: var(--bm-ink); text-decoration: underline; text-underline-offset: 4px; text-decoration-color: var(--bm-accent); }
+@media (hover: hover) and (pointer: fine) {
+  .branched-menu__head:hover { color: var(--bm-ink); }
+}
+.branched-menu__body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--bm-fold) var(--bm-ease-out);
+}
+.branched-menu__section[data-open] .branched-menu__body { grid-template-rows: 1fr; }
+.branched-menu__fold { min-height: 0; overflow: hidden; }
+.branched-menu__tree { position: relative; padding: 6px 0; box-sizing: border-box; }
+.branched-menu__lines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: visible;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms ease;
+}
+.branched-menu__section[data-open] .branched-menu__lines { opacity: 1; transition: opacity 250ms ease 100ms; }
+.branched-menu__base,
+.branched-menu__reach {
+  fill: none;
+  stroke-width: var(--bm-line-w);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.branched-menu__base { stroke: var(--bm-line); }
+.branched-menu__reach { stroke: var(--bm-accent); transition: stroke-dashoffset var(--bm-draw) var(--bm-ease-out); }
+.branched-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: var(--bm-row);
+  margin: 0;
+  padding: 0 0 0 var(--bm-indent);
+  border: 0;
+  background: none;
+  color: var(--bm-muted);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  outline: none;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 200ms ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .branched-menu__item:hover { color: var(--bm-ink); }
+}
+.branched-menu__item[data-active] { color: var(--bm-accent); font-weight: 500; }
+.branched-menu__icon { display: inline-flex; flex: none; }
+.branched-menu__icon svg { display: block; }
+.branched-menu__label { white-space: nowrap; }
+
+@media (prefers-reduced-motion: reduce) {
+  .branched-menu__marker { transition: opacity 150ms ease; }
+  .branched-menu__body,
+  .branched-menu__reach { transition: none; }
+}

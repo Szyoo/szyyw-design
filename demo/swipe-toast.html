@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Swipe Toast · 手测</title>
+<!-- 手测页（不进 package files）：仓库根目录 python3 -m http.server 8080，打开 http://localhost:8080/demo/swipe-toast.html -->
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../components.css">
+<style>
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, sans-serif; }
+  .demo { max-width: 860px; margin: 0 auto; padding: 16px 16px 64px; }
+  .demo > section { padding: 18px 20px; margin-bottom: 16px; }
+  .demo h1 { font-size: 18px; margin: 0 0 12px; }
+  .demo h2 { margin: 0 0 4px; font-size: 15px; }
+  .demo .note { margin: 0 0 12px; font-size: 12px; color: var(--text-dim); }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .row label { font-size: 12px; color: var(--text-dim); display: inline-flex; gap: 6px; align-items: center; }
+  
+</style>
+</head>
+<body>
+<main class="demo">
+  <h1>Swipe Toast</h1>
+  <div class="bar" id="bar">
+    <button class="btn-ghost btn-small" type="button" data-scheme="dark">dark</button>
+    <button class="btn-ghost btn-small" type="button" data-scheme="light">light</button>
+    <button class="btn-ghost btn-small" type="button" data-palette="default">默认配色</button>
+    <button class="btn-ghost btn-small" type="button" data-palette="aurora">aurora</button>
+  </div>
+
+  <section class="glass">
+    <h2>旧调用方式（语义不变）</h2>
+    <p class="note">toast(message, { tone, timeout })、clearToasts()。下滑可关、点按关闭、悬停暂停引线。</p>
+    <div class="row">
+      <button class="btn btn-small" type="button" data-toast="ok">ok</button>
+      <button class="btn btn-small" type="button" data-toast="info">info</button>
+      <button class="btn btn-small" type="button" data-toast="warn">warn</button>
+      <button class="btn btn-small" type="button" data-toast="err">err</button>
+      <button class="btn-ghost btn-small" type="button" data-toast="sticky">不自动消失</button>
+      <button class="btn-ghost btn-small" type="button" id="clear">clearToasts()</button>
+      <button class="btn-ghost btn-small" type="button" id="many">连弹 6 条（上限 4）</button>
+    </div>
+  </section>
+  <section class="glass">
+    <h2>新增可选项</h2>
+    <div class="row">
+      <button class="btn btn-small" type="button" id="titled">title + action</button>
+      <button class="btn btn-small" type="button" id="closebtn">closeButton</button>
+      <button class="btn btn-small" type="button" id="noicon">icon: false</button>
+      <button class="btn btn-small" type="button" id="long">长文本</button>
+      <button class="btn btn-small" type="button" id="node">Node 内容</button>
+    </div>
+    <p class="note" id="log"></p>
+  </section>
+
+</main>
+<script type="module">
+  const root = document.documentElement;
+  document.getElementById("bar").addEventListener("click", (e) => {
+    const b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.scheme) root.setAttribute("data-scheme", b.dataset.scheme);
+    if (b.dataset.palette) { if (b.dataset.palette === "default") root.removeAttribute("data-palette"); else root.setAttribute("data-palette", b.dataset.palette); }
+  });
+
+  import { toast, clearToasts } from "../toast.js";
+  const $ = (id) => document.getElementById(id);
+  for (const b of document.querySelectorAll("[data-toast]")) b.addEventListener("click", () => {
+    const t = b.dataset.toast;
+    if (t === "sticky") toast("这条不会自己消失，点一下 / 下滑关闭", { timeout: 0 });
+    else toast({ ok: "已保存", info: "已复制链接", warn: "额度快用完了", err: "保存失败：网络错误（503）" }[t], { tone: t });
+  });
+  $("clear").addEventListener("click", clearToasts);
+  $("many").addEventListener("click", () => { for (let i = 1; i <= 6; i++) toast("第 " + i + " 条", { tone: "info", timeout: 6000 }); });
+  $("titled").addEventListener("click", () => toast("3 条记录已移入回收站", { tone: "ok", title: "已删除", timeout: 6000, action: { label: "撤销", onClick: () => { $("log").textContent = "点了撤销"; } }, onClose: (r) => { $("log").textContent = "关闭原因：" + r; } }));
+  $("closebtn").addEventListener("click", () => toast("带关闭按钮", { closeButton: true, timeout: 0, tone: "warn" }));
+  $("noicon").addEventListener("click", () => toast("没有图标的 toast", { icon: false }));
+  $("long").addEventListener("click", () => toast("很长很长的一段文字用来测试换行与最大宽度，" + "重复。".repeat(30), { tone: "err", title: "出错了" }));
+  $("node").addEventListener("click", () => { const s = document.createElement("span"); s.innerHTML = "含 <b>Node</b> 的消息"; toast(s); });
+
+</script>
+</body>
+</html>

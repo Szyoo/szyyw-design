@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gradual Blur · 手测</title>
+<!-- 手测页（不进 package files）：仓库根目录 python3 -m http.server 8080，打开 http://localhost:8080/demo/gradual-blur.html -->
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../components.css">
+<style>
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, sans-serif; }
+  .demo { max-width: 860px; margin: 0 auto; padding: 16px 16px 64px; }
+  .demo > section { padding: 18px 20px; margin-bottom: 16px; }
+  .demo h1 { font-size: 18px; margin: 0 0 12px; }
+  .demo h2 { margin: 0 0 4px; font-size: 15px; }
+  .demo .note { margin: 0 0 12px; font-size: 12px; color: var(--text-dim); }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .row label { font-size: 12px; color: var(--text-dim); display: inline-flex; gap: 6px; align-items: center; }
+  
+  .scroller { height: 260px; overflow: auto; border: 1px solid var(--glass-border); border-radius: 14px; padding: 8px 14px; }
+  .scroller p { margin: 0 0 12px; line-height: 1.6; }
+  .page-pad p { line-height: 1.7; }
+
+</style>
+</head>
+<body>
+<main class="demo">
+  <h1>Gradual Blur</h1>
+  <div class="bar" id="bar">
+    <button class="btn-ghost btn-small" type="button" data-scheme="dark">dark</button>
+    <button class="btn-ghost btn-small" type="button" data-scheme="light">light</button>
+    <button class="btn-ghost btn-small" type="button" data-palette="default">默认配色</button>
+    <button class="btn-ghost btn-small" type="button" data-palette="aurora">aurora</button>
+  </div>
+
+  <section class="glass">
+    <h2>滚动容器 · position=both</h2>
+    <p class="note">上下各一条，贴着容器可视区边缘；在顶端时不叠顶部那条，往下滚渐渐浮现。</p>
+    <div class="row">
+      <label>strength <input id="strength" type="range" min="0.5" max="6" step="0.5" value="2"></label>
+      <label>divCount <input id="div" type="range" min="2" max="12" value="5"></label>
+      <label>curve <select id="curve"><option>linear</option><option>bezier</option><option>ease-in</option><option>ease-out</option><option>ease-in-out</option></select></label>
+      <label><input id="exp" type="checkbox"> exponential</label>
+      <label>edgeFade <input id="edge" type="range" min="0" max="200" step="8" value="64"></label>
+    </div>
+    <div class="scroller" id="s1"></div>
+  </section>
+  <section class="glass">
+    <h2>声明式 · data-gradual-blur="top"</h2>
+    <div class="scroller" id="s2" data-gradual-blur="top" data-gradual-blur-height="3rem" data-gradual-blur-preset="smooth"></div>
+  </section>
+  <section class="glass">
+    <h2>页面级</h2>
+    <p class="note">视口上 / 下边缘固定一条（下方按钮开关）。</p>
+    <div class="row"><button class="btn btn-small" id="page" type="button">开 / 关 页面级模糊</button></div>
+  </section>
+  <section class="glass page-pad" id="filler"></section>
+
+</main>
+<script type="module">
+  const root = document.documentElement;
+  document.getElementById("bar").addEventListener("click", (e) => {
+    const b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.scheme) root.setAttribute("data-scheme", b.dataset.scheme);
+    if (b.dataset.palette) { if (b.dataset.palette === "default") root.removeAttribute("data-palette"); else root.setAttribute("data-palette", b.dataset.palette); }
+  });
+
+  import { mountGradualBlur, enhanceGradualBlur } from "../gradual-blur.js";
+  const lorem = (n) => Array.from({ length: n }, (_, i) => `<p>第 ${i + 1} 段：渐进模糊把滑出 / 滑入边缘的内容雾化，层数越多过渡越平滑。The quick brown fox jumps over the lazy dog.</p>`).join("");
+  document.getElementById("s1").innerHTML = lorem(14);
+  document.getElementById("s2").innerHTML = lorem(14);
+  document.getElementById("filler").innerHTML = lorem(30);
+  const $ = (id) => document.getElementById(id);
+  const h = mountGradualBlur($("s1"), { position: "both", height: "4rem" });
+  const group = enhanceGradualBlur();
+  const upd = () => h.update({ strength: +$("strength").value, divCount: +$("div").value, curve: $("curve").value, exponential: $("exp").checked, edgeFade: +$("edge").value });
+  for (const el of document.querySelectorAll(".row input, .row select")) el.addEventListener("input", upd);
+  let pg = null;
+  $("page").addEventListener("click", () => { if (pg) { pg.destroy(); pg = null; } else pg = mountGradualBlur(window, { position: "both", height: "5rem", strength: 2.5 }); });
+  window.__gb = { count: () => document.querySelectorAll(".gradual-blur").length };
+
+</script>
+</body>
+</html>
