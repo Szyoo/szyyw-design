@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Glide Select · 手测</title>
+<!--
+  @szyyw/design Glide Select 的静态手测页（不进 package files）。
+  仓库根目录 `python3 -m http.server 8080`，打开 http://localhost:8080/demo/glide-select.html
+  ?scheme=light|dark&palette=aurora 可直接指定明暗 / 配色（截图用）；页内也有切换按钮。
+-->
+<script>
+  (function () {
+    var d = document.documentElement, q = new URLSearchParams(location.search);
+    var s = q.get("scheme"), p = q.get("palette");
+    if (s === "auto" || s === "dark" || s === "light") d.setAttribute("data-scheme", s);
+    if (p && p !== "default") d.setAttribute("data-palette", p);
+  })();
+</script>
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../components.css">
+<style>
+  .demo { max-width: 820px; margin: 0 auto; padding: 24px 16px 64px; }
+  .demo > section { padding: 18px 20px; margin-bottom: 16px; }
+  .demo h2 { margin: 0 0 4px; font-size: 15px; }
+  .demo .note { margin: 0 0 14px; font-size: 12px; color: var(--text-dim); }
+  .demo .grid2 { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .demo .log { font-size: 12px; color: var(--text-dim); margin-top: 10px; min-height: 1.4em; }
+  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+</style>
+</head>
+<body>
+<div class="bg-layer" aria-hidden="true"></div>
+<div class="app-frame">
+  <main class="demo">
+    <h1 class="page-title grad-text">Glide Select</h1>
+    <div class="toolbar">
+      <button class="btn-ghost btn-small" data-set="scheme:light">浅色</button>
+      <button class="btn-ghost btn-small" data-set="scheme:dark">深色</button>
+      <button class="btn-ghost btn-small" data-set="palette:default">默认配色</button>
+      <button class="btn-ghost btn-small" data-set="palette:aurora">aurora</button>
+    </div>
+
+    <section class="glass">
+      <h2>select.field[data-glide]（跟 .field 外观）</h2>
+      <p class="note">菜单从触发器角上弹出，高亮在行间滑动。↑↓ Home End Enter Esc、字母键跳转。原生 select 仍是数据源。</p>
+      <div class="grid2">
+        <div class="form-row"><label for="g1">分类</label>
+          <select id="g1" class="field" data-glide>
+            <option value="" disabled selected hidden>选择分类…</option>
+            <option value="a">Apple</option><option value="b" data-tag="新">Banana</option><option value="c">Cherry</option>
+            <option value="d" disabled>Durian（禁用）</option><option value="e">Elderberry</option>
+          </select></div>
+        <div class="form-row"><label for="g2">分组（optgroup）</label>
+          <select id="g2" class="field small" data-glide data-glide-placement="top">
+            <optgroup label="水果"><option>苹果</option><option>香蕉</option></optgroup>
+            <optgroup label="蔬菜"><option>白菜</option><option>胡萝卜</option><option disabled>西兰花</option></optgroup>
+            <optgroup label="整组禁用" disabled><option>肉</option></optgroup>
+          </select></div>
+        <div class="form-row"><label for="g3">非 .field · 右对齐 · sm</label>
+          <select id="g3" data-glide data-glide-size="sm" data-glide-align="right" data-glide-menu-width="200">
+            <option>One</option><option data-tag="⌘1">Two</option><option data-tag="⌘2">Three</option>
+          </select></div>
+        <div class="form-row"><label for="g4">长列表（滚动）</label>
+          <select id="g4" class="field" data-glide></select></div>
+      </div>
+    </section>
+    <section class="glass">
+      <h2>表格内不被裁切</h2>
+      <div class="table-wrap" style="max-height:120px"><table class="tbl"><thead><tr><th>名称</th><th>状态</th></tr></thead><tbody>
+        <tr><td>行 1</td><td><select class="field small" data-glide id="g5"><option>待处理</option><option>进行中</option><option>已完成</option><option>已取消</option></select></td></tr>
+      </tbody></table></div>
+    </section>
+    <section class="glass">
+      <h2>回归：受控组件</h2>
+      <p class="note">脚本把 select 当受控组件：每次 change 就把 value 写回「状态」。选 B 时状态拒绝（写回 A）。验证：无死循环、值与状态一致、事件各触发一次。</p>
+      <div class="row wrap">
+        <select id="ctl" class="field" data-glide style="max-width:220px"><option value="A">A 可选</option><option value="B">B（被拒绝）</option><option value="C">C 可选</option></select>
+        <button class="btn-ghost btn-small" id="ext">外部改 value = C</button>
+        <button class="btn-ghost btn-small" id="addopt">追加选项</button>
+        <button class="btn-ghost btn-small" id="dis">切换 disabled</button>
+      </div>
+      <div class="log" id="clog">—</div>
+    </section>
+  </main>
+</div>
+<script>
+  document.querySelectorAll("[data-set]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var kv = b.dataset.set.split(":"), d = document.documentElement;
+      if (kv[1] === "default") d.removeAttribute("data-" + kv[0]);
+      else d.setAttribute("data-" + kv[0], kv[1]);
+    });
+  });
+</script>
+<script type="module">
+  import { enhanceSelects } from "../glide-select.js";
+  const g4 = document.getElementById("g4");
+  for (let i = 1; i <= 40; i++) g4.add(new Option("选项 " + i, String(i)));
+  enhanceSelects();
+  // 受控组件回归
+  const sel = document.getElementById("ctl");
+  let state = "A";
+  const c = { input: 0, change: 0, writes: 0 };
+  const show = (t) => (document.getElementById("clog").textContent = t + " · state=" + state + " select.value=" + sel.value + " · input " + c.input + " / change " + c.change + " / 回写 " + c.writes);
+  sel.value = state;
+  sel.addEventListener("input", () => c.input++);
+  sel.addEventListener("change", () => {
+    c.change++;
+    if (sel.value !== "B") state = sel.value;
+    sel.value = state; // 受控：回写
+    c.writes++;
+    show("change");
+  });
+  document.getElementById("ext").onclick = () => { state = "C"; sel.value = state; show("外部写入"); };
+  document.getElementById("addopt").onclick = () => { sel.add(new Option("D 新增", "D")); show("追加"); };
+  document.getElementById("dis").onclick = () => { sel.disabled = !sel.disabled; show("disabled=" + sel.disabled); };
+  show("就绪");
+  window.__c = c;
+</script>
+</body>
+</html>

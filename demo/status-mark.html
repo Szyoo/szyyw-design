@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Status Mark · 手测</title>
+<!--
+  @szyyw/design Status Mark 的静态手测页（不进 package files）。
+  仓库根目录 `python3 -m http.server 8080`，打开 http://localhost:8080/demo/status-mark.html
+  ?scheme=light|dark&palette=aurora 可直接指定明暗 / 配色（截图用）；页内也有切换按钮。
+-->
+<script>
+  (function () {
+    var d = document.documentElement, q = new URLSearchParams(location.search);
+    var s = q.get("scheme"), p = q.get("palette");
+    if (s === "auto" || s === "dark" || s === "light") d.setAttribute("data-scheme", s);
+    if (p && p !== "default") d.setAttribute("data-palette", p);
+  })();
+</script>
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../components.css">
+<style>
+  .demo { max-width: 820px; margin: 0 auto; padding: 24px 16px 64px; }
+  .demo > section { padding: 18px 20px; margin-bottom: 16px; }
+  .demo h2 { margin: 0 0 4px; font-size: 15px; }
+  .demo .note { margin: 0 0 14px; font-size: 12px; color: var(--text-dim); }
+  .demo .grid2 { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .demo .log { font-size: 12px; color: var(--text-dim); margin-top: 10px; min-height: 1.4em; }
+  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+</style>
+</head>
+<body>
+<div class="bg-layer" aria-hidden="true"></div>
+<div class="app-frame">
+  <main class="demo">
+    <h1 class="page-title grad-text">Status Mark</h1>
+    <div class="toolbar">
+      <button class="btn-ghost btn-small" data-set="scheme:light">浅色</button>
+      <button class="btn-ghost btn-small" data-set="scheme:dark">深色</button>
+      <button class="btn-ghost btn-small" data-set="palette:default">默认配色</button>
+      <button class="btn-ghost btn-small" data-set="palette:aurora">aurora</button>
+    </div>
+
+    <section class="glass">
+      <h2>五态</h2>
+      <div class="grid2">
+        <span class="status-mark" data-status="pending" data-label="待处理"></span>
+        <span class="status-mark" data-status="idle" data-label="idle（别名）"></span>
+        <span class="status-mark" data-status="running" data-label="不定进度"></span>
+        <span class="status-mark" data-status="running" data-progress="0.6" data-label="定进度 60%"></span>
+        <span class="status-mark" data-status="done" data-label="已完成"></span>
+        <span class="status-mark" data-status="failed" data-label="失败"></span>
+        <span class="status-mark" data-status="error" data-label="error（别名）"></span>
+        <span class="status-mark" data-status="cancelled" data-label="已取消"></span>
+        <span class="status-mark" data-status="running" id="nolabel"></span>
+      </div>
+    </section>
+    <section class="glass">
+      <h2>进度驱动（mountStatusMark）</h2>
+      <p class="note">空心圈 → 进度弧 → 勾 / 叉，状态切换带过渡。</p>
+      <div class="row wrap" style="gap:18px"><span id="m1"></span><span id="m2"></span></div>
+      <div class="actions" style="margin-top:12px">
+        <button class="btn-ghost btn-small" data-s="pending">pending</button>
+        <button class="btn-ghost btn-small" data-s="running">running</button>
+        <button class="btn-ghost btn-small" data-s="p">progress +25%</button>
+        <button class="btn-ghost btn-small" data-s="done">done</button>
+        <button class="btn-ghost btn-small" data-s="failed">failed</button>
+        <button class="btn-ghost btn-small" id="auto">自动演示</button>
+      </div>
+    </section>
+    <section class="glass">
+      <h2>选项</h2>
+      <div class="row wrap" style="gap:18px" id="opts"></div>
+    </section>
+  </main>
+</div>
+<script>
+  document.querySelectorAll("[data-set]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var kv = b.dataset.set.split(":"), d = document.documentElement;
+      if (kv[1] === "default") d.removeAttribute("data-" + kv[0]);
+      else d.setAttribute("data-" + kv[0], kv[1]);
+    });
+  });
+</script>
+<script type="module">
+  import { mountStatusMark, enhanceStatusMarks } from "../status-mark.js";
+  enhanceStatusMarks();
+  const m1 = mountStatusMark(document.getElementById("m1"), { status: "pending", label: "同步素材" });
+  const m2 = mountStatusMark(document.getElementById("m2"), { status: "running", label: "大尺寸", size: 32, strokeWidth: 2.5, fontSize: 18, doneColor: "--accent", errorColor: "--warn" });
+  let p = 0;
+  for (const b of document.querySelectorAll("[data-s]")) b.onclick = () => {
+    const s = b.dataset.s;
+    if (s === "p") { p = Math.min(1, p + 0.25); m1.set({ status: "running", progress: p }); m2.set({ status: "running", progress: p }); }
+    else { if (s !== "running") p = 0; m1.set({ status: s, progress: undefined }); m2.set({ status: s, progress: undefined }); }
+  };
+  document.getElementById("auto").onclick = () => {
+    const seq = [["pending"], ["running"], ["running", 0.3], ["running", 0.7], ["done"], ["pending"], ["running"], ["failed"]];
+    let i = 0;
+    const t = setInterval(() => { const [s, pr] = seq[i++] || []; if (!s) return clearInterval(t); m1.set({ status: s, progress: pr }); m2.set({ status: s, progress: pr }); }, 1100);
+  };
+  const o = document.getElementById("opts");
+  const add = (opts) => { const e = document.createElement("span"); o.appendChild(e); mountStatusMark(e, opts); };
+  add({ status: "pending", label: "dashes 5", dashes: 5 });
+  add({ status: "running", label: "arcLength 0.4 / 慢转", arcLength: 0.4, spinDuration: 2200 });
+  add({ status: "done", label: "不划线", strike: false });
+  add({ status: "done", label: "fill 0.2", fillOpacity: 0.2 });
+  add({ status: "done", label: "字号 18 / size 28", size: 28, fontSize: 18 });
+  add({ status: "failed", label: "texts 自定义读屏", texts: { failed: "出错了" } });
+</script>
+</body>
+</html>

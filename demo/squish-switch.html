@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Squish Switch · 手测</title>
+<!--
+  @szyyw/design Squish Switch 的静态手测页（不进 package files）。
+  仓库根目录 `python3 -m http.server 8080`，打开 http://localhost:8080/demo/squish-switch.html
+  ?scheme=light|dark&palette=aurora 可直接指定明暗 / 配色（截图用）；页内也有切换按钮。
+-->
+<script>
+  (function () {
+    var d = document.documentElement, q = new URLSearchParams(location.search);
+    var s = q.get("scheme"), p = q.get("palette");
+    if (s === "auto" || s === "dark" || s === "light") d.setAttribute("data-scheme", s);
+    if (p && p !== "default") d.setAttribute("data-palette", p);
+  })();
+</script>
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../components.css">
+<style>
+  .demo { max-width: 820px; margin: 0 auto; padding: 24px 16px 64px; }
+  .demo > section { padding: 18px 20px; margin-bottom: 16px; }
+  .demo h2 { margin: 0 0 4px; font-size: 15px; }
+  .demo .note { margin: 0 0 14px; font-size: 12px; color: var(--text-dim); }
+  .demo .grid2 { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .demo .log { font-size: 12px; color: var(--text-dim); margin-top: 10px; min-height: 1.4em; }
+  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+</style>
+</head>
+<body>
+<div class="bg-layer" aria-hidden="true"></div>
+<div class="app-frame">
+  <main class="demo">
+    <h1 class="page-title grad-text">Squish Switch</h1>
+    <div class="toolbar">
+      <button class="btn-ghost btn-small" data-set="scheme:light">浅色</button>
+      <button class="btn-ghost btn-small" data-set="scheme:dark">深色</button>
+      <button class="btn-ghost btn-small" data-set="palette:default">默认配色</button>
+      <button class="btn-ghost btn-small" data-set="palette:aurora">aurora</button>
+    </div>
+
+    <section class="glass">
+      <h2>.switch（标记不变，升级即生效）</h2>
+      <p class="note">不挂 JS：颜色渐变、按下压扁、滑块带回弹地滑过去。挂上 switch.js（下方「增强」组）后可拖动滑块，按速度拉伸、松手挤压回弹。</p>
+      <div class="grid2" id="plain">
+        <label class="row" style="margin:0"><input type="checkbox" class="switch"> 关（纯 CSS）</label>
+        <label class="row" style="margin:0"><input type="checkbox" class="switch" checked> 开（纯 CSS）</label>
+        <label class="row" style="margin:0"><input type="checkbox" class="switch" disabled> 禁用·关</label>
+        <label class="row" style="margin:0"><input type="checkbox" class="switch" checked disabled> 禁用·开</label>
+      </div>
+    </section>
+    <section class="glass" id="enh">
+      <h2>增强：enhanceSwitches()</h2>
+      <p class="note">按住拖动、快速甩动看拉伸；点击 / 空格 / 点文字都与原生一致。下面的计数来自 change 事件。</p>
+      <div class="grid2">
+        <label class="row" style="margin:0"><input type="checkbox" class="switch" id="e1"> 默认</label>
+        <label class="row" style="margin:0"><input type="checkbox" class="switch" id="e2" checked data-stretch="80"> 拉伸 80</label>
+        <label class="row" style="margin:0"><input type="checkbox" class="switch" id="e3" data-width="76" data-height="38" data-stretch="36" data-speed="60"> 76×38（上游尺寸）</label>
+        <label class="row" style="margin:0"><input type="checkbox" class="switch" id="e4" data-stretch="0"> 拉伸 0</label>
+      </div>
+      <form id="f" class="row" style="margin-top:12px">
+        <label class="row" style="margin:0"><input type="checkbox" class="switch" name="notify" id="e5" checked> 表单内</label>
+        <button class="btn-ghost btn-small" type="reset">reset</button>
+        <button class="btn-ghost btn-small" type="submit">提交</button>
+      </form>
+      <div class="log" id="log">—</div>
+    </section>
+  </main>
+</div>
+<script>
+  document.querySelectorAll("[data-set]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var kv = b.dataset.set.split(":"), d = document.documentElement;
+      if (kv[1] === "default") d.removeAttribute("data-" + kv[0]);
+      else d.setAttribute("data-" + kv[0], kv[1]);
+    });
+  });
+</script>
+<script type="module">
+  import { enhanceSwitches } from "../switch.js";
+  const root = document.getElementById("enh");
+  const stop = enhanceSwitches(root);
+  window.__stop = stop;
+  const log = document.getElementById("log");
+  const counts = { input: 0, change: 0, click: 0 };
+  const show = (t) => (log.textContent = t + "  ·  input " + counts.input + " / change " + counts.change + " / click " + counts.click);
+  for (const t of ["input", "change", "click"]) root.addEventListener(t, (e) => { if (e.target.matches?.("input.switch")) { counts[t]++; show(e.target.id + " → " + e.target.checked); } }, true);
+  document.getElementById("f").addEventListener("submit", (e) => { e.preventDefault(); show("提交 " + JSON.stringify([...new FormData(e.target)])); });
+</script>
+</body>
+</html>

@@ -371,37 +371,65 @@ a.corner-tool { text-decoration: none; }
 }
 
 :where(.corner-tools, .corner-panel) .switch {
+  --sw-w: 40px;
+  --sw-h: 22px;
+  --sw-inset: 3px;
+  --sw-thumb: calc(var(--sw-h) - var(--sw-inset) * 2);
+  --sw-x: 0px;
+  --sw-sx: 1;
+  --sw-sy: 1;
+  --sw-hs: 1;
+  --sw-squish: 1.22;
+  --sw-hover: 1.035;
+  --sw-dur: 0.42s;
+  --sw-fade: 0.2s;
   appearance: none;
   -webkit-appearance: none;
   position: relative;
   flex: none;
-  width: 40px;
-  height: 22px;
-  border-radius: 11px;
+  width: var(--sw-w);
+  height: var(--sw-h);
+  border-radius: var(--sw-r, calc(var(--sw-h) / 2));
   /* 轨道要压得住白色滑块——浅色模式下太淡就看不见关着的开关 */
   background: color-mix(in srgb, var(--text-dim) 55%, transparent);
   cursor: pointer;
-  transition: background 0.2s var(--ease);
+  touch-action: pan-y;
+  -webkit-tap-highlight-color: transparent;
+  transition: background var(--sw-fade) var(--ease);
 }
 
 :where(.corner-tools, .corner-panel) .switch::after {
   content: "";
   position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
+  top: var(--sw-inset);
+  left: var(--sw-inset);
+  width: var(--sw-thumb);
+  height: var(--sw-thumb);
+  border-radius: calc(var(--sw-thumb) / 2);
   background: var(--on-accent);
-  transition: transform 0.2s var(--ease);
+  transform: translateX(var(--sw-x)) scale(calc(var(--sw-sx) * var(--sw-hs)), calc(var(--sw-sy) * var(--sw-hs)));
+  /* 带轻微过冲的缓动：滑到位后回弹一下 */
+  transition: transform var(--sw-dur) cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 :where(.corner-tools, .corner-panel) .switch:checked {
- background: var(--grad);
+ background: var(--grad); --sw-x: calc(var(--sw-w) - var(--sw-h));
 }
 
-:where(.corner-tools, .corner-panel) .switch:checked::after {
- transform: translateX(18px);
+:where(.corner-tools, .corner-panel) .switch:active:not(:disabled) {
+ --sw-sx: var(--sw-squish); --sw-sy: 0.92;
+}
+
+:where(.corner-tools, .corner-panel) .switch:focus-visible {
+ outline: 2px solid color-mix(in srgb, var(--accent) 60%, transparent); outline-offset: 2px;
+}
+
+:where(.corner-tools, .corner-panel) .switch.is-dragging {
+ cursor: grabbing;
+}
+
+:where(.corner-tools, .corner-panel) .switch.is-dragging::after {
+ transition: none;
 }
 
 :where(.corner-tools, .corner-panel) .panel-title {

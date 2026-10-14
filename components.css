@@ -496,34 +496,70 @@ input[type="color"]::-webkit-color-swatch-wrapper { padding: 2px; }
 input[type="color"]::-webkit-color-swatch { border: none; border-radius: 4px; }
 input[type="color"]::-moz-color-swatch { border: none; border-radius: 4px; }
 
+/* 开关（<input type="checkbox" class="switch">，v0.19.0 起带 Squish 动效）
+   标记不变，尺寸与布局不变（40×22）。移植自 React Bits Squish Switch（David Haz），MIT + Commons Clause。
+   纯 CSS 部分：颜色渐变、按下压扁、开关时滑块带回弹地滑过去。switch.js 的 enhanceSwitches 可选，
+   补上「拖动时按速度拉伸、松手挤压回弹」。可调：--sw-w / --sw-h / --sw-inset / --sw-r（几何）、
+   --sw-dur（滑动时长）、--sw-fade（颜色渐变）、--sw-squish（按下时横向压扁倍数）、--sw-hover（悬停膨胀）。 */
 .switch {
+  --sw-w: 40px;
+  --sw-h: 22px;
+  --sw-inset: 3px;
+  --sw-thumb: calc(var(--sw-h) - var(--sw-inset) * 2);
+  --sw-x: 0px;
+  --sw-sx: 1;
+  --sw-sy: 1;
+  --sw-hs: 1;
+  --sw-squish: 1.22;
+  --sw-hover: 1.035;
+  --sw-dur: 0.42s;
+  --sw-fade: 0.2s;
   appearance: none;
   -webkit-appearance: none;
   position: relative;
   flex: none;
-  width: 40px;
-  height: 22px;
-  border-radius: 11px;
+  width: var(--sw-w);
+  height: var(--sw-h);
+  border-radius: var(--sw-r, calc(var(--sw-h) / 2));
   /* 轨道要压得住白色滑块——浅色模式下太淡就看不见关着的开关 */
   background: color-mix(in srgb, var(--text-dim) 55%, transparent);
   cursor: pointer;
-  transition: background 0.2s var(--ease);
+  touch-action: pan-y;
+  -webkit-tap-highlight-color: transparent;
+  transition: background var(--sw-fade) var(--ease);
 }
 
 .switch::after {
   content: "";
   position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
+  top: var(--sw-inset);
+  left: var(--sw-inset);
+  width: var(--sw-thumb);
+  height: var(--sw-thumb);
+  border-radius: calc(var(--sw-thumb) / 2);
   background: var(--on-accent);
-  transition: transform 0.2s var(--ease);
+  transform: translateX(var(--sw-x)) scale(calc(var(--sw-sx) * var(--sw-hs)), calc(var(--sw-sy) * var(--sw-hs)));
+  /* 带轻微过冲的缓动：滑到位后回弹一下 */
+  transition: transform var(--sw-dur) cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.switch:checked { background: var(--grad); }
-.switch:checked::after { transform: translateX(18px); }
+.switch:checked { background: var(--grad); --sw-x: calc(var(--sw-w) - var(--sw-h)); }
+
+@media (hover: hover) and (pointer: fine) {
+  .switch:hover:not(:disabled) { --sw-hs: var(--sw-hover); }
+}
+/* 按下：滑块横向压扁变宽（居中，两侧各让出一点） */
+.switch:active:not(:disabled) { --sw-sx: var(--sw-squish); --sw-sy: 0.92; }
+.switch:focus-visible { outline: 2px solid color-mix(in srgb, var(--accent) 60%, transparent); outline-offset: 2px; }
+
+/* switch.js 拖动中：滑块跟手（无过渡），位置 / 拉伸由内联变量给 */
+.switch.is-dragging { cursor: grabbing; }
+.switch.is-dragging::after { transition: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .switch, .switch::after { transition-duration: 1ms; }
+  .switch:active:not(:disabled) { --sw-sx: 1; --sw-sy: 1; }
+}
 
 /* ---------- 文本 ---------- */
 
@@ -2308,4 +2344,441 @@ select.field.small { padding-right: 30px; }
   .branched-menu__marker { transition: opacity 150ms ease; }
   .branched-menu__body,
   .branched-menu__reach { transition: none; }
+}
+
+/* ===== controls ===== */
+/* v0.19.0 交互控件：Glide Select / Status Mark / Lattice Loader（.switch 的 Squish 动效见表单段）。
+   移植自 React Bits（David Haz），MIT + Commons Clause；颜色只从 token。 */
+
+/* ---------- Glide Select（glide-select.js）---------- */
+.glide-select {
+  --gs-accent: var(--accent);
+  --gs-surface: var(--sheet-bg);
+  --gs-highlight: color-mix(in srgb, var(--accent) 14%, transparent);
+  --gs-text: var(--text);
+  --gs-radius: 12px;
+  --gs-inner-radius: 8px;
+  --gs-chip: 32px;
+  --gs-row: 32px;
+  --gs-font: 13px;
+  --gs-pop: 180ms;
+  --gs-pop-out: 120ms;
+  --gs-glide: 220ms;
+  --gs-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  vertical-align: middle;
+}
+.glide-select--field { display: block; }
+.glide-select[data-disabled] { opacity: 0.5; }
+
+/* 原生 select 留在 DOM 里当数据源：视觉隐藏但仍可聚焦（<label for> 会把焦点转给触发器） */
+.glide-native {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  margin: -1px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.glide-select__trigger {
+  position: relative;
+  max-width: 100%;
+  margin: 0;
+  color: var(--gs-text);
+  font-family: inherit;
+  line-height: 1;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: border-color 0.2s var(--ease), box-shadow 0.2s var(--ease), background-color 0.15s ease, transform 160ms var(--gs-ease-out);
+}
+/* 非 .field 的 select：紧凑的玻璃小块 */
+.glide-select__trigger:not(.field) {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--gs-chip);
+  padding: 0 8px 0 12px;
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  background: var(--field-bg);
+  font-size: var(--gs-font);
+  font-weight: 500;
+}
+/* 跟 select.field：外观、尺寸、内边距都交给 .field / .field.small，只补布局 */
+.glide-select__trigger.field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  text-align: left;
+}
+.glide-select__trigger:focus-visible,
+.glide-select__trigger[aria-expanded="true"] {
+  outline: none;
+  border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);
+}
+.glide-select__trigger:disabled { cursor: not-allowed; }
+@media (hover: hover) and (pointer: fine) {
+  .glide-select__trigger:not(:disabled):hover { border-color: color-mix(in srgb, var(--accent) 40%, var(--glass-border)); }
+}
+.glide-select__trigger:not(.field):not(:disabled):active { transform: scale(0.97); }
+
+.glide-select__label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.glide-select__label[data-empty] { opacity: 0.6; }
+.glide-select[data-swap] .glide-select__label { animation: gs-swap 160ms ease; }
+@keyframes gs-swap { from { opacity: 0.6; filter: blur(2px); } }
+
+.glide-select__chevron {
+  display: inline-flex;
+  flex: none;
+  color: var(--text-dim);
+  transition: transform 200ms var(--gs-ease-out);
+}
+.glide-select__trigger[aria-expanded="true"] .glide-select__chevron { transform: rotate(180deg); }
+
+.glide-select__menu {
+  --gs-accent: var(--accent);
+  --gs-surface: var(--sheet-bg);
+  --gs-highlight: color-mix(in srgb, var(--accent) 14%, transparent);
+  --gs-text: var(--text);
+  --gs-radius: 12px;
+  --gs-inner-radius: 8px;
+  --gs-row: 32px;
+  --gs-font: 13px;
+  --gs-pop: 180ms;
+  --gs-pop-out: 120ms;
+  --gs-glide: 220ms;
+  --gs-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  position: fixed;
+  z-index: 62;
+  box-sizing: border-box;
+  max-width: calc(100vw - 16px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--gs-radius);
+  background: var(--gs-surface);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  box-shadow: var(--pop-shadow);
+  color: var(--gs-text);
+  font-size: var(--gs-font);
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity var(--gs-pop) var(--gs-ease-out), transform var(--gs-pop) var(--gs-ease-out);
+}
+.glide-select__menu[data-state="open"] { opacity: 1; transform: none; }
+.glide-select__menu[data-state="closed"] { transition-duration: var(--gs-pop-out); pointer-events: none; }
+
+.glide-select__list {
+  position: relative;
+  display: grid;
+  gap: 1px;
+  touch-action: none;
+}
+.glide-select__list.is-scrollable { touch-action: pan-y; }
+.glide-select__group { display: grid; gap: 1px; }
+.glide-select__group + .glide-select__group,
+.glide-select__option + .glide-select__group { margin-top: 4px; }
+.glide-select__group-label {
+  padding: 6px 10px 3px;
+  color: var(--text-dim);
+  font-size: calc(var(--gs-font) - 2px);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.glide-select__pill {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: var(--gs-row);
+  border-radius: var(--gs-inner-radius);
+  background: var(--gs-highlight);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform var(--gs-glide) var(--gs-ease-out), opacity 150ms ease;
+}
+.glide-select__option {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--gs-row);
+  padding: 0 8px 0 10px;
+  border-radius: var(--gs-inner-radius);
+  color: var(--gs-text);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.glide-select__option[aria-selected="true"] { background: color-mix(in srgb, var(--gs-accent) 8%, transparent); }
+.glide-select__list[data-live] .glide-select__option[aria-selected="true"] { background: transparent; }
+.glide-select__option[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; }
+.glide-select__name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 500;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.glide-select__tag { flex: none; color: var(--text-dim); font-size: calc(var(--gs-font) - 2px); }
+.glide-select__check { display: inline-flex; flex: none; color: var(--gs-accent); visibility: hidden; }
+.glide-select__check[data-on] { visibility: visible; }
+
+@media (prefers-reduced-motion: reduce) {
+  .glide-select__menu { transform: none !important; transition: opacity var(--gs-pop) ease; }
+  .glide-select__menu[data-state="closed"] { transition-duration: var(--gs-pop-out); }
+  .glide-select__pill { transition: opacity 150ms ease; }
+  .glide-select__chevron { transition: none; }
+  .glide-select__trigger { transition: border-color 0.2s var(--ease), box-shadow 0.2s var(--ease); }
+  .glide-select__trigger:not(.field):not(:disabled):active { transform: none; }
+  .glide-select[data-swap] .glide-select__label { animation: none; }
+}
+
+/* ---------- Status Mark（status-mark.js / .status-mark[data-status]）---------- */
+.status-mark {
+  --sm-size: 20px;
+  --sm-stroke: 2;
+  --sm-color: currentColor;
+  --sm-done: var(--ok);
+  --sm-error: var(--err);
+  --sm-fill: 0.06;
+  --sm-font: 14px;
+  --sm-draw: 240ms;
+  --sm-strike-delay: 180ms;
+  --sm-muted: 0.55;
+  --sm-check-delay: 120ms;
+  --sm-label-o: 0.65;
+  --sm-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --sm-ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--sm-size) * 0.5);
+  vertical-align: middle;
+  line-height: 1;
+}
+.status-mark__glyph { flex: none; overflow: visible; color: var(--sm-color); transition: color 200ms ease; }
+.status-mark[data-status="done"] .status-mark__glyph { color: var(--sm-done); }
+.status-mark[data-status="failed"] .status-mark__glyph { color: var(--sm-error); }
+.status-mark__track {
+  fill: currentColor;
+  stroke: currentColor;
+  stroke-width: var(--sm-stroke);
+  fill-opacity: 0;
+  stroke-opacity: 0;
+  transition: fill-opacity 180ms ease, stroke-opacity 200ms ease;
+}
+.status-mark[data-status="running"] .status-mark__track { stroke-opacity: 0.2; }
+.status-mark[data-status="done"] .status-mark__track,
+.status-mark[data-status="failed"] .status-mark__track { fill-opacity: var(--sm-fill); }
+.status-mark__ring {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: var(--sm-stroke);
+  stroke-linecap: round;
+  opacity: var(--sm-muted);
+  transition: opacity 200ms ease;
+}
+.status-mark[data-status="running"] .status-mark__ring,
+.status-mark[data-status="done"] .status-mark__ring,
+.status-mark[data-status="failed"] .status-mark__ring { opacity: 1; }
+.status-mark__check,
+.status-mark__cross {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: var(--sm-stroke);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1 2;
+  stroke-dashoffset: 1.05;
+  opacity: 0;
+  transition: stroke-dashoffset 160ms var(--sm-ease-out), opacity 0ms linear 160ms;
+}
+.status-mark[data-status="done"] .status-mark__check,
+.status-mark[data-status="failed"] .status-mark__cross,
+.status-mark[data-status="cancelled"] .status-mark__cross {
+  stroke-dashoffset: 0;
+  opacity: 1;
+  transition: stroke-dashoffset var(--sm-draw) var(--sm-ease-out) var(--sm-check-delay), opacity 0ms linear var(--sm-check-delay);
+}
+.status-mark__label {
+  position: relative;
+  color: var(--sm-color);
+  font-size: var(--sm-font);
+  line-height: 1.25;
+  opacity: var(--sm-label-o);
+  transition: opacity 200ms ease;
+}
+.status-mark__label[hidden],
+.status-mark__sr[hidden] { display: none; }
+.status-mark[data-status="running"] { --sm-label-o: 1; }
+.status-mark[data-status="done"] { --sm-label-o: 0.6; }
+.status-mark[data-status="failed"] { --sm-label-o: 1; }
+.status-mark[data-status="cancelled"] { --sm-label-o: 0.55; }
+.status-mark__strike {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  left: 0;
+  height: max(1px, calc(var(--sm-font) / 14));
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left center;
+  translate: 0 -50%;
+  pointer-events: none;
+  transition: transform 160ms var(--sm-ease-out);
+}
+.status-mark[data-status="done"][data-struck] .status-mark__strike {
+  transform: scaleX(1);
+  transition: transform 280ms var(--sm-ease-out) var(--sm-strike-delay);
+}
+.status-mark__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+@keyframes sm-breathe { 50% { opacity: 0.45; } }
+@media (prefers-reduced-motion: reduce) {
+  .status-mark[data-indeterminate] .status-mark__ring { animation: sm-breathe 1400ms var(--sm-ease-in-out) infinite; }
+  .status-mark__check,
+  .status-mark__cross { stroke-dashoffset: 0; transition: opacity 200ms ease; }
+  .status-mark__strike { opacity: 0; transform: scaleX(1) !important; transition: opacity 200ms ease; }
+  .status-mark[data-status="done"][data-struck] .status-mark__strike { opacity: 1; }
+}
+
+/* ---------- Lattice Loader（lattice-loader.js）---------- */
+.lattice-loader {
+  --ll-n: 3;
+  --ll-cell: 6px;
+  --ll-gap: 2px;
+  --ll-font: 14px;
+  --ll-color: currentColor;
+  --ll-done: var(--ok);
+  --ll-error: var(--err);
+  --ll-mark: var(--ll-done);
+  --ll-idle: 0.15;
+  --ll-glow: currentColor;
+  --ll-peak: 1;
+  --ll-cycle: 864ms;
+  --ll-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ll-ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--ll-font) * 0.625);
+  font-family: inherit;
+  font-size: var(--ll-font);
+  line-height: 1;
+  vertical-align: middle;
+}
+.lattice-loader[data-status="error"] { --ll-mark: var(--ll-error); }
+.lattice-loader__grid { display: grid; flex: none; }
+.lattice-loader__layer {
+  grid-area: 1 / 1;
+  display: grid;
+  grid-template-columns: repeat(var(--ll-n), var(--ll-cell));
+  gap: var(--ll-gap);
+}
+.lattice-loader__cell {
+  width: var(--ll-cell);
+  height: var(--ll-cell);
+  border-radius: max(1px, calc(var(--ll-cell) * 0.25));
+  background: var(--ll-color);
+  opacity: var(--ll-idle);
+}
+.lattice-loader[data-shape="round"] .lattice-loader__cell { border-radius: 50%; }
+.lattice-loader[data-glow] .lattice-loader__run .lattice-loader__cell:not([data-hole]) {
+  box-shadow: 0 0 calc(var(--ll-cell) * 1.2) calc(var(--ll-cell) * 0.12) var(--ll-glow);
+}
+.lattice-loader[data-glow] .lattice-loader__mark .lattice-loader__cell[data-on] {
+  box-shadow: 0 0 calc(var(--ll-cell) * 1.2) calc(var(--ll-cell) * 0.12) var(--ll-mark);
+}
+.lattice-loader__run { transition: opacity 200ms ease; }
+.lattice-loader__run .lattice-loader__cell { animation: lattice-on var(--ll-cycle) var(--ll-ease-in-out) infinite; }
+.lattice-loader__run .lattice-loader__cell[data-lit="45"] { animation-name: lattice-on-45; }
+.lattice-loader__run .lattice-loader__cell[data-lit="35"] { animation-name: lattice-on-35; }
+.lattice-loader__run .lattice-loader__cell[data-lit="25"] { animation-name: lattice-on-25; }
+.lattice-loader__run .lattice-loader__cell[data-hole] { animation: none; opacity: calc(var(--ll-idle) * 0.47); }
+.lattice-loader__mark {
+  opacity: 0;
+  transform: scale(0.9);
+  transform-origin: center;
+  transition: opacity 160ms var(--ll-ease-out), transform 160ms var(--ll-ease-out);
+}
+.lattice-loader__mark .lattice-loader__cell { transition: opacity 200ms ease, background-color 200ms ease; }
+.lattice-loader__mark .lattice-loader__cell[data-on] { background: var(--ll-mark); opacity: var(--ll-peak); }
+.lattice-loader:not([data-status="working"]) .lattice-loader__run { opacity: 0; }
+.lattice-loader:not([data-status="working"]) .lattice-loader__run .lattice-loader__cell { animation-play-state: paused; }
+.lattice-loader:not([data-status="working"]) .lattice-loader__mark {
+  opacity: 1;
+  transform: none;
+  transition: opacity 200ms ease, transform 200ms var(--ll-ease-out);
+}
+.lattice-loader__label { position: relative; display: inline-block; font-weight: 500; }
+.lattice-loader__text {
+  position: absolute;
+  top: 0;
+  left: 0;
+  white-space: nowrap;
+  opacity: 0;
+  filter: blur(2px);
+  transition: opacity 200ms ease, filter 200ms ease;
+}
+.lattice-loader__text[data-active] { position: static; opacity: 1; filter: blur(0); }
+.lattice-loader__timer {
+  font-family: 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+  font-size: calc(var(--ll-font) * 0.875);
+  font-variant-numeric: tabular-nums;
+  opacity: 0.6;
+}
+.lattice-loader__timer[hidden] { display: none; }
+.lattice-loader__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+@keyframes lattice-on { 0%, 100% { opacity: var(--ll-idle); } 18%, 42% { opacity: var(--ll-peak); } 62% { opacity: var(--ll-idle); } }
+@keyframes lattice-on-45 { 0%, 100% { opacity: var(--ll-idle); } 13%, 31% { opacity: var(--ll-peak); } 45% { opacity: var(--ll-idle); } }
+@keyframes lattice-on-35 { 0%, 100% { opacity: var(--ll-idle); } 10%, 24% { opacity: var(--ll-peak); } 35% { opacity: var(--ll-idle); } }
+@keyframes lattice-on-25 { 0%, 100% { opacity: var(--ll-idle); } 7%, 17% { opacity: var(--ll-peak); } 25% { opacity: var(--ll-idle); } }
+@media (prefers-reduced-motion: reduce) {
+  .lattice-loader__run { --ll-peak: 0.7; }
+  .lattice-loader__run .lattice-loader__cell { animation-delay: 0ms !important; animation-duration: 1400ms !important; }
+  .lattice-loader .lattice-loader__mark { transform: none; }
+  .lattice-loader .lattice-loader__text { filter: none; }
 }
