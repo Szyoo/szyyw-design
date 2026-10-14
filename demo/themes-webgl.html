@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WebGL 背景主题 · 手测</title>
+<link rel="icon" href="data:,">
+<!--
+  themes/gradient-waves.js / side-rays.js / pixel-blast.js 的静态手测页（不进 package files）。
+  不经外观面板，直接 import 三个主题模块，按 meta.params 生成简易控件。
+  在仓库根目录 `python3 -m http.server 8080`，打开 http://localhost:8080/demo/themes-webgl.html
+  URL 参数：?theme=side-rays&palette=aurora&scheme=light 可直接定位；&bare=1 隐藏控件只看背景。
+-->
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../components.css">
+<style>
+  .demo { max-width: 760px; margin: 0 auto; padding: 48px 16px 48px; }
+  .demo .glass { padding: 18px 20px; margin-bottom: 16px; }
+  .demo .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+  .demo .row > span { font-size: 12px; color: var(--text-dim); min-width: 44px; }
+  .ctl { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px 20px; }
+  @media (min-width: 720px) { .ctl { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .ctl label { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 8px; font-size: 12px; color: var(--text-dim); }
+  .ctl label input[type="range"], .ctl label select { grid-column: 1 / -1; width: 100%; min-width: 0; }
+  .ctl label output { font-variant-numeric: tabular-nums; color: var(--text); }
+  .ctl .tg { display: flex; align-items: center; gap: 8px; }
+  .demo #status { font-size: 12px; color: var(--text-dim); margin: 0; overflow-wrap: anywhere; }
+</style>
+</head>
+<body>
+<div class="bg-layer" id="bg"></div>
+<main class="app-frame">
+  <div class="demo">
+    <h1 class="page-title">WebGL 背景主题</h1>
+    <p class="page-sub">渐变波浪 / 侧光 / 像素爆破：原生 WebGL、颜色取 token、参数热更新。</p>
+
+    <section class="glass">
+      <div class="row" id="themes"><span>主题</span></div>
+      <div class="row" id="palettes"><span>配色</span>
+        <button class="chip" type="button" data-palette="default">default</button>
+        <button class="chip" type="button" data-palette="aurora">aurora</button>
+      </div>
+      <div class="row" id="schemes"><span>明暗</span>
+        <button class="chip" type="button" data-scheme="dark">dark</button>
+        <button class="chip" type="button" data-scheme="light">light</button>
+      </div>
+      <div class="row">
+        <button class="btn btn-ghost btn-small" type="button" id="reset">恢复默认</button>
+        <button class="btn btn-ghost btn-small" type="button" id="lose">模拟丢失上下文</button>
+      </div>
+      <p id="status" class="mono"></p>
+    </section>
+
+    <section class="glass">
+      <div class="ctl" id="ctl"></div>
+    </section>
+  </div>
+</main>
+
+<script type="module">
+  import * as gradientWaves from "../themes/gradient-waves.js";
+  import * as sideRays from "../themes/side-rays.js";
+  import * as pixelBlast from "../themes/pixel-blast.js";
+  import { defaultThemeContext } from "../themes/_gl.js";
+
+  const THEMES = { "gradient-waves": gradientWaves, "side-rays": sideRays, "pixel-blast": pixelBlast };
+  const root = document.documentElement;
+  const bg = document.getElementById("bg");
+  const ctl = document.getElementById("ctl");
+  const status = document.getElementById("status");
+  const q = new URLSearchParams(location.search);
+  const ctx = defaultThemeContext();
+
+  let current = q.get("theme") in THEMES ? q.get("theme") : "gradient-waves";
+  let handle = null;
+  let values = {};
+
+  function setPalette(p) {
+    if (p === "default") root.removeAttribute("data-palette");
+    else root.setAttribute("data-palette", p);
+    for (const b of document.querySelectorAll("[data-palette]")) b.classList.toggle("active", b.dataset.palette === p);
+  }
+  function setScheme(s) {
+    root.setAttribute("data-scheme", s);
+    for (const b of document.querySelectorAll("[data-scheme]")) b.classList.toggle("active", b.dataset.scheme === s);
+  }
+
+  function defaults(meta) {
+    const o = {};
+    for (const d of meta.params) o[d.key] = d.default;
+    return o;
+  }
+
+  function buildControls(meta) {
+    ctl.textContent = "";
+    for (const d of meta.params) {
+      const label = document.createElement("label");
+      const name = document.createElement("span");
+      name.textContent = `${d.labels.zh}（${d.key}）`;
+      label.appendChild(name);
+      let input;
+      if (d.type === "range") {
+        const out = document.createElement("output");
+        out.textContent = values[d.key];
+        label.appendChild(out);
+        input = document.createElement("input");
+        Object.assign(input, { type: "range", min: d.min, max: d.max, step: d.step, value: values[d.key] });
+        input.addEventListener("input", () => {
+          values[d.key] = +input.value;
+          out.textContent = input.value;
+          handle.update({ [d.key]: values[d.key] });
+        });
+      } else if (d.type === "toggle") {
+        label.classList.add("tg");
+        input = document.createElement("input");
+        input.type = "checkbox";
+        input.checked = !!values[d.key];
+        input.addEventListener("change", () => {
+          values[d.key] = input.checked;
+          handle.update({ [d.key]: values[d.key] });
+        });
+        label.prepend(input);
+        ctl.appendChild(label);
+        continue;
+      } else {
+        // select 与 token：选项同形
+        input = document.createElement("select");
+        input.className = "input";
+        for (const o of d.options) {
+          const opt = document.createElement("option");
+          opt.value = o.value;
+          opt.textContent = d.type === "token" ? `${o.labels.zh}  ${o.value}` : o.labels.zh;
+          input.appendChild(opt);
+        }
+        input.value = values[d.key];
+        input.addEventListener("change", () => {
+          values[d.key] = input.value;
+          handle.update({ [d.key]: values[d.key] });
+        });
+      }
+      label.appendChild(input);
+      ctl.appendChild(label);
+    }
+  }
+
+  function mountTheme(id) {
+    handle?.destroy();
+    current = id;
+    const mod = THEMES[id];
+    values = defaults(mod.meta);
+    root.setAttribute("data-theme", id);
+    handle = mod.mount(bg, { ...values }, ctx);
+    window.__handle = handle;
+    buildControls(mod.meta);
+    for (const b of document.querySelectorAll("[data-theme-id]")) b.classList.toggle("active", b.dataset.themeId === id);
+    const canvas = bg.querySelector("canvas");
+    const gl = canvas && (canvas.getContext("webgl2") || canvas.getContext("webgl"));
+    status.textContent = `${id} · ${handle.webgl ? (gl && typeof WebGL2RenderingContext !== "undefined" && gl instanceof WebGL2RenderingContext ? "WebGL2" : "WebGL1") : "WebGL 不可用（回退纯色）"} · ${mod.meta.params.length} 个参数`;
+  }
+
+  const themesRow = document.getElementById("themes");
+  for (const [id, mod] of Object.entries(THEMES)) {
+    const b = document.createElement("button");
+    b.className = "chip";
+    b.type = "button";
+    b.dataset.themeId = id;
+    b.textContent = mod.meta.labels.zh;
+    b.addEventListener("click", () => mountTheme(id));
+    themesRow.appendChild(b);
+  }
+  for (const b of document.querySelectorAll("[data-palette]")) b.addEventListener("click", () => setPalette(b.dataset.palette));
+  for (const b of document.querySelectorAll("[data-scheme]")) b.addEventListener("click", () => setScheme(b.dataset.scheme));
+  document.getElementById("reset").addEventListener("click", () => mountTheme(current));
+  document.getElementById("lose").addEventListener("click", () => {
+    const canvas = bg.querySelector("canvas");
+    const ext = canvas && (canvas.getContext("webgl2") || canvas.getContext("webgl"))?.getExtension("WEBGL_lose_context");
+    if (!ext) return;
+    ext.loseContext();
+    setTimeout(() => ext.restoreContext(), 600);
+  });
+
+  if (q.get("bare")) document.querySelector("main").hidden = true;
+  setPalette(q.get("palette") === "aurora" ? "aurora" : "default");
+  setScheme(q.get("scheme") === "light" ? "light" : "dark");
+  mountTheme(current);
+  window.__mountTheme = mountTheme;
+</script>
+</body>
+</html>

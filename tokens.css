@@ -147,3 +147,28 @@
   --df-to: light-dark(rgba(3, 105, 161, 0.3), rgba(56, 189, 248, 0.38));
   --df-glow: light-dark(#edf6f2, #081412);
 }
+
+/* ===== themes-webgl ===== */
+/* WebGL 背景主题（themes/gradient-waves.js / side-rays.js / pixel-blast.js）的取色 token。
+   颜色的 alpha 是该主题的「强度系数」：浅色模式整体压低，叠在浅底上也不刺眼、不抢正文。 */
+
+:root {
+  /* 渐变波浪：远处雾化到地平线色，近处波面 → 浪尖 */
+  --th-gradient-waves-horizon: light-dark(rgba(167, 139, 250, 0.9), #4c1d95);
+  --th-gradient-waves-wave: light-dark(rgba(56, 189, 248, 0.75), #0e7490);
+  --th-gradient-waves-crest: light-dark(rgba(237, 233, 254, 0.9), #c4b5fd);
+  /* 侧光：主光 / 副光 */
+  --th-side-rays-1: light-dark(rgba(3, 105, 161, 0.75), rgba(56, 189, 248, 0.9));
+  --th-side-rays-2: light-dark(rgba(126, 34, 206, 0.65), rgba(168, 85, 247, 0.9));
+  /* 像素爆破 */
+  --th-pixel-blast-color: light-dark(rgba(126, 34, 206, 0.32), rgba(180, 151, 207, 0.55));
+}
+
+:root[data-palette="aurora"] {
+  --th-gradient-waves-horizon: light-dark(rgba(52, 211, 153, 0.85), #064e3b);
+  --th-gradient-waves-wave: light-dark(rgba(56, 189, 248, 0.7), #0f766e);
+  --th-gradient-waves-crest: light-dark(rgba(209, 250, 229, 0.9), #a7f3d0);
+  --th-side-rays-1: light-dark(rgba(4, 120, 87, 0.75), rgba(52, 211, 153, 0.9));
+  --th-side-rays-2: light-dark(rgba(3, 105, 161, 0.65), rgba(56, 189, 248, 0.9));
+  --th-pixel-blast-color: light-dark(rgba(4, 120, 87, 0.3), rgba(110, 231, 183, 0.5));
+}
