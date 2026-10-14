@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.22.1 — 2026-10-14
+
+修吸顶标题的两个显示问题（DESIGN.md §13.2）。
+
+- `mountStickyHeads` 的下沿外侧 Gradual Blur 带改为**缺省不挂**（`blur: true` / 参数对象才挂）：v0.22.0 缺省挂带，
+  最下层标题下方的正文被糊住，标题行那条带（标题行的子节点、层级高于小标题）还会压在吸上来的小标题上，看起来像两层标题之间有缝。
+  现在内容只在滚进标题区域时被标题自己的玻璃底模糊。`blur?: false | object` 类型放宽为 `boolean | object`，传 `false` 的旧写法照旧可用。
+- 实测的 `--sticky-top` / `--sticky-page-h` 改为向下取整（四舍五入可能留一条细缝）；`.section-head.sticky::before` 上沿多盖 1px。
+- vendored 项目用 v0.22.1 的 `sync.sh`；CDN / npm 项目只改版本号。
+
 ## v0.22.0 — 2026-10-14
 
 **吸顶标题**（DESIGN.md §13.2，手测页 `demo/sticky-heads.html`）。纯新增，既有类与函数行为不变。

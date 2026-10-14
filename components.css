@@ -662,6 +662,8 @@ input[type="color"]::-moz-color-swatch { border: none; border-radius: 4px; }
 }
 .page-head.sticky[data-stuck="0"]::before,
 .section-head.sticky[data-stuck="0"]::before { opacity: 0; }
+/* v0.22.1：小标题的玻璃底往上多盖 1px，与标题行之间不留细缝（吸顶线有亚像素误差时也盖得住） */
+.section-head.sticky::before { top: -1px; }
 
 /* 入场动效 .stagger / .rise 是 both 填充：动画结束后 opacity 动画仍在「填充」，Chrome 把元素一直当 backdrop root，
    吸顶标题的玻璃底与模糊带只能糊到它自己里面（实测：底下滚过的字原样透出来）。

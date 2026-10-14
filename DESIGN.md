@@ -633,7 +633,7 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
 ## 13.2 吸顶标题 `.page-head.sticky` / `.section-head.sticky`（v0.22.0）
 
 长页面（账户详情一类）：标题行往下滚时吸顶；页面分几块时每块的小标题也吸顶，叠在标题行下方，滚到哪块显示哪块；
-吸住时标题下方滚上去的内容用 Gradual Blur（§16）雾化。手测页 `demo/sticky-heads.html`（`?topbar=1` / `?js=0` / `?blur=0`）。
+吸住时滚进标题区域的内容被玻璃底模糊（标题下方不加模糊带）。手测页 `demo/sticky-heads.html`（`?topbar=1` / `?js=0` / `?blur=1` 外侧模糊带）。
 
 ```html
 <div class="stagger">
@@ -668,8 +668,10 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
 - **可选 JS `mountStickyHeads({ root, offset, blur }) → { refresh(), destroy() }`**（`@szyyw/design/sticky-heads`）：
   一个应用挂一次（外壳里），换页由 MutationObserver 跟进。做三件事：实测 `--sticky-page-h`（与 `offset` 给的顶栏高度 → `--sticky-top`，
   `display: none` 时为 0，断点切换自动对）；写 `data-stuck="1|0"`（没吸住时玻璃底隐去，看起来就是普通标题）与标题行的 `data-covered`
-  （有小标题吸在下面时标题行的模糊带让位，免得糊住小标题）；在每个吸顶标题下沿外侧挂 Gradual Blur（`mountGradualBlur(el, { outside: true })`，
-  缺省 `height: 1.5rem, strength: 2, divCount: 5`，`blur: false` 不挂）。只跟页面（window）滚动。
+  （有小标题吸在下面时标题行的模糊带让位）。**模糊只发生在标题区域里**：内容滚进标题时被标题自己的玻璃底模糊，
+  标题下方的正文保持清楚。下沿外侧的 Gradual Blur 带（`mountGradualBlur(el, { outside: true })`）v0.22.1 起**缺省不挂**，
+  `blur: true` / 参数对象才挂（v0.22.0 缺省挂，会糊住最下层标题下方的正文、并压在吸上来的小标题上）。实测高度向下取整、
+  小标题玻璃底上沿多盖 1px，两层标题之间不留缝。只跟页面（window）滚动。
   不挂 JS 时退化为纯 CSS：照样吸顶，玻璃底常驻、没有模糊带。
 - **层级**（§3）：标题行 21、小标题 20，都在内容层里，低于应用顶栏（30）、底部导航（40）、工具位（45）与一切弹层，
   菜单 / 抽屉 / sheet 照旧盖得住它们。

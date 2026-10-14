@@ -1,5 +1,5 @@
 /* ============================================================
-   @szyyw/design · sticky-heads.js（v0.22.0）
+   @szyyw/design · sticky-heads.js（v0.22.0，v0.22.1 修正）
    吸顶标题 .page-head.sticky / .section-head.sticky 的可选增强（样式与旋钮见 components.css、DESIGN.md §13.2）。
    不挂它也能吸顶（纯 CSS：玻璃底常驻、小标题按缺省 52px 让位）；挂上之后多三件事：
 
@@ -7,8 +7,9 @@
       给了 offset（应用自己的 sticky / fixed 顶栏）时，它的实际高度 → --sticky-top（display: none 时为 0）
    2. 吸住状态：每个吸顶标题写 data-stuck="1" | "0"——没吸住时玻璃底隐去，在页面里看起来就是普通标题；
       有小标题吸在标题行下方时，标题行再写 data-covered
-   3. Gradual Blur：每个吸顶标题下沿外侧挂一条渐进模糊带（gradual-blur.js 的 outside 模式），
-      吸住时标题下方滚上去的内容被雾化；blur: false 可关
+   3. （可选，v0.22.1 起缺省关）blur: true / 参数对象时，每个吸顶标题下沿外侧挂一条 Gradual Blur 带。
+      缺省不挂：内容只在滚进标题区域时被标题自己的玻璃底模糊——外侧带会糊住最下层标题下方的正文，
+      标题行那条还会压在吸上来的小标题上（v0.22.0 的问题）
 
      import { mountStickyHeads } from "@szyyw/design/sticky-heads";
      const h = mountStickyHeads({ offset: ".mobile-topbar" });   // 一个应用挂一次即可（外壳里）
@@ -34,7 +35,8 @@ export const BLUR_DEFAULTS = { height: "1.5rem", strength: 2, divCount: 5, curve
 export function mountStickyHeads(options = {}) {
   if (typeof window === "undefined" || typeof document === "undefined") return { refresh() {}, destroy() {} };
   const root = options.root || document.body;
-  const blurOpts = options.blur === false ? null : { ...BLUR_DEFAULTS, ...(options.blur || {}) };
+  // v0.22.1：模糊带改为显式开启（true 或参数对象）；缺省 / false 都不挂
+  const blurOpts = options.blur ? { ...BLUR_DEFAULTS, ...(options.blur === true ? {} : options.blur) } : null;
   const html = document.documentElement;
   /** @type {Map<Element, { blur: { destroy(): void } | null, top: number, page: boolean }>} */
   const heads = new Map();
@@ -82,13 +84,14 @@ export function mountStickyHeads(options = {}) {
   function measure() {
     if (options.offset !== undefined) {
       const h = offsetEl ? offsetEl.getBoundingClientRect().height : 0;
-      html.style.setProperty("--sticky-top", `${Math.round(h)}px`);
+      // 向下取整：吸顶线宁可与上一层叠半像素，也不留缝（四舍五入会露出一条细缝）
+      html.style.setProperty("--sticky-top", `${Math.floor(h)}px`);
     }
     let pageH = 0;
     for (const [el, rec] of heads) {
       if (rec.page && !pageH) pageH = el.getBoundingClientRect().height;
     }
-    html.style.setProperty("--sticky-page-h", `${Math.round(pageH)}px`);
+    html.style.setProperty("--sticky-page-h", `${Math.floor(pageH)}px`);
     // 变量写完再读各自的吸顶位置（computed top 已解析成 px）
     for (const [el, rec] of heads) rec.top = parseFloat(getComputedStyle(el).top) || 0;
   }

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>吸顶标题 · 手测</title>
 <!-- 手测页（不进 package files）：仓库根目录 python3 -m http.server 8080，打开 http://localhost:8080/demo/sticky-heads.html
-     ?topbar=1 模拟应用自己的 sticky 顶栏（offset 实测）；?js=0 不挂 sticky-heads.js（纯 CSS 退化）；?blur=0 不挂模糊带 -->
+     ?topbar=1 模拟应用自己的 sticky 顶栏（offset 实测）；?js=0 不挂 sticky-heads.js（纯 CSS 退化）；?blur=1 挂外侧模糊带（v0.22.1 起缺省不挂） -->
 <link rel="stylesheet" href="../tokens.css">
 <link rel="stylesheet" href="../components.css">
 <style>
@@ -35,7 +35,7 @@
     <button class="btn-ghost btn-small" type="button" data-palette="aurora">aurora</button>
     <a class="btn-ghost btn-small" href="?topbar=1">带顶栏</a>
     <a class="btn-ghost btn-small" href="?js=0">纯 CSS</a>
-    <a class="btn-ghost btn-small" href="?blur=0">无模糊带</a>
+    <a class="btn-ghost btn-small" href="?blur=1">外侧模糊带</a>
     <a class="btn-ghost btn-small" href="?">缺省</a>
   </div>
 
@@ -94,7 +94,7 @@
     const { mountStickyHeads } = await import("../sticky-heads.js");
     window.stickyHeads = mountStickyHeads({
       offset: q.get("topbar") === "1" ? "#topbar" : undefined,
-      blur: q.get("blur") === "0" ? false : undefined,
+      blur: q.get("blur") === "1",
     });
   }
 </script>

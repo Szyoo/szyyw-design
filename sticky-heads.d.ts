@@ -8,8 +8,11 @@ export interface StickyHeadsOptions {
    * （display: none 时为 0，可随断点自动切换）。不传则不碰 --sticky-top（应用可自己在 CSS 里设）。
    */
   offset?: Element | string | null;
-  /** 标题下沿的 Gradual Blur 参数（覆盖 BLUR_DEFAULTS；position / outside / edgeFade 固定）；false = 不挂模糊带 */
-  blur?: false | Omit<GradualBlurOptions, "position" | "outside" | "edgeFade">;
+  /**
+   * 标题下沿外侧的 Gradual Blur 带。v0.22.1 起**缺省不挂**（内容只在滚进标题区域时被玻璃底模糊）；
+   * true = 用 BLUR_DEFAULTS 挂，对象 = 覆盖参数（position / outside / edgeFade 固定）
+   */
+  blur?: boolean | Omit<GradualBlurOptions, "position" | "outside" | "edgeFade">;
 }
 
 export interface StickyHeadsHandle {
@@ -28,6 +31,6 @@ export const BLUR_DEFAULTS: Readonly<Pick<GradualBlurOptions, "height" | "streng
 /**
  * v0.22.0：吸顶标题 `.page-head.sticky` / `.section-head.sticky` 的可选增强——
  * 实测标题行高度（--sticky-page-h）与顶栏高度（--sticky-top），写 data-stuck / data-covered，
- * 并在每个吸顶标题下沿外侧挂 Gradual Blur。只跟页面（window）滚动。模块顶层不碰 DOM，SSR 可 import。
+ * 可选（blur）在吸顶标题下沿外侧挂 Gradual Blur（v0.22.1 起缺省不挂）。只跟页面（window）滚动。模块顶层不碰 DOM，SSR 可 import。
  */
 export function mountStickyHeads(options?: StickyHeadsOptions): StickyHeadsHandle;
