@@ -20,7 +20,7 @@
 - `corner.css` 不变。
 
 **升级提示**
-- vendored 项目用 v0.20.0 的 `sync.sh`（清单加了 `sticky-heads.js`）；CDN / npm 项目只改版本号。
+- vendored 项目用 v0.22.0 的 `sync.sh`（清单加了 `sticky-heads.js`）；CDN / npm 项目只改版本号。
 
 ## v0.21.0 — 2026-10-14
 
