@@ -61,6 +61,8 @@ export function mountStickyHeads(options = {}) {
     ro?.unobserve(el);
     el.removeAttribute("data-stuck");
     el.removeAttribute("data-covered");
+    el.style.removeProperty("--sticky-bleed-l");
+    el.style.removeProperty("--sticky-bleed-r");
   }
 
   function scan() {
@@ -94,6 +96,13 @@ export function mountStickyHeads(options = {}) {
     html.style.setProperty("--sticky-page-h", `${Math.floor(pageH)}px`);
     // 变量写完再读各自的吸顶位置（computed top 已解析成 px）
     for (const [el, rec] of heads) rec.top = parseFloat(getComputedStyle(el).top) || 0;
+    // 玻璃底横向铺满视口：记下元素到视口左右边的距离（clientWidth 不含滚动条，不会撑出横向滚动）
+    const vw = html.clientWidth;
+    for (const [el] of heads) {
+      const r = el.getBoundingClientRect();
+      el.style.setProperty("--sticky-bleed-l", `${Math.max(0, Math.floor(r.left))}px`);
+      el.style.setProperty("--sticky-bleed-r", `${Math.max(0, Math.floor(vw - r.right))}px`);
+    }
   }
 
   function updateStuck() {

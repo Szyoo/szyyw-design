@@ -652,7 +652,12 @@ input[type="color"]::-moz-color-swatch { border: none; border-radius: 4px; }
 .section-head.sticky::before {
   content: "";
   position: absolute;
-  inset: 0;
+  /* v0.22.2：玻璃底横向铺满视口（--sticky-bleed-l/-r 由 sticky-heads.js 实测写在元素上），
+     不再是悬在内容列上、两侧露出背景的一块平板；侧栏等更高层级的固定元素自然盖在它上面 */
+  top: 0;
+  bottom: 0;
+  left: calc(-1 * var(--sticky-bleed-l, 0px));
+  right: calc(-1 * var(--sticky-bleed-r, 0px));
   z-index: -1;
   pointer-events: none;
   background: color-mix(in srgb, var(--bg) 72%, transparent);
@@ -664,6 +669,9 @@ input[type="color"]::-moz-color-swatch { border: none; border-radius: 4px; }
 .section-head.sticky[data-stuck="0"]::before { opacity: 0; }
 /* v0.22.1：小标题的玻璃底往上多盖 1px，与标题行之间不留细缝（吸顶线有亚像素误差时也盖得住） */
 .section-head.sticky::before { top: -1px; }
+/* v0.22.2：最下面一层吸住的标题底边一条细线（与侧栏右边线同色），玻璃区与下方内容的分界清楚，不再像被硬切一刀 */
+.page-head.sticky[data-stuck="1"]:not([data-covered])::before,
+.section-head.sticky[data-stuck="1"]::before { box-shadow: 0 1px 0 var(--line-soft); }
 
 /* 入场动效 .stagger / .rise 是 both 填充：动画结束后 opacity 动画仍在「填充」，Chrome 把元素一直当 backdrop root，
    吸顶标题的玻璃底与模糊带只能糊到它自己里面（实测：底下滚过的字原样透出来）。
