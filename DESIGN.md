@@ -992,3 +992,5 @@ Commons Clause 一节的大意是「可以作为应用 / 网站的一部分使�
 - 正文、提示、说明文字（`p` `li` `dd` `td` `th` `figcaption` `blockquote` `.hint` `.callout` `.muted` `.small` `.tiny` `.page-sub` `.app-sub` `.err-text` `.ok-text` `.warn-text` `.empty`）里**不带 class** 的 `<a>` 自动套用，不用改标记。
 - 带 class 的链接（`.tab` `.btn` `.chip` `.corner-tool` 等导航 / 控件）不受影响。应用里自写的「主色链接」样式请删掉，改用 `.link`。
 
+- v0.26.1：`.app-frame` 里直接有 `.app-main` 时，外框为纵向弹性布局、`.app-main` 撑满剩余高度（短页面半透明底铺到屏幕底部）。页头 / 页脚请放在 `.app-main` 的兄弟位置；嵌在弹层等非 `.app-frame` 直接子级里的 `.app-main` 不受影响。
+

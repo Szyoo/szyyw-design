@@ -128,6 +128,14 @@ a {
   .app-main { --page-pad-x: 16px; }
   .app-main::before { -webkit-mask-image: none; mask-image: none; }
 }
+/* 主体栏至少铺满一屏（v0.26.1）：外框里直接有 .app-main 时改为纵向弹性布局，主体栏吃掉剩余高度——
+   内容很短的页面（登录、空列表），半透明底不再在内容下方截断成一条横线；
+   页头 / 页脚放在主体栏外面时也只分剩余高度，不会多出滚动。没有 .app-main 的外框不受影响 */
+.app-frame:has(> .app-main) {
+  display: flex;
+  flex-direction: column;
+}
+.app-frame > .app-main { flex: 1 0 auto; }
 
 /* ---------- 动效 ---------- */
 
