@@ -118,6 +118,7 @@ a {
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
   border-radius: 16px;
+  box-shadow: var(--glass-inset);
   -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
 }
@@ -142,6 +143,7 @@ a {
   border-color: color-mix(in srgb, var(--accent) 45%, transparent);
   box-shadow: var(--lift-shadow);
 }
+.glass.lift:hover { box-shadow: var(--glass-inset), var(--lift-shadow); }
 
 /* hover 光斑：--mx/--my 由 attachSpot()（dotfield.js 导出）跟踪写入 */
 .spot {
@@ -206,7 +208,8 @@ a {
   cursor: pointer;
   color: var(--text);
   background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
+  border: 1px solid var(--control-border);
+  box-shadow: var(--glass-inset);
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   transition: transform 0.15s var(--ease), border-color 0.15s var(--ease), background 0.15s var(--ease);
@@ -486,7 +489,7 @@ input[type="color"] {
   width: 34px;
   height: 24px;
   padding: 0;
-  border: 1px solid var(--glass-border);
+  border: 1px solid var(--control-border);
   border-radius: 6px;
   background: transparent;
   cursor: pointer;
@@ -522,7 +525,7 @@ input[type="color"]::-moz-color-swatch { border: none; border-radius: 4px; }
   height: var(--sw-h);
   border-radius: var(--sw-r, calc(var(--sw-h) / 2));
   /* 轨道要压得住白色滑块——浅色模式下太淡就看不见关着的开关 */
-  background: color-mix(in srgb, var(--text-dim) 55%, transparent);
+  background: var(--switch-track);
   cursor: pointer;
   touch-action: pan-y;
   -webkit-tap-highlight-color: transparent;
@@ -739,7 +742,7 @@ input[type="color"]::-moz-color-swatch { border: none; border-radius: 4px; }
 .btn-ghost {
   appearance: none;
   background: transparent;
-  border: 1px solid var(--glass-border);
+  border: 1px solid var(--control-border);
   border-radius: 10px;
   padding: 10px 20px;
   font: inherit;
@@ -784,7 +787,7 @@ label {
   width: 100%;
   min-width: 0;
   background: var(--field-bg);
-  border: 1px solid var(--glass-border);
+  border: 1px solid var(--control-border);
   border-radius: 10px;
   padding: 10px 12px;
   font: inherit;
@@ -904,7 +907,7 @@ input[type="month"].field::-webkit-date-and-time-value {
   font-size: 13px;
   padding: 7px 14px;
   border-radius: 999px;
-  border: 1px solid var(--glass-border);
+  border: 1px solid var(--control-border);
   background: var(--inner-bg);
   color: var(--text-dim);
   cursor: pointer;
@@ -1001,7 +1004,7 @@ table.tbl {
 
 .tbl td {
   padding: 9px 12px;
-  border-bottom: 1px solid color-mix(in srgb, var(--text-dim) 12%, transparent);
+  border-bottom: 1px solid var(--row-line);
   white-space: nowrap;
 }
 
@@ -1401,7 +1404,7 @@ table.tbl {
   line-height: 1;
   color: var(--text-dim);
   background: var(--inner-bg);
-  border: 1px solid var(--glass-border);
+  border: 1px solid var(--control-border);
   border-radius: 8px;
   cursor: pointer;
   transition: color 0.15s var(--ease), border-color 0.15s var(--ease);
@@ -1500,6 +1503,7 @@ table.tbl {
   padding: 3px;
   border-radius: 11px;
   background: var(--seg-track);
+  box-shadow: inset 0 0 0 1px var(--seg-track-ring);
   max-width: 100%;
 }
 .tabs {
@@ -2558,7 +2562,7 @@ select.field.small { padding-right: 30px; }
   gap: 6px;
   height: var(--gs-chip);
   padding: 0 8px 0 12px;
-  border: 1px solid var(--glass-border);
+  border: 1px solid var(--control-border);
   border-radius: 10px;
   background: var(--field-bg);
   font-size: var(--gs-font);

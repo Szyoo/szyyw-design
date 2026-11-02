@@ -40,16 +40,27 @@
   /* 渐变按钮上的文字色：深色模式下渐变亮所以用深字，浅色模式反之 */
   --on-accent: light-dark(#ffffff, #04101c);
 
-  /* 玻璃层级 */
-  --glass-bg: light-dark(rgba(255, 255, 255, 0.6), rgba(15, 23, 42, 0.55));
-  --glass-border: light-dark(rgba(90, 108, 133, 0.26), rgba(148, 163, 184, 0.18));
+  /* 玻璃层级（v0.25.0：暗色分量提亮——卡片底与页面底拉开一层，边框对卡片底约 2:1；浅色分量不变） */
+  --glass-bg: light-dark(rgba(255, 255, 255, 0.6), rgba(24, 33, 56, 0.62));
+  --glass-border: light-dark(rgba(90, 108, 133, 0.26), rgba(148, 163, 184, 0.34));
+  /* 玻璃顶部内高光（v0.25.0）：暗色下一条极细的亮线勾出卡片 / 弹层上沿，浅色透明。
+     同样拆成「颜色 token + 固定几何」，.glass / .corner-tool / --pop-shadow 都带上它 */
+  --glass-highlight: light-dark(transparent, rgba(255, 255, 255, 0.07));
+  --glass-inset: inset 0 1px 0 var(--glass-highlight);
+  /* 可交互控件的描边（v0.25.0：.field / .btn-ghost / .btn-icon / .chip / 颜色选择 / 工具位按钮 / Glide Select 触发器）。
+     暗色下对相邻表面 ≥ 3:1（WCAG 1.4.11），浅色与 --glass-border 同值 */
+  --control-border: light-dark(rgba(90, 108, 133, 0.26), rgba(148, 163, 184, 0.64));
   --inner-bg: light-dark(rgba(148, 163, 184, 0.14), rgba(2, 6, 23, 0.35));
   --field-bg: light-dark(rgba(255, 255, 255, 0.72), rgba(2, 6, 23, 0.55));
-  --sheet-bg: light-dark(rgba(246, 248, 252, 0.94), rgba(15, 23, 42, 0.92));
+  --sheet-bg: light-dark(rgba(246, 248, 252, 0.94), rgba(21, 29, 50, 0.94));
   --overlay-bg: light-dark(rgba(30, 41, 59, 0.35), rgba(2, 6, 23, 0.55));
 
   /* 细线与悬浮着色 */
-  --line-soft: light-dark(rgba(90, 108, 133, 0.18), rgba(148, 163, 184, 0.1));
+  --line-soft: light-dark(rgba(90, 108, 133, 0.18), rgba(148, 163, 184, 0.24));
+  /* 表格行线（v0.25.0 起 token 化；浅色与之前的 text-dim 12% 相同） */
+  --row-line: light-dark(color-mix(in srgb, var(--text-dim) 12%, transparent), rgba(148, 163, 184, 0.2));
+  /* 开关关闭时的轨道（v0.25.0 起 token 化；浅色同之前的 text-dim 55%，暗色对卡片底 ≥ 3:1） */
+  --switch-track: light-dark(color-mix(in srgb, var(--text-dim) 55%, transparent), rgba(148, 163, 184, 0.62));
   --hover-tint: light-dark(rgba(3, 105, 161, 0.07), rgba(56, 189, 248, 0.06));
   /* light-dark() 只接受颜色：整条阴影写进去会算成 none（v0.13.0 及之前 .lift:hover 的阴影因此从未生效） */
   --lift-shadow-color: light-dark(rgba(30, 41, 59, 0.12), rgba(0, 0, 0, 0.35));
@@ -57,10 +68,12 @@
   /* 浮层阴影（v0.13.0：.menu / .drawer / .toast）。light-dark() 只接受颜色，
      所以拆成「阴影颜色 token + 固定几何」，整条阴影不能直接塞进 light-dark() */
   --pop-shadow-color: light-dark(rgba(30, 41, 59, 0.16), rgba(0, 0, 0, 0.45));
-  --pop-shadow: 0 12px 36px var(--pop-shadow-color), 0 2px 8px color-mix(in srgb, var(--pop-shadow-color) 50%, transparent);
+  --pop-shadow: var(--glass-inset), 0 12px 36px var(--pop-shadow-color), 0 2px 8px color-mix(in srgb, var(--pop-shadow-color) 50%, transparent);
 
   /* 滑块分段（v0.23.0：.tabs > .tab 与 .seg 的轨道 / 凸起块 / 文字）。凸起块阴影同样拆成「颜色 token + 固定几何」 */
-  --seg-track: light-dark(rgba(30, 41, 59, 0.06), rgba(255, 255, 255, 0.043));
+  --seg-track: light-dark(rgba(30, 41, 59, 0.06), rgba(255, 255, 255, 0.06));
+  /* 轨道外圈细线（v0.25.0）：暗色下勾出轨道边界（对卡片底 ≥ 3:1），浅色透明 */
+  --seg-track-ring: light-dark(transparent, rgba(148, 163, 184, 0.58));
   --seg-raised: light-dark(rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.1));
   --seg-raised-edge: light-dark(rgba(255, 255, 255, 1), rgba(255, 255, 255, 0.07));
   --seg-raised-ring: light-dark(rgba(30, 41, 59, 0.07), transparent);
