@@ -1,5 +1,30 @@
 # Changelog
 
+## v0.23.0 — 2026-11-02
+
+**标签页与分段控件统一为「滑块分段」外观**（DESIGN.md §12.1，手测页 `demo/tabs.html`）。类名与标记不变，升级即生效——这是有意的可见变化。
+
+**外观变化**
+- `.tabs > .tab` 与 `.seg > button|a` 同一外观：浅底圆角轨道（36px 高、3px 内距、11px 圆角），各段 30px 高、14px / 500；
+  选中项从「accent 色字 + accent 淡底」改为正文色字 + 凸起滑块（浅底 + 顶部高光 + 细投影），悬停浅底、按下轻微缩小、`:focus-visible` accent 外框。
+  段内 `<svg>` 统一 16px、与文字间距 7px。参照 reactbits.dev 文档外壳的「Preview / Code」切换样式自行实现（§17）。
+- `.tabs` 由整行宽改为宽度随内容（`fit-content`，仍是块级、放不下换行）；段间距 6px → 2px；≤767px 撑满一行、各段均分。
+- `.seg` 去掉 1px 描边；字号 13px / 600 → 14px / 500（与 `.tabs` 一致）；新增 `.seg.compact`。
+- `.tabs.compact` / `.seg.compact`：轨道 30px、段 26px、13px。`.tabs.scroll` 照旧横滚。
+- 修正：`.seg` 选中项悬停时凸起底被悬停样式盖掉。
+
+**新增**
+- token：`--seg-track` `--seg-raised` `--seg-raised-edge` `--seg-raised-ring` `--seg-raised-shadow-color` `--seg-raised-shadow`（颜色 token + 固定几何）`--seg-hover` `--seg-muted` `--seg-text`。
+- JS `./tabs`：`enhanceTabs(root?) → { refresh(), destroy() }`、`TABS_SELECTOR`。选中项下的凸起块改由轨道 `::before` 画并随切换滑动；
+  不插入子节点，只写 `data-pill` / `data-pill-on` / `data-pill-ready` 与 `--tab-pill-x/y/w/h`；跟进动态插入的标签条、框架改 `aria-selected`、尺寸与字体变化；
+  首帧不从 0 滑入；减少动效时无过渡。
+- `mountChrome({ tabs })`：**缺省开启**（`false` 关闭，`{ root }` 限定范围），`handle.tabs`。
+
+**迁移**
+- 只用包类、没覆写的标签条无需改动。覆写过 `.tabs` / `.tab` / `.seg` 的 padding、高度、字号、底色的，删掉覆写（要更矮用 `.compact`）；
+  `.glass` 不要直接加在 `.tabs` 上（挪到外层容器）。拿 `.chip` 或链接组当标签页的，换成 `.tabs > .tab` 或 `.seg`。
+- vendored 项目用 v0.23.0 的 `sync.sh`（新增 `tabs.js`，`chrome.js` 依赖它）；CDN / npm 项目只改版本号。`corner.css` 不变。
+
 ## v0.22.2 — 2026-10-28
 
 吸顶标题的玻璃底改得像一条完整的顶栏（DESIGN.md §13.2）。

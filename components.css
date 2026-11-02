@@ -1483,80 +1483,174 @@ table.tbl {
 .callout.err > strong:first-child { color: var(--err); }
 .callout.info > strong:first-child { color: var(--accent); }
 
-/* ---------- 标签页（.tabs > .tab）----------
-   选中：.active 或 [aria-selected="true"]（role="tab" 时用后者）。样子与 jppost / 某看板类应用自写的 .tab 一致，
-   迁过来不跳。.tabs.compact 是紧凑档 */
-.tabs {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-.tab {
-  appearance: none;
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--text-dim);
-  font: inherit;
-  font-size: 14px;
-  font-weight: 500;
-  padding: 8px 18px;
-  border-radius: 10px;
-  cursor: pointer;
-  text-decoration: none;
-  white-space: nowrap;
-  transition: color 0.2s var(--ease), background 0.2s var(--ease);
-}
-.tab:hover { color: var(--text); }
-.tab.active,
-.tab[aria-selected="true"] {
-  color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
-}
-.tab:disabled { opacity: 0.45; cursor: not-allowed; }
-.tab[hidden] { display: none; }
-.tabs.compact .tab { padding: 4px 12px; font-size: 13px; }
-/* 一行放不下时横向滚动而不是换行（窄抽屉里的标签栏） */
-.tabs.scroll { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
-.tabs.scroll::-webkit-scrollbar { display: none; }
-.tabs.scroll .tab { flex: none; }
-
-/* ---------- 分段控件（.seg > button）----------
-   二到四个互斥选项（日 / 周 / 月、股票 / 基金）。选中：.active 或 aria-pressed="true" */
+/* ---------- 滑块分段：标签页（.tabs > .tab）与分段控件（.seg > button|a）----------
+   v0.23.0 起两者同一外观（DESIGN.md §12.1）：浅底圆角轨道，选中项是一块凸起的「滑块」。
+   选中：.tab 用 .active 或 [aria-selected="true"]；.seg 子项用 .active 或 [aria-pressed="true"]。
+   纯 CSS 时选中项自己画凸起底；挂了 tabs.js（mountChrome 缺省挂）的轨道带 [data-pill]，
+   凸起块改由轨道的 ::before 画，按 --tab-pill-x/y/w/h 定位、切换时滑过去。
+   修饰：.tabs.compact / .seg.compact 紧凑档；.tabs.scroll 不换行横滚（滑块随内容滚动）。
+   ≤767px：.tabs 撑满一行、各段均分；.seg 保持内联宽度（它常嵌在工具条里）。 */
+.tabs,
 .seg {
-  display: inline-flex;
+  position: relative;
+  isolation: isolate;
   align-items: center;
   gap: 2px;
+  min-height: 36px;
   padding: 3px;
-  border-radius: 10px;
-  background: var(--inner-bg);
-  border: 1px solid var(--glass-border);
+  border-radius: 11px;
+  background: var(--seg-track);
   max-width: 100%;
+}
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  width: fit-content;
+}
+.seg {
+  display: inline-flex;
   overflow-x: auto;
   scrollbar-width: none;
 }
+.seg::-webkit-scrollbar { display: none; }
+.tab,
 .seg > :where(button, a) {
   appearance: none;
+  position: relative;
+  z-index: 1;
   flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: 30px;
+  margin: 0;
+  padding: 0 12px;
   border: none;
+  border-radius: 8px;
   background: transparent;
-  color: var(--text-dim);
+  box-shadow: none;
+  color: var(--seg-muted);
   font: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  padding: 5px 12px;
-  border-radius: 7px;
-  cursor: pointer;
-  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.01em;
   white-space: nowrap;
-  transition: color 0.15s var(--ease), background 0.15s var(--ease);
+  text-decoration: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color 0.2s var(--ease),
+    box-shadow 0.2s var(--ease),
+    color 0.2s var(--ease),
+    transform 0.12s var(--ease);
 }
-.seg > :where(button, a):hover { color: var(--text); }
-.seg > :where(button, a):where(.active, [aria-pressed="true"]) {
-  color: var(--accent);
-  background: var(--sheet-bg);
-  box-shadow: inset 0 0 0 1px var(--glass-border);
+.tab > svg,
+.seg > :where(button, a) > svg {
+  flex: none;
+  width: 16px;
+  height: 16px;
 }
-.seg > button:disabled { opacity: 0.45; cursor: not-allowed; }
+.tab:hover,
+.seg > :where(button, a):hover {
+  color: var(--seg-text);
+  background: var(--seg-hover);
+}
+.tab:active,
+.seg > :where(button, a):active { transform: scale(0.96); }
+.tab:focus-visible,
+.seg > :where(button, a):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+/* 选中项：不挂 JS 时自己带凸起底与阴影 */
+.tab.active,
+.tab[aria-selected="true"],
+.seg > :where(button, a):is(.active, [aria-pressed="true"]) {
+  color: var(--seg-text);
+  background: var(--seg-raised);
+  box-shadow: var(--seg-raised-shadow);
+}
+.tab:disabled,
+.tab[aria-disabled="true"],
+.seg > :where(button, a):where(:disabled, [aria-disabled="true"]) {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+.tab:disabled:hover,
+.seg > button:disabled:hover { background: transparent; color: var(--seg-muted); }
+.tab[hidden],
+.seg > [hidden] { display: none; }
+
+/* JS 接管（tabs.js）：选中项去掉自己的底与阴影，由轨道 ::before 的滑块画；首次测量完成才加 [data-pill-ready]，首帧不从 0 滑入 */
+:where(.tabs, .seg)[data-pill]::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  width: var(--tab-pill-w, 0px);
+  height: var(--tab-pill-h, 30px);
+  transform: translate(var(--tab-pill-x, 0px), var(--tab-pill-y, 3px));
+  border-radius: 8px;
+  background: var(--seg-raised);
+  box-shadow: var(--seg-raised-shadow);
+  opacity: 0;
+  pointer-events: none;
+}
+:where(.tabs, .seg)[data-pill][data-pill-on]::before { opacity: 1; }
+:where(.tabs, .seg)[data-pill][data-pill-ready]::before {
+  transition:
+    transform 0.38s var(--ease),
+    width 0.38s var(--ease),
+    height 0.38s var(--ease),
+    opacity 0.18s var(--ease);
+}
+.tabs[data-pill] > .tab:is(.active, [aria-selected="true"]),
+.seg[data-pill] > :where(button, a):is(.active, [aria-pressed="true"]) {
+  background: transparent;
+  box-shadow: none;
+}
+
+/* 紧凑档 */
+:where(.tabs, .seg).compact {
+  min-height: 30px;
+  padding: 2px;
+  border-radius: 9px;
+}
+:where(.tabs, .seg).compact > :where(.tab, button, a) {
+  height: 26px;
+  padding: 0 10px;
+  gap: 6px;
+  border-radius: 7px;
+  font-size: 13px;
+}
+:where(.tabs, .seg).compact > :where(.tab, button, a) > svg { width: 14px; height: 14px; }
+:where(.tabs, .seg).compact[data-pill]::before { border-radius: 7px; }
+
+/* 一行放不下时横向滚动而不是换行（窄抽屉里的标签栏）；滑块画在轨道里，随内容一起滚 */
+.tabs.scroll {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tabs.scroll::-webkit-scrollbar { display: none; }
+.tabs.scroll > .tab { flex: none; }
+
+@media (max-width: 767px) {
+  .tabs { width: 100%; }
+  .tabs > .tab { flex: 1 1 0; }
+  .tabs.scroll > .tab { flex: 1 0 auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  :where(.tabs, .seg)[data-pill][data-pill-ready]::before { transition: none; }
+  .tab,
+  .seg > :where(button, a) { transition: none; }
+  .tab:active,
+  .seg > :where(button, a):active { transform: none; }
+}
 
 /* ---------- toast（toast.js）----------
    区域底部居中；有底部导航的页面把 --toast-offset 抬到导航之上：

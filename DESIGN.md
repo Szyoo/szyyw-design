@@ -553,6 +553,8 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
   JS `./theme-background` `./themes` `./themes/<id>` `./target-cursor` `./gradual-blur` `./branched-menu` `./switch` `./glide-select` `./status-mark` `./lattice-loader`
 - v0.22.0 新增（§13.2）：`.page-head.sticky` `.section-head.sticky`（`.page-head` 必须带 `.sticky`）；属性 `data-stuck` `data-covered`（sticky-heads.js 写）；
   token 旋钮 `--sticky-top` `--sticky-page-h` `--sticky-clear`；JS `./sticky-heads`（`mountStickyHeads`）；`mountGradualBlur` 新选项 `outside`
+- v0.23.0（§12.1）：`.tabs` / `.seg` 改为滑块分段外观（类名不变）；`.seg.compact`；token `--seg-*`；属性 `data-pill` `data-pill-on` `data-pill-ready`
+  与轨道上的 `--tab-pill-x/y/w/h`（tabs.js 写，应用不要手写）；JS `./tabs`（`enhanceTabs` `TABS_SELECTOR`）、`mountChrome({ tabs })` 与 `handle.tabs`
 - v0.15.0 新增（§14）：JS `./techtext`（`mountTechText` `enhanceTechText` `DEFAULTS`）、`mountChrome({ techText })` 与 `handle.techText`；
   类 `.tech-text`（JS 加在被增强的元素上，可用来写选中色等外观）。`.tech-text-canvas` 是内部实现，别套用
 
@@ -578,8 +580,8 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
 | `.warn-text` | 与 `.ok-text` / `.err-text` 同一族（13px、`--warn`） | cosme / 某表单类应用自写 `.warn-text` |
 | `.hint` | 字段下方提示：12px、`--text-dim`、上边距 6px | jppost / 某表单类应用自写 `.hint`、内联 `tiny muted` |
 | `.callout` + `.ok/.warn/.err/.info` | 提示条：tint 底 + 同色描边；首个 `<strong>` 着语义色；info 跟 accent | 各处内联 style 的提示块 |
-| `.tabs > .tab` | 选中 `.active` 或 `[aria-selected="true"]`；`.tabs.compact` 紧凑；`.tabs.scroll` 不换行横滚 | jppost / 某看板类应用 `.nav-tabs .tab`（样子一致）、portal `.tab-bar .tab-btn` |
-| `.seg > button` | 分段控件，选中 `.active` 或 `aria-pressed="true"` | 某看板类应用 `.mode-switch`、portal `.lay-seg`（cosme 的 `.acct-seg` 是账号进度条的色段，不是分段控件，不在此列） |
+| `.tabs > .tab` | 选中 `.active` 或 `[aria-selected="true"]`；`.tabs.compact` 紧凑；`.tabs.scroll` 不换行横滚（v0.23.0 起外观见 §12.1） | jppost / 某看板类应用 `.nav-tabs .tab`（样子一致）、portal `.tab-bar .tab-btn` |
+| `.seg > button` | 分段控件，选中 `.active` 或 `aria-pressed="true"`（v0.23.0 起与 `.tabs` 同一外观，§12.1） | 某看板类应用 `.mode-switch`、portal `.lay-seg`（cosme 的 `.acct-seg` 是账号进度条的色段，不是分段控件，不在此列） |
 | `toast()`（toast.js） | `toast(msg, { tone, timeout })`，底部居中堆叠、aria-live；有底部导航时设 `--toast-offset`。v0.19.0 起为 Swipe Toast（下滑关闭，§16） | portal `toast.jsx`、某控制台类 / 看板类应用 `.toast` |
 | `.field.small` | 紧凑输入（14px、6px 10px）；触屏 / ≤640px 仍 16px 防 iOS 缩放 | portal `.field-small`、某看板类应用 `select.field.small` |
 | `.field:disabled` / `.switch:disabled` | 熄灭态 | — |
@@ -604,6 +606,27 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
 - `.spinner` 的旋转是匀速 `linear`，是唯一不走 `--ease` 的动效（等待语义）。
 - 阴影 token 一律拆成「颜色 token（`light-dark()`）+ 固定几何」：`light-dark()` 只接受颜色，整条阴影塞进去会算成 `none`
   （v0.13.0 及之前 `--lift-shadow` 就是这样，`.lift:hover` 的投影从未生效，v0.13.1 修正）。浮层用 `--pop-shadow`。
+
+## 12.1 滑块分段：标签页与分段控件（v0.23.0）
+
+所有标签页与分段切换统一用 `.tabs > .tab` 或 `.seg > button|a`，**应用不再自写标签条**（`.chip` / 链接组当标签页、自写 `.nav-tabs` 都换掉）。
+手测页 `demo/tabs.html`（`?js=0` 纯 CSS、`?scheme=light`）。
+
+- **外观**：浅底圆角轨道（`--seg-track`，高 36px、内距 3px、圆角 11px），各段 30px 高、14px / 500、未选中 `--seg-muted`；
+  选中项是一块凸起的滑块（`--seg-raised` + `--seg-raised-shadow`，文字 `--seg-text`），悬停浅底 `--seg-hover`，按下 `scale(.96)`，
+  `:focus-visible` 2px `--accent` 外框。段内可放 16px 的 `<svg>` 图标（间距 7px）。`.compact`（`.tabs` / `.seg` 都有）轨道 30px、段 26px、13px。
+- **`.tabs` 与 `.seg` 的差别只在布局**：`.tabs` 是块级、宽度随内容（`fit-content`），放不下换行（`.scroll` 改横滚）；≤767px 撑满一行、各段均分。
+  `.seg` 是内联、超出横滚，窄屏不撑满（它常嵌在工具条 / 行内）。
+- **纯 CSS 即完整可用**：选中项自己画凸起底。挂了 `tabs.js`（`mountChrome` 缺省挂）后轨道带 `[data-pill]`，选中项的底与阴影去掉，
+  改由轨道 `::before` 画一块滑块，按 `--tab-pill-x/y/w/h` 定位、选中变化时 0.38s `--ease` 滑过去；首次测到位置才加 `[data-pill-ready]`（才有过渡），
+  首帧不会从 0 滑入；`prefers-reduced-motion` 下无过渡。滑块在轨道内绝对定位，`.scroll` 横滚时随内容滚动；换行的 `.tabs` 也按行定位。
+- **JS `enhanceTabs(root?) → { refresh(), destroy() }`**（`@szyyw/design/tabs`）：不插入任何子节点（React / Vue 管理的子节点列表不受影响），
+  只在轨道上写属性与 CSS 变量。选中项 = 轨道直接子元素中带 `.active` / `[aria-selected="true"]` / `[aria-pressed="true"]`、未 `hidden` 的第一个；
+  选中态始终由应用自己改，本模块只跟随：MutationObserver 跟进轨道增删与选中 / hidden / disabled / class 变化（框架只改 `aria-selected` 也算），
+  ResizeObserver 跟进轨道与各段尺寸（文字变化、窗口缩放、隐藏面板显示出来），`document.fonts` 加载完重测。`destroy()` 清掉写过的全部属性与变量。
+- **`mountChrome({ tabs })`** 缺省开启（范围 document），`tabs: false` 关闭、`{ root }` 限定范围；`handle.tabs` 是返回的 handle，`chrome.destroy()` 一并撤销。
+- **应用不要覆写** `.tabs` / `.tab` / `.seg` 的 padding、高度、字号、背景、边框与圆角：要更矮用 `.compact`；要放进玻璃卡就把 `.glass` 加在外层容器上，
+  不要加在轨道自己身上（会叠出两层底）。只改外边距、`flex` 这类排布属性没问题。
 
 ## 13. v0.14.0 补充
 
@@ -886,6 +909,9 @@ Commons Clause 一节的大意是「可以作为应用 / 网站的一部分使�
 包作者知情，决定把移植版随本包（个人站点的设计包）发布、供自己的站点使用；其他使用者请自行评估上游许可。
 上游原件可按 `components.json` 的 `@react-bits` registry 取到 `reference/reactbits/`（已 gitignore，不随包分发），只作参考、不作依赖。
 移植时 React state / effect → 闭包，`motion` → CSS transition / Web Animations，`ogl` / `three` / `postprocessing` → 原生 WebGL，零运行时依赖。
+
+滑块分段（§12.1，`.tabs` / `.seg` + `tabs.js`）的外观参照 reactbits.dev 文档站点外壳里「Preview / Code」的分段切换样式
+（站点自身的界面，不是 React Bits 组件库里的组件），尺寸与动效按其观感自行实现，未移植其代码。
 
 其他第三方素材：Branched Menu 内置图标取自 Hugeicons 免费集（MIT，Copyright (c) 2025 Hugeicons），以内联 SVG 收录；
 字体 Geist（SIL OFL 1.1，`fonts/OFL.txt`，见 §7）。

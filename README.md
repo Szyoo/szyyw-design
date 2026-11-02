@@ -13,6 +13,7 @@ szyyw.xyz 设计语言的共享实现：design tokens、玻璃组件层、右上
 - 背景主题：星云（DotField 点阵，缺省）、光标网格、渐变波浪、侧光、像素爆破、粒子；参数全部可在外观弹层里调
 - 鼠标效果：默认 / Target Cursor
 - 吸顶标题：`.page-head.sticky` / `.section-head.sticky`（+ 可选 `./sticky-heads`）
+- 标签页与分段控件：`.tabs > .tab` / `.seg > button` 滑块分段（+ 可选 `./tabs` 滑动滑块，`mountChrome` 缺省开）
 - 组件：Swipe Toast、行菜单、TechText 字标、Squish Switch、Glide Select、Status Mark、Lattice Loader、Gradual Blur、Branched Menu
 - 内置 zh / ja / en 文案
 
@@ -68,11 +69,12 @@ const chrome = mountChrome({
   appearance: { onChange: (a) => savePrefs(a) },    // 账号级外观持久化
   localeToggle: { locales: ["zh", "ja", "en"], onChange: (l) => setAppLocale(l) },  // 可省
   // techText 缺省开启：.app-title / .wordmark 变 TechText 字标（含之后才插入的标题）；false = 不开
+  // tabs 缺省开启：.tabs / .seg 的选中滑块随切换滑动（含之后才插入的标签条）；false = 不开
 });
 chrome.setLocale("ja");   // 切换器 / 账户菜单 / 明暗 / 外观 / 语言按钮一起换，画布不重建
 ```
 
-其余选项：`persist`（`"cookie" | "localStorage" | "none"`）、`switcher` / `account`（透传选项，`false` = 不挂）、`appearance.dotField`、`appearance.labels`；完整类型见 `chrome.d.ts`。返回的 handle 含 `appearance` / `switcher` / `account` / `localeToggle` / `techText`。
+其余选项：`persist`（`"cookie" | "localStorage" | "none"`）、`switcher` / `account`（透传选项，`false` = 不挂）、`appearance.dotField`、`appearance.labels`；完整类型见 `chrome.d.ts`。返回的 handle 含 `appearance` / `switcher` / `account` / `localeToggle` / `techText` / `tabs`。
 
 工具位从左到右的 order：应用切换器 5 · 账户 6 · 明暗 10 · 语言 15 · 外观 20 · 项目按钮（缺省 50）。顶栏用 `.app-header`（或给自己的顶栏加 `.corner-clear`）给工具位让位，不要写死 `padding-right`。
 
@@ -241,6 +243,27 @@ mountStickyHeads({ offset: ".my-topbar" });   // 外壳里挂一次：实测高�
 ```
 
 每块要包一层容器、小标题是第一个子元素；旋钮 `--sticky-top` / `--sticky-page-h` / `--sticky-clear` 与层级见 DESIGN.md §13.2，手测页 `demo/sticky-heads.html`。
+
+### 标签页与分段控件
+
+所有标签页 / 分段切换都用包里的两个类，选中态由应用自己改（类名或 aria 属性）：
+
+```html
+<div class="tabs" role="tablist">
+  <button class="tab" role="tab" aria-selected="true"><svg …/>Preview</button>
+  <button class="tab" role="tab" aria-selected="false">Code</button>
+</div>
+<div class="seg"><button aria-pressed="true">日</button><button aria-pressed="false">周</button></div>
+```
+
+纯 CSS 已是完整外观；挂了 `mountChrome` 就自动有滑动滑块。不用 `mountChrome` 的页面：
+
+```js
+import { enhanceTabs } from "@szyyw/design/tabs";
+enhanceTabs();   // 跟进之后插入的标签条与选中态变化；返回 { refresh, destroy }
+```
+
+修饰类 `.compact`（紧凑）、`.tabs.scroll`（横滚）；不要覆写它们的尺寸与底色，细则见 DESIGN.md §12.1，手测页 `demo/tabs.html`。
 
 ### 表单排版
 

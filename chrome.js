@@ -13,6 +13,7 @@ import { mountAppSwitcher } from "./switcher.js";
 import { mountAccountMenu } from "./account.js";
 import { mountLocaleToggle } from "./locale-toggle.js";
 import { mountTechText } from "./techtext.js";
+import { enhanceTabs } from "./tabs.js";
 
 const DEFAULT_PORTAL = "https://szyyw.xyz";
 const DEFAULT_TECH_TEXT = ".app-title, .wordmark";
@@ -81,6 +82,8 @@ function watchTechText(selector, opts, onChange) {
  * @param {object}  options.localeToggle  { locales, onChange?, order?, labels? }；给了 locales 才挂语言切换
  * @param {boolean|string|object} options.techText  标题的 TechText 字标。v0.18.0 起缺省开启（选择器 ".app-title, .wordmark"），
  *        并跟进之后才插入 / 移除的匹配元素；false = 不开；字符串 = 选择器；对象 = { selector?, ...TechText 选项 }
+ * @param {boolean|{root?: ParentNode}} options.tabs  .tabs / .seg 的滑动滑块（tabs.js）。v0.23.0 起缺省开启（整个 document，
+ *        跟进之后插入的轨道与选中态变化）；false = 不开（选中项仍是纯 CSS 的凸起样式）
  */
 export function mountChrome({
   background = null,
@@ -92,7 +95,8 @@ export function mountChrome({
   switcher: switcherOpts = {},
   account: accountOpts = {},
   localeToggle: localeOpts = null,
-  techText: techTextOpts = true
+  techText: techTextOpts = true,
+  tabs: tabsOpts = true
 } = {}) {
   let current = locale;
 
@@ -116,6 +120,7 @@ export function mountChrome({
     account,
     localeToggle: null,
     techText: [],
+    tabs: null,
     get locale() {
       return current;
     },
@@ -129,6 +134,8 @@ export function mountChrome({
       localeToggle?.set(next);
     },
     destroy() {
+      handle.tabs?.destroy();
+      handle.tabs = null;
       stopTechText?.();
       stopTechText = null;
       localeToggle?.destroy();
@@ -159,6 +166,10 @@ export function mountChrome({
     stopTechText = watchTechText(selector, opts, (list) => {
       handle.techText = list;
     });
+  }
+
+  if (tabsOpts) {
+    handle.tabs = enhanceTabs(typeof tabsOpts === "object" ? tabsOpts.root : undefined);
   }
 
   return handle;

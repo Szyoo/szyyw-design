@@ -4,6 +4,7 @@ import type { AccountMenuHandle, PortalLoginMessage } from "./account";
 import type { AccountLabels } from "./chrome-text";
 import type { LocaleToggleHandle } from "./locale-toggle";
 import type { TechTextHandle, TechTextOptions } from "./techtext";
+import type { TabsHandle } from "./tabs";
 
 export interface ChromeHandle {
   appearance: AppearanceHandle;
@@ -15,6 +16,8 @@ export interface ChromeHandle {
   localeToggle: LocaleToggleHandle | null;
   /** techText 选项增强出的、当前仍在文档里的字标（没开时为空数组）；之后插入 / 移除的标题会自动增减（v0.18.0）；destroy() 一并销毁 */
   techText: TechTextHandle[];
+  /** .tabs / .seg 滑动滑块（v0.23.0，enhanceTabs）；tabs: false 时为 null；destroy() 一并撤销 */
+  tabs: TabsHandle | null;
   /** 当前语言 */
   readonly locale: string;
   /** 同步所有子件的文案（外观 / 🌗 / 切换器 / 账户菜单 / 语言按钮）；背景画布不重建 */
@@ -68,4 +71,9 @@ export function mountChrome(options?: {
    * false = 不开；true = 缺省选择器；字符串 = 选择器；对象 = { selector?, ...TechTextOptions }
    */
   techText?: boolean | string | (TechTextOptions & { selector?: string });
+  /**
+   * v0.23.0：.tabs / .seg 的滑动滑块（tabs.js 的 enhanceTabs），缺省开启、范围 document；
+   * false = 不开（选中项仍是纯 CSS 的凸起样式，外观一致只是不滑动）；{ root } = 只增强该范围
+   */
+  tabs?: boolean | { root?: ParentNode };
 }): ChromeHandle;
