@@ -555,6 +555,7 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
   token 旋钮 `--sticky-top` `--sticky-page-h` `--sticky-clear`；JS `./sticky-heads`（`mountStickyHeads`）；`mountGradualBlur` 新选项 `outside`
 - v0.23.0（§12.1）：`.tabs` / `.seg` 改为滑块分段外观（类名不变）；`.seg.compact`；token `--seg-*`；属性 `data-pill` `data-pill-on` `data-pill-ready`
   与轨道上的 `--tab-pill-x/y/w/h`（tabs.js 写，应用不要手写）；JS `./tabs`（`enhanceTabs` `TABS_SELECTOR`）、`mountChrome({ tabs })` 与 `handle.tabs`
+- v0.24.0 新增（§16）：`.depth-carousel` 及其 `__*` 子类与状态类、CSS 变量 `--dc-height` `--dc-min-height` `--dc-tint` `--dc-fit`；JS `./depth-carousel`（`mountDepthCarousel`）
 - v0.15.0 新增（§14）：JS `./techtext`（`mountTechText` `enhanceTechText` `DEFAULTS`）、`mountChrome({ techText })` 与 `handle.techText`；
   类 `.tech-text`（JS 加在被增强的元素上，可用来写选中色等外观）。`.tech-text-canvas` 是内部实现，别套用
 
@@ -807,7 +808,7 @@ Commons Clause 一节写的是「可以作为应用 / 网站的一部分使用�
 ## 16. 交互组件与控件（v0.19.0）
 
 全部框架无关 ESM + 手写 `.d.ts`，颜色只从 token，尊重 `prefers-reduced-motion`；出处见 §17。手测页
-`demo/swipe-toast.html` `target-cursor.html` `gradual-blur.html` `branched-menu.html` `squish-switch.html` `glide-select.html` `status-mark.html` `lattice-loader.html`。
+`demo/swipe-toast.html` `target-cursor.html` `gradual-blur.html` `branched-menu.html` `squish-switch.html` `glide-select.html` `status-mark.html` `lattice-loader.html` `depth-carousel.html`。
 
 ### Swipe Toast（`./toast`，升级）
 
@@ -881,6 +882,33 @@ running 无 progress = 不定进度。选项：`color` `doneColor`（缺省 `--o
 选项：`pattern`（命名或自定义）`grid` 3|4 `shape` `color` `doneColor` `errorColor` `cellSize` `gap` `fontSize` `step` `idleOpacity` `glow` `glowColor`。
 用于替代长任务的「加载中…」；`role="status"`，状态变化时播报「文字 + 用时」。
 
+### Depth Carousel（`./depth-carousel`，v0.24.0）
+
+`mountDepthCarousel(el, { items, start, … }) → { goTo(i, { animate }), next(), prev(), index, count, setItems(items, start), refresh(), destroy() }`。
+`el` 即根元素（加 `.depth-carousel`），卡片 / 按钮 / 圆点由 JS 生成；`items` 为图片 url 或 `{ image, alt }`；`onChange(index, item)` 在当前项变化时调用
+（用户操作、自动轮播、`goTo` 都算；初始化与 `setItems` 不算），应用用它显示「3 / 8」与「原图」链接。主要用途是**点开照片**：放进 `.overlay` + `.sheet.wide`
+（无标题头，§8）里看图，不再跳全屏查看器或新标签页；配 `mountOverlay` 处理 Esc / 点遮罩，关闭时 `destroy()`。
+
+- 上游参数全保留：`cardWidth` 300、`cardHeight` 380、`radius` 18、`tint`（缺省 `var(--bg)`，可传颜色或 token 名）、`depth` 220、`spread` 90、`tilt` 22、
+  `tiltDirection` `"right"`、`perspective` 1400、`visibleCards` 4、`falloff` 0.2、`blur` 6、`duration` 700、`ease` `"power3.out"`（另认 gsap 常用名、
+  `"cubic-bezier(…)"`、函数）、`autoplay` false、`autoplayDelay` 3200、`loop` true、`controls` / `indicators` true（上游名 `showControls` / `showIndicators` 也认）。
+  新增：`aspect`、`fit`（缺省 `"contain"`）、`maxIndicators` 24（超过不显示圆点）、`wheel`（缺省 `"horizontal"`）、`keyboard`、`locale` / `labels` / `label`、`className`。
+- **尺寸**：数字 = 上游行为（容器窄时整体缩小，最小 0.4 倍，不放大）。`cardWidth` / `cardHeight` 任一为 `"auto"` 时按容器宽高与 `aspect` 放大或缩小填满，
+  圆点在卡片下方单独留位；容器须有确定高度——写 `--dc-height`（缺省 `100%`，父元素没高度时落到 `--dc-min-height` 320px）。
+  弹层看图推荐 `cardWidth: "auto", cardHeight: "auto", aspect: 3 / 4` + 容器 `--dc-height: min(68dvh, 580px)`：桌面 760 宽弹层里卡片约 390 × 520，
+  手机底部抽屉（375 宽）约 280 × 370。卡片按像素尺寸排版（不用 `scale()` 放大），照片不糊；图片 `object-fit: contain`（`--dc-fit` 可改）。
+- 交互：拖动（鼠标与触摸；先判方向，纵向手势交还浏览器，`touch-action: pan-y`，不挡弹层滚动）、松手按速度投射落点；点后排卡片跳到它；
+  焦点在组件内时 ← → Home End；左右按钮（`loop: false` 时首尾禁用）；圆点；滚轮缺省只认横向（`wheel: true` = 上游的纵横都认）。
+- 自动轮播：悬停（精确指针）/ 拖动 / 聚焦 / 标签页隐藏时暂停；`prefers-reduced-motion` 下不自动轮播、切换无动画。补间只在动画中跑 rAF，空闲零帧。
+- 大量图片：只创建当前项前 1 张到后 `visibleCards + 1` 张的卡片，图片随之按需加载；加载中显示转圈、失败显示图标 +「加载失败」。
+- 颜色只从 token：卡片底 `--text` 7% 混 `--bg`、按钮 `--sheet-bg` / `--glass-border`、圆点 `--text` 32% / 当前 `--accent`、阴影 `--pop-shadow`；
+  后排卡片向 `--dc-tint`（缺省 `--bg`）淡出，深色底时同时按 `falloff` 压暗，浅色底时不压暗（否则发灰）。明暗 / 配色切换即时生效。
+- a11y：根 `role="region"` + `aria-roledescription="carousel"`（按 locale）+ `aria-label`、可聚焦；每张 `role="group"` + `aria-label="3 / 8"`，非当前项 `aria-hidden`；
+  当前项变化经隐藏的 `aria-live="polite"` 播报「3 / 8 · alt」（自动轮播且未聚焦时关闭播报）；按钮与圆点有 label，当前圆点 `aria-current`。
+- 公开类：`.depth-carousel`（+ 状态 `.is-auto` `.is-dragging` `.has-dots` `.is-empty`）、`__stage` `__card`（`.is-active`、`data-state="loading|loaded|error"`）
+  `__img` `__msg` `__tint` `__arrow`（`--prev` / `--next`）`__dots` `__dot`（`.is-active`）`__live`；CSS 变量 `--dc-height` `--dc-min-height` `--dc-tint` `--dc-fit`
+  （`--dc-w` `--dc-h` `--dc-radius` `--dc-perspective` `--dc-reserve` 由 JS 写，别手设）。卡片与按钮的 z-index（2000± / 3000）只在根元素内部，不进 §3 全局层级。
+
 ## 16.1 分页器 `.pager`（v0.20.0）
 
 `import { mountPager } from "@szyyw/design/pager"`；所有列表分页统一用它，应用不自写「上一页 / 加载更多」。
@@ -904,11 +932,12 @@ running 无 progress = 不定进度。选项：`color` `doneColor`（缺省 `--o
 | `themes/gradient-waves.js` · `themes/side-rays.js` · `themes/pixel-blast.js` | GradientWaves · SideRays · PixelBlast |
 | `target-cursor.js` · `gradual-blur.js` · `branched-menu.js` · `toast.js`（Swipe Toast 外观与交互） | TargetCursor · GradualBlur · BranchedMenu · SwipeToast |
 | `.switch` + `switch.js` · `glide-select.js` · `status-mark.js` · `lattice-loader.js` | SquishSwitch · GlideSelect · StatusMark · LatticeLoader |
+| `depth-carousel.js`（v0.24.0，gsap 补间改为自写 rAF 补间） | DepthCarousel |
 
 Commons Clause 一节的大意是「可以作为应用 / 网站的一部分使用（含商用），但不得出售、再许可或再分发组件本身」。
 包作者知情，决定把移植版随本包（个人站点的设计包）发布、供自己的站点使用；其他使用者请自行评估上游许可。
 上游原件可按 `components.json` 的 `@react-bits` registry 取到 `reference/reactbits/`（已 gitignore，不随包分发），只作参考、不作依赖。
-移植时 React state / effect → 闭包，`motion` → CSS transition / Web Animations，`ogl` / `three` / `postprocessing` → 原生 WebGL，零运行时依赖。
+移植时 React state / effect → 闭包，`motion` → CSS transition / Web Animations，`gsap` → 自写 rAF 补间与缓动，`ogl` / `three` / `postprocessing` → 原生 WebGL，零运行时依赖。
 
 滑块分段（§12.1，`.tabs` / `.seg` + `tabs.js`）的外观参照 reactbits.dev 文档站点外壳里「Preview / Code」的分段切换样式
 （站点自身的界面，不是 React Bits 组件库里的组件），尺寸与动效按其观感自行实现，未移植其代码。

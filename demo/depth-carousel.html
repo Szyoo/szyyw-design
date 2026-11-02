@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Depth Carousel · 手测</title>
+<!--
+  @szyyw/design Depth Carousel 的静态手测页（不进 package files）。
+  仓库根目录 `python3 -m http.server 8080`，打开 http://localhost:8080/demo/depth-carousel.html
+  ?scheme=light|dark 可直接指定明暗（截图用）。图片全是页内用 canvas 生成的占位图（横竖混合），不引用外部图片。
+-->
+<script>
+  (function () {
+    var d = document.documentElement, q = new URLSearchParams(location.search);
+    var s = q.get("scheme");
+    if (s === "auto" || s === "dark" || s === "light") d.setAttribute("data-scheme", s);
+  })();
+</script>
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../components.css">
+<style>
+  .demo { max-width: 920px; margin: 0 auto; padding: 24px 16px 64px; }
+  .demo > section { padding: 18px 20px; margin-bottom: 16px; }
+  .demo h2 { margin: 0 0 4px; font-size: 15px; }
+  .demo .note { margin: 0 0 10px; font-size: 12px; color: var(--text-dim); }
+  .demo .log { font-size: 12px; color: var(--text-dim); margin-top: 8px; min-height: 1.4em; font-variant-numeric: tabular-nums; }
+  #dc1 { --dc-height: 440px; }
+  #dc2 { --dc-height: 380px; }
+  .thumbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; }
+  .thumbs button { padding: 0; border: 1px solid var(--glass-border); border-radius: 10px; overflow: hidden; background: var(--inner-bg); aspect-ratio: 1; cursor: zoom-in; }
+  .thumbs img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  /* 看图弹层：卡片尺寸跟容器走，容器给确定高度 */
+  .viewer .sheet-body { padding: 0 8px 8px; }
+  .viewer .depth-carousel { --dc-height: min(68dvh, 580px); }
+  .viewer-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 10px 2px; font-size: 13px; color: var(--text-dim); }
+  .viewer-bar .num { font-variant-numeric: tabular-nums; color: var(--text); }
+</style>
+</head>
+<body>
+<div class="bg-layer" aria-hidden="true"></div>
+<div class="app-frame">
+  <main class="demo">
+    <h1 class="page-title grad-text">Depth Carousel</h1>
+    <p class="page-sub">拖动（鼠标 / 触摸）、← → Home End、左右按钮、圆点、横向滚轮。<button class="btn-ghost btn-small" id="scheme" type="button">切换明暗</button></p>
+
+    <section class="glass"><h2>上游缺省参数（300 × 380，loop）</h2>
+      <p class="note">数字尺寸：容器窄时整体缩小。勾选自动轮播：悬停 / 聚焦 / 拖动 / 标签页隐藏时暂停。</p>
+      <label class="small"><input type="checkbox" id="ap"> 自动轮播（1600ms）</label>
+      <div id="dc1"></div><div class="log" id="l1"></div></section>
+
+    <section class="glass"><h2>自适应尺寸 + 不循环 + 一张加载失败</h2>
+      <p class="note">cardWidth / cardHeight = "auto"、aspect 3 / 4、loop: false、tiltDirection: "left"、ease "expo.out"。</p>
+      <div id="dc2"></div><div class="log" id="l2"></div></section>
+
+    <section class="glass"><h2>点开照片（.overlay + .sheet.wide，无标题头）</h2>
+      <p class="note">从第 N 张打开、显示「n / N」与原图链接、Esc / 点遮罩 / ✕ 关闭。手机上是底部全宽抽屉。</p>
+      <div class="thumbs" id="thumbs"></div>
+      <p class="note" style="margin-top:12px"><button class="btn btn-small" id="many" type="button">打开 120 张（只创建可见附近的卡片，不显示圆点）</button></p>
+    </section>
+  </main>
+</div>
+<script type="module">
+  import { mountDepthCarousel } from "../depth-carousel.js";
+  import { mountOverlay } from "../overlay.js";
+
+  /* 占位照片：横竖混合，canvas 画渐变 + 编号，转 blob URL（原图链接能在新标签页打开） */
+  const SIZES = [[800, 1067], [1200, 800], [800, 1200], [900, 900], [1280, 720], [750, 1000], [800, 1067], [1000, 750]];
+  function makePhoto(i) {
+    const [w, h] = SIZES[i % SIZES.length];
+    const c = document.createElement("canvas");
+    c.width = w; c.height = h;
+    const g = c.getContext("2d");
+    const hue = (i * 47) % 360;
+    const grd = g.createLinearGradient(0, 0, w, h);
+    grd.addColorStop(0, `hsl(${hue} 70% 55%)`);
+    grd.addColorStop(1, `hsl(${(hue + 60) % 360} 65% 30%)`);
+    g.fillStyle = grd; g.fillRect(0, 0, w, h);
+    g.fillStyle = "rgba(255,255,255,0.18)";
+    for (let k = 0; k < 6; k++) { g.beginPath(); g.arc(w * ((k * 37) % 100) / 100, h * ((k * 61) % 100) / 100, Math.min(w, h) * 0.12, 0, Math.PI * 2); g.fill(); }
+    g.fillStyle = "#fff"; g.textAlign = "center"; g.textBaseline = "middle";
+    g.font = `600 ${Math.round(Math.min(w, h) * 0.22)}px system-ui, sans-serif`;
+    g.fillText(String(i + 1), w / 2, h / 2);
+    g.font = `500 ${Math.round(Math.min(w, h) * 0.05)}px system-ui, sans-serif`;
+    g.fillText(`${w} × ${h}`, w / 2, h / 2 + Math.min(w, h) * 0.17);
+    return new Promise((r) => c.toBlob((b) => r(URL.createObjectURL(b)), "image/jpeg", 0.85));
+  }
+  const photos = await Promise.all(Array.from({ length: 8 }, (_, i) => makePhoto(i)));
+  const items = photos.map((image, i) => ({ image, alt: `照片 ${i + 1}` }));
+
+  document.getElementById("scheme").addEventListener("click", () => {
+    const d = document.documentElement;
+    d.setAttribute("data-scheme", d.getAttribute("data-scheme") === "light" ? "dark" : "light");
+  });
+
+  /* 1. 上游缺省 */
+  const l1 = document.getElementById("l1");
+  let dc1;
+  const mount1 = (autoplay) => {
+    dc1?.destroy();
+    dc1 = mountDepthCarousel(document.getElementById("dc1"), {
+      items: photos.slice(0, 6), autoplay, autoplayDelay: 1600,
+      onChange: (i) => { l1.textContent = `onChange → ${i}（${i + 1} / ${dc1.count}）`; },
+    });
+    window.dc1 = dc1;
+  };
+  mount1(false);
+  document.getElementById("ap").addEventListener("change", (e) => mount1(e.target.checked));
+
+  /* 2. 自适应 + 不循环 + 失败占位 */
+  const l2 = document.getElementById("l2");
+  const dc2 = mountDepthCarousel(document.getElementById("dc2"), {
+    items: [...items.slice(0, 4), { image: "./missing-photo.jpg", alt: "不存在的图" }, ...items.slice(4)],
+    cardWidth: "auto", cardHeight: "auto", aspect: 3 / 4, loop: false, tiltDirection: "left", ease: "expo.out",
+    onChange: (i) => { l2.textContent = `onChange → ${i}`; },
+  });
+  window.dc2 = dc2;
+
+  /* 3. 看图弹层 */
+  function openViewer(list, start) {
+    const overlay = document.createElement("div");
+    overlay.className = "overlay viewer";
+    overlay.innerHTML = `
+      <div class="sheet wide" role="dialog" aria-modal="true" aria-label="查看照片">
+        <div class="sheet-head"><button class="close-x" type="button" aria-label="关闭">✕</button></div>
+        <div class="sheet-body">
+          <div class="vc"></div>
+          <div class="viewer-bar"><span class="num"></span><a class="orig" target="_blank" rel="noopener">原图</a></div>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    const num = overlay.querySelector(".num"), orig = overlay.querySelector(".orig");
+    const sync = (i) => { num.textContent = `${i + 1} / ${list.length}`; orig.href = list[i].image; };
+    const dc = mountDepthCarousel(overlay.querySelector(".vc"), {
+      items: list, start, cardWidth: "auto", cardHeight: "auto", aspect: 3 / 4, label: "照片", onChange: sync,
+    });
+    sync(dc.index);
+    const close = () => { ov.destroy(); dc.destroy(); overlay.remove(); window.viewer = null; };
+    const ov = mountOverlay(overlay, { onClose: close });
+    overlay.querySelector(".close-x").addEventListener("click", close);
+    overlay.querySelector(".vc").focus();
+    window.viewer = { dc, close, overlay };
+  }
+  const thumbs = document.getElementById("thumbs");
+  items.forEach((it, i) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.setAttribute("aria-label", `查看${it.alt}`);
+    b.innerHTML = `<img alt="" src="${it.image}">`;
+    b.addEventListener("click", () => openViewer(items, i));
+    thumbs.appendChild(b);
+  });
+  document.getElementById("many").addEventListener("click", async () => {
+    const extra = Array.from({ length: 120 }, (_, i) => ({ image: photos[i % 8], alt: `第 ${i + 1} 张` }));
+    openViewer(extra, 57);
+  });
+  window.openViewer = openViewer;
+  window.demoItems = items;
+</script>
+</body>
+</html>

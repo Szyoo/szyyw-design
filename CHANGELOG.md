@@ -1,5 +1,24 @@
 # Changelog
 
+## v0.24.0 — 2026-11-02
+
+**Depth Carousel**（DESIGN.md §16，手测页 `demo/depth-carousel.html`）。纯新增，既有类与函数行为不变；`corner.css` 不变。
+
+**新增**
+- JS `./depth-carousel`：`mountDepthCarousel(el, { items, start, onChange, … }) → { goTo(i, { animate }), next(), prev(), index, count, setItems(items, start), refresh(), destroy() }`，
+  另导出 `DEFAULTS`、`resolveEase`、`cubicBezier`。纵深轮播：当前卡片在最前，其余沿斜后方退远（变暗 / 模糊 / 倾斜）。
+  用途：应用里点开照片时在 `.overlay` + `.sheet.wide`（无标题头）里看图，配 `mountOverlay`，不再跳全屏查看器或新标签页。
+- 上游参数全保留（`cardWidth` 300、`cardHeight` 380、`radius`、`tint`、`depth`、`spread`、`tilt`、`tiltDirection`、`perspective`、`visibleCards`、`falloff`、`blur`、
+  `duration`、`ease`、`autoplay`、`autoplayDelay`、`loop`、`controls`、`indicators`）；gsap 补间改为自写 rAF 补间（`ease` 认 gsap 常用名、`cubic-bezier(…)`、函数），零依赖。
+- 尺寸自适应：`cardWidth` / `cardHeight` 为 `"auto"` 时按容器宽高与 `aspect` 填满（容器用 `--dc-height` 给高度）；卡片按像素尺寸排版，照片不糊；图片缺省 `object-fit: contain`。
+- 拖动（鼠标与触摸，纵向手势交还浏览器）、← → Home End、左右按钮、圆点、横向滚轮；自动轮播在悬停 / 拖动 / 聚焦 / 标签页隐藏时暂停，减少动效时不轮播、切换无动画。
+- 只创建可见范围附近的卡片（大量图片也不卡），加载中 / 加载失败有占位；超过 `maxIndicators`（24）张不显示圆点。
+- a11y：`role="region"` + `aria-roledescription`、每张 `aria-label="3 / 8"`、当前项变化 `aria-live="polite"`（自动轮播时不播报）、按钮有 label；文案 zh / ja / en。
+- 样式在 `components.css` 末尾「depth-carousel」段，颜色只取 token；CSS 变量 `--dc-height` `--dc-min-height` `--dc-tint` `--dc-fit`。
+
+**升级提示**
+- vendored 项目用 v0.24.0 的 `sync.sh`（清单加了 `depth-carousel.js`）；CDN / npm 项目只改版本号。
+
 ## v0.23.0 — 2026-11-02
 
 **标签页与分段控件统一为「滑块分段」外观**（DESIGN.md §12.1，手测页 `demo/tabs.html`）。类名与标记不变，升级即生效——这是有意的可见变化。

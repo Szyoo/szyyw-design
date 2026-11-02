@@ -24,17 +24,17 @@ npm（钉精确 tag）：
 ```jsonc
 // package.json
 "dependencies": {
-  "@szyyw/design": "github:Szyoo/szyyw-design#v0.22.2"
+  "@szyyw/design": "github:Szyoo/szyyw-design#v0.24.0"
 }
 ```
 
 CDN（无构建步骤的项目，免 vendoring）：每个 `vX.Y.Z` tag 发布到 `https://design.szyyw.xyz/vX.Y.Z/`，内容即该 tag 的 `git archive`，发布后不再改写（`Cache-Control: immutable`，CORS `*`）。
 
 ```html
-<link rel="stylesheet" href="https://design.szyyw.xyz/v0.22.2/tokens.css">
-<link rel="stylesheet" href="https://design.szyyw.xyz/v0.22.2/components.css">
+<link rel="stylesheet" href="https://design.szyyw.xyz/v0.24.0/tokens.css">
+<link rel="stylesheet" href="https://design.szyyw.xyz/v0.24.0/components.css">
 <script type="module">
-  import { mountChrome } from "https://design.szyyw.xyz/v0.22.2/chrome.js";
+  import { mountChrome } from "https://design.szyyw.xyz/v0.24.0/chrome.js";
   mountChrome({ /* … */ });
 </script>
 ```
@@ -46,8 +46,8 @@ CDN（无构建步骤的项目，免 vendoring）：每个 `vX.Y.Z` tag 发布�
 vendoring（复制到项目目录）：只用上游 `sync.sh`，从目标 tag 取脚本，文件清单与该版本一致：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Szyoo/szyyw-design/v0.22.2/sync.sh \
-  | sh -s -- ./static/vendor/szyyw-design v0.22.2
+curl -fsSL https://raw.githubusercontent.com/Szyoo/szyyw-design/v0.24.0/sync.sh \
+  | sh -s -- ./static/vendor/szyyw-design v0.24.0
 ```
 
 它复制运行时文件（清单见 `sync.sh` 的 `FILES`）并写 / 刷新 `VENDORED.md`；第二个参数用 `--local` 可从本机 clone 同步未发版改动。
@@ -228,6 +228,32 @@ const loader = mountLatticeLoader(el, { label: "处理中" });  loader.set({ sta
 
 `.switch` 不挂 JS 也有 Squish 动效；Gradual Blur、Branched Menu、Target Cursor 的用法见 DESIGN.md §16，手测页在 `demo/`。
 
+### 看图轮播（Depth Carousel）
+
+应用里点开照片时，在 `.overlay` + `.sheet.wide`（无标题头）里用它看图，不跳全屏查看器或新标签页。卡片尺寸 `"auto"` 时跟容器走，容器要给确定高度：
+
+```html
+<div class="overlay">
+  <div class="sheet wide" role="dialog" aria-modal="true" aria-label="查看照片">
+    <div class="sheet-head"><button class="close-x" type="button" aria-label="关闭">✕</button></div>
+    <div class="sheet-body"><div id="viewer" style="--dc-height: min(68dvh, 580px)"></div><span class="num"></span> <a class="orig" target="_blank">原图</a></div>
+  </div>
+</div>
+```
+
+```js
+import { mountDepthCarousel } from "@szyyw/design/depth-carousel";
+const dc = mountDepthCarousel(viewerEl, {
+  items: photos.map((p) => ({ image: p.url, alt: p.name })), start: 2,
+  cardWidth: "auto", cardHeight: "auto", aspect: 3 / 4,
+  onChange: (i) => { num.textContent = `${i + 1} / ${photos.length}`; orig.href = photos[i].url; },
+});
+// 关闭弹层时 dc.destroy()；配 mountOverlay 处理 Esc / 点遮罩
+```
+
+上游参数全保留（cardWidth 300 / cardHeight 380 / radius / tint / depth / spread / tilt / tiltDirection / perspective / visibleCards / falloff / blur /
+duration / ease / autoplay / autoplayDelay / loop / controls / indicators），零依赖；选项与行为见 DESIGN.md §16，手测页 `demo/depth-carousel.html`。
+
 ### 吸顶标题
 
 长页面的标题行与分块小标题吸顶（小标题叠在标题行下方，滚到哪块显示哪块），吸住时下沿挂 Gradual Blur。纯 CSS 就能吸顶，JS 可选：
@@ -306,6 +332,7 @@ enhanceTabs();   // 跟进之后插入的标签条与选中态变化；返回 { 
 | `./menu` | `attachMenu` |
 | `./techtext` | `enhanceTechText`、`mountTechText`、`runningCount`、`DEFAULTS` |
 | `./overlay` | `mountOverlay`（遮罩点击 / Esc 关闭 + body 滚动锁引用计数） |
+| `./depth-carousel` | `mountDepthCarousel`、`DEFAULTS`、`resolveEase`、`cubicBezier`（纵深轮播 / 弹层看图，DESIGN.md §16） |
 | `./version` | `VERSION`、`REPO` |
 
 每个 JS 模块都有同名 `.d.ts`，选项与返回值以其为准。

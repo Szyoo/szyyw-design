@@ -1,6 +1,6 @@
 {
   "name": "@szyyw/design",
-  "version": "0.23.0",
+  "version": "0.24.0",
   "description": "szyyw.xyz design language — tokens, glass components, interactive dot-field background. Framework-agnostic CSS/JS, no build step.",
   "type": "module",
   "license": "MIT",
@@ -128,6 +128,10 @@
     "./tabs": {
       "types": "./tabs.d.ts",
       "default": "./tabs.js"
+    },
+    "./depth-carousel": {
+      "types": "./depth-carousel.d.ts",
+      "default": "./depth-carousel.js"
     }
   },
   "files": [
@@ -192,6 +196,8 @@
     "sticky-heads.d.ts",
     "tabs.js",
     "tabs.d.ts",
+    "depth-carousel.js",
+    "depth-carousel.d.ts",
     "themes/",
     "fonts/"
   ]

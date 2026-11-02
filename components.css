@@ -2977,3 +2977,175 @@ select.field.small { padding-right: 30px; }
   .pager-num, .pager-gap { display: none; }
   .pager-cur { display: inline; }
 }
+
+/* ===== depth-carousel（v0.24.0） ===== */
+/* Depth Carousel（depth-carousel.js，DESIGN.md §16）：当前卡片在最前，其余沿斜后方退远。
+   根元素就是 mountDepthCarousel 的容器；JS 写 --dc-w / --dc-h / --dc-radius / --dc-perspective / --dc-reserve。
+   容器旋钮：--dc-height（缺省 100%，父元素没高度时落到 --dc-min-height 320px）、--dc-tint（后排卡片淡出到的颜色，缺省 --bg）、
+   --dc-fit（图片 object-fit，缺省 contain）。颜色只取 token，明暗 / 配色切换即时生效。 */
+
+.depth-carousel {
+  position: relative;
+  width: 100%;
+  height: var(--dc-height, 100%);
+  min-height: var(--dc-min-height, 320px);
+  overflow: hidden;
+  perspective: var(--dc-perspective, 1400px);
+  perspective-origin: 50% 50%;
+  touch-action: pan-y;
+  outline: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  cursor: grab;
+}
+.depth-carousel.is-dragging { cursor: grabbing; }
+.depth-carousel:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 50%, transparent);
+  outline-offset: -2px;
+  border-radius: 12px;
+}
+.depth-carousel__stage {
+  position: absolute;
+  inset: 0 0 var(--dc-reserve, 0px) 0;
+  transform-style: preserve-3d;
+  color: var(--dc-tint, var(--bg)); /* JS 读它判断 tint 明暗，不显示文字 */
+}
+.depth-carousel__card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--dc-w, 300px);
+  height: var(--dc-h, 380px);
+  border-radius: var(--dc-radius, 18px);
+  overflow: hidden;
+  background: color-mix(in srgb, var(--text) 7%, var(--bg));
+  box-shadow: var(--pop-shadow);
+  transform: translate(-50%, -50%);
+  transform-origin: center center;
+  will-change: transform, opacity, filter;
+  cursor: pointer;
+}
+.depth-carousel__card.is-active { cursor: inherit; }
+.depth-carousel__img {
+  width: 100%;
+  height: 100%;
+  object-fit: var(--dc-fit, contain);
+  display: block;
+  pointer-events: none;
+  -webkit-user-drag: none;
+  transition: opacity 0.3s var(--ease);
+}
+.depth-carousel__card:not([data-state="loaded"]) .depth-carousel__img { opacity: 0; }
+.depth-carousel__msg {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  font-size: 12px;
+  color: var(--text-dim);
+  text-align: center;
+  pointer-events: none;
+}
+.depth-carousel__card[data-state="loaded"] .depth-carousel__msg { display: none; }
+.depth-carousel__card[data-state="loading"] .depth-carousel__msg::before {
+  content: "";
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--text-dim) 30%, transparent);
+  border-top-color: var(--accent);
+  animation: dc-spin 0.8s linear infinite;
+}
+.depth-carousel__card[data-state="error"] .depth-carousel__msg { color: var(--text-dim); }
+.depth-carousel__card[data-state="error"] .depth-carousel__msg svg { width: 28px; height: 28px; opacity: 0.7; }
+@keyframes dc-spin { to { transform: rotate(360deg); } }
+.depth-carousel__tint {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  background: var(--dc-tint, var(--bg));
+}
+.depth-carousel__arrow {
+  position: absolute;
+  top: calc((100% - var(--dc-reserve, 0px)) / 2);
+  transform: translateY(-50%);
+  z-index: 3000;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  background: var(--sheet-bg);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  color: var(--text);
+  box-shadow: var(--pop-shadow);
+  cursor: pointer;
+  transition: color 0.2s var(--ease), border-color 0.2s var(--ease), transform 0.2s var(--ease), opacity 0.2s var(--ease);
+}
+.depth-carousel__arrow:hover:not(:disabled) {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--glass-border));
+}
+.depth-carousel__arrow:active:not(:disabled) { transform: translateY(-50%) scale(0.94); }
+.depth-carousel__arrow:disabled { opacity: 0.35; cursor: default; }
+.depth-carousel__arrow:focus-visible,
+.depth-carousel__dot:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.depth-carousel__arrow--prev { left: 12px; }
+.depth-carousel__arrow--next { right: 12px; }
+.depth-carousel__dots {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3000;
+  display: flex;
+  gap: 8px;
+  max-width: calc(100% - 24px);
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+.depth-carousel__dot {
+  position: relative;
+  flex: none;
+  width: 7px;
+  height: 7px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 32%, transparent);
+  cursor: pointer;
+  transition: width 0.25s var(--ease), background 0.25s var(--ease);
+}
+.depth-carousel__dot::after { content: ""; position: absolute; inset: -8px -4px; } /* 扩大点按区域 */
+.depth-carousel__dot.is-active { width: 20px; background: var(--accent); }
+.depth-carousel__live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+@media (max-width: 520px) {
+  .depth-carousel__arrow { width: 36px; height: 36px; }
+  .depth-carousel__arrow--prev { left: 6px; }
+  .depth-carousel__arrow--next { right: 6px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .depth-carousel__card { will-change: auto; }
+  .depth-carousel__img, .depth-carousel__arrow, .depth-carousel__dot { transition: none; }
+  .depth-carousel__card[data-state="loading"] .depth-carousel__msg::before { animation: none; }
+}
