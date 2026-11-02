@@ -77,6 +77,39 @@ a {
   min-height: 100vh;
 }
 
+/* 居中主体栏（.app-main，v0.25.0）：.app-frame > .app-main > …
+   定宽居中、两侧留空的那一栏，自带一层半透明底（--page-veil），让正文在各背景主题上更清楚，仍透出一点背景。
+   - 宽度旋钮 --page-max-w（缺省 1080px），左右内距 --page-pad-x（缺省 24px，≤640px 为 16px）；上下内距应用自定。
+   - 底层画在 ::before（z-index -1，落在 .app-frame 的层叠上下文里、内容之下），不建新层叠上下文：
+     .drawer / .sheet / .overlay / .corner-panel 等 fixed 浮层与吸顶标题的层级不受影响。
+   - 左右边缘在内距里渐隐（--page-veil-fade，缺省 32px，不超过内距 + 8px 的观感）；窄屏铺满宽度、不渐隐，不产生横向滚动。
+   - 带侧栏的布局（主体偏移）不要用它。 */
+.app-main {
+  --page-max-w: 1080px;
+  --page-pad-x: 24px;
+  --page-veil-fade: 32px;
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: var(--page-max-w);
+  margin-inline: auto;
+  padding-inline: var(--page-pad-x);
+}
+.app-main::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--page-veil);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 var(--page-veil-fade), #000 calc(100% - var(--page-veil-fade)), transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 var(--page-veil-fade), #000 calc(100% - var(--page-veil-fade)), transparent);
+}
+@media (max-width: 640px) {
+  .app-main { --page-pad-x: 16px; }
+  .app-main::before { -webkit-mask-image: none; mask-image: none; }
+}
+
 /* ---------- 动效 ---------- */
 
 /* 终帧必须是 transform:none，否则 fill-mode 残留的 transform

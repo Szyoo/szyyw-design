@@ -55,6 +55,9 @@
   --sheet-bg: light-dark(rgba(246, 248, 252, 0.94), rgba(21, 29, 50, 0.94));
   --overlay-bg: light-dark(rgba(30, 41, 59, 0.35), rgba(2, 6, 23, 0.55));
 
+  /* 居中主体栏 .app-main 的半透明底（v0.25.0）：压住背景主题、托起正文，仍透出一点背景 */
+  --page-veil: light-dark(rgba(238, 241, 248, 0.62), rgba(11, 16, 32, 0.52));
+
   /* 细线与悬浮着色 */
   --line-soft: light-dark(rgba(90, 108, 133, 0.18), rgba(148, 163, 184, 0.24));
   /* 表格行线（v0.25.0 起 token 化；浅色与之前的 text-dim 12% 相同） */

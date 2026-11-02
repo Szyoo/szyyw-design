@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>居中主体栏 · 手测</title>
+<!-- 手测页（不进 package files）：仓库根目录 python3 -m http.server 8080，打开 http://localhost:8080/demo/app-main.html
+     ?theme=<主题 id>（缺省 nebula）  ?scheme=dark|light（缺省 dark）  ?veil=0 去掉 .app-main（对照组：同宽自写居中栏，无半透明底） -->
+<script>
+  (function () {
+    var q = new URLSearchParams(location.search), d = document.documentElement;
+    d.setAttribute("data-theme", q.get("theme") || "nebula");
+    d.setAttribute("data-scheme", q.get("scheme") || "dark");
+  })();
+</script>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../components.css">
+<style>
+  /* 对照组：与 .app-main 同宽同内距，但没有半透明底 */
+  .plain-col { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+  @media (max-width: 640px) { .plain-col { padding: 0 16px; } }
+  .demo-body { padding-bottom: 64px; }
+  .demo-body > section { padding: 18px 20px; margin-top: 16px; }
+  .demo-body h2 { margin: 0 0 4px; font-size: 15px; }
+  .demo-body .note { margin: 0 0 12px; font-size: 12px; color: var(--text-dim); }
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-top: 16px; }
+</style>
+</head>
+<body>
+<div class="bg-layer" aria-hidden="true"></div>
+<div class="app-frame">
+  <header class="app-header">
+    <div class="app-brand">
+      <h1 class="app-title">居中主体栏</h1>
+      <span class="app-sub">.app-frame &gt; .app-main</span>
+    </div>
+    <div class="app-actions">
+      <button class="btn btn-small" type="button" id="open-drawer">打开抽屉</button>
+    </div>
+  </header>
+
+  <main class="app-main demo-body" id="col">
+    <div class="page-head sticky">
+      <div class="spread">
+        <h2 style="margin:0">本月概览</h2>
+        <div class="tabs compact" role="tablist"><button class="tab active" role="tab" aria-selected="true">概览</button><button class="tab" role="tab">明细</button><button class="tab" role="tab">设置</button></div>
+      </div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="glass stat-card"><div class="small muted">收入</div><div class="num" style="font-size:22px">¥ 482,300</div></div>
+      <div class="glass stat-card"><div class="small muted">支出</div><div class="num" style="font-size:22px">¥ 213,940</div></div>
+      <div class="glass stat-card"><div class="small muted">结余</div><div class="num" style="font-size:22px">¥ 268,360</div></div>
+    </div>
+
+    <section class="glass">
+      <h2>筛选</h2>
+      <p class="note">正文直接写在主体栏上（不包卡片）时也读得清：这段说明文字就在半透明底上。<a href="#" style="color:var(--accent)">查看规则 →</a></p>
+      <div class="field-row">
+        <input class="field" placeholder="搜索商户">
+        <span class="chip-row"><button class="chip active" type="button">全部</button><button class="chip" type="button">餐饮</button><button class="chip" type="button">交通</button></span>
+        <label class="row" style="margin:0"><input type="checkbox" class="switch" checked> 只看本月</label>
+        <button class="btn-ghost" type="button">重置</button>
+        <button class="btn" type="button">应用</button>
+      </div>
+    </section>
+
+    <p class="note" style="margin:16px 4px 0">卡片之间的正文：.app-main 的半透明底压住背景主题，两侧在内距里渐隐。</p>
+
+    <section class="glass">
+      <div class="section-head sticky"><h2 style="margin:0">流水</h2><span class="pill cyan">42 条</span></div>
+      <div class="table-wrap"><table class="tbl hover">
+        <thead><tr><th>日期</th><th>商户</th><th style="text-align:right">金额</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table></div>
+    </section>
+  </main>
+</div>
+
+<div class="overlay" id="ov" hidden></div>
+<aside class="drawer" id="drawer" hidden aria-label="详情">
+  <div class="drawer-head"><strong>详情</strong><button class="close-x" type="button" id="close-drawer" aria-label="关闭">×</button></div>
+  <div class="drawer-body"><div class="callout info">抽屉（z 51）盖在主体栏与工具位之上。</div></div>
+</aside>
+
+<script type="module">
+  const q = new URLSearchParams(location.search);
+  if (q.get("veil") === "0") { const c = document.getElementById("col"); c.classList.remove("app-main"); c.classList.add("plain-col"); }
+  const merchants = ["セブン-イレブン 渋谷店", "JR 東日本", "Amazon.co.jp", "スターバックス", "ユニクロ 新宿", "東京電力"];
+  document.getElementById("rows").innerHTML = Array.from({ length: 14 }, (_, i) =>
+    `<tr><td class="num">11-${String(30 - i).padStart(2, "0")}</td><td>${merchants[i % 6]}</td><td class="num" style="text-align:right">¥${(i * 1373) % 9000 + 120}</td></tr>`).join("");
+  const { mountThemeBackground } = await import("../theme-background.js");
+  mountThemeBackground(document.querySelector(".bg-layer"), { theme: q.get("theme") || "nebula", follow: false, persist: "none" });
+  const { mountStickyHeads } = await import("../sticky-heads.js");
+  mountStickyHeads();
+  const { enhanceTabs } = await import("../tabs.js");
+  enhanceTabs();
+  const dr = document.getElementById("drawer"), ov = document.getElementById("ov");
+  document.getElementById("open-drawer").onclick = () => { dr.hidden = false; ov.hidden = false; };
+  document.getElementById("close-drawer").onclick = ov.onclick = () => { dr.hidden = true; ov.hidden = true; };
+</script>
+</body>
+</html>
