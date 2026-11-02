@@ -60,6 +60,25 @@ a {
   text-decoration: none;
 }
 
+/* 文字链接（v0.26.0）：主色 + 细下划线。暗色下蓝灰主色与 --text-dim 很接近，只靠颜色认不出链接，
+   所以下划线常驻（半透明），悬停时加深。显式用 .link；正文 / 提示 / 说明文字里不带 class 的 <a> 自动套用，
+   导航、按钮、标签页、工具位这些带 class 的链接不受影响 */
+.link,
+:where(p, li, dd, td, th, figcaption, blockquote, .hint, .callout, .muted, .small, .tiny, .page-sub, .app-sub,
+  .err-text, .ok-text, .warn-text, .empty) a:where(:not([class])) {
+  color: var(--accent);
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.22em;
+  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+  transition: text-decoration-color 0.15s var(--ease), color 0.15s var(--ease);
+}
+.link:hover,
+:where(p, li, dd, td, th, figcaption, blockquote, .hint, .callout, .muted, .small, .tiny, .page-sub, .app-sub,
+  .err-text, .ok-text, .warn-text, .empty) a:where(:not([class])):hover {
+  text-decoration-color: currentColor;
+}
+
 /* ---------- 层级模型 ---------- */
 
 .bg-layer {
@@ -470,7 +489,7 @@ a.corner-tool { text-decoration: none; }
 .ctl-value { font-size: 12px; color: var(--accent); }
 
 /* 版本检测区：变更链接与动作按钮 */
-.update-link { color: var(--accent); text-decoration: none; }
+.update-link { color: var(--accent); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.22em; text-decoration-color: color-mix(in srgb, currentColor 45%, transparent); }
 .update-link:hover { text-decoration: underline; }
 .update-actions { display: flex; gap: 8px; }
 .update-actions .btn { flex: 1; }

@@ -306,7 +306,7 @@ a.corner-tool { text-decoration: none; }
 .ctl-value { font-size: 12px; color: var(--accent); }
 
 /* 版本检测区：变更链接与动作按钮 */
-.update-link { color: var(--accent); text-decoration: none; }
+.update-link { color: var(--accent); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.22em; text-decoration-color: color-mix(in srgb, currentColor 45%, transparent); }
 .update-link:hover { text-decoration: underline; }
 .update-actions { display: flex; gap: 8px; }
 .update-actions .btn { flex: 1; }

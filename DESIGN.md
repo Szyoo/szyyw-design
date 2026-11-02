@@ -550,7 +550,7 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
 - 容器：`.glass` `.panel` `.inner` `.lift` `.sheet` `.sheet-head` `.sheet-title` `.sheet-body` `.sheet-foot` `.overlay` `.close-x`
 - 表单：`.field` `.form-row` `.form-grid` `.chip` `.chip-row` `.switch` `.err-text` `.ok-text`
 - 按钮：`.btn` `.btn-ghost` `.btn-small` `.danger`
-- 文本 / 数据：`.page-title` `.page-sub` `.panel-title` `.panel-head` `.grad-text` `.muted` `.small` `.tiny` `.num` `.mono`
+- 文本 / 数据：`.page-title` `.page-sub` `.panel-title` `.panel-head` `.grad-text` `.link` `.muted` `.small` `.tiny` `.num` `.mono`
   `.pill`（+ 色：`cyan` `violet` `green` `red` `amber`，v0.14.0 加 `slate` `pink`）`.amt-*` `.stat-*` `.bar` `.bar-fill` `.tbl` `.table-wrap` `.empty` `.term*`
 - 动效：`.rise` `.stagger` `.shake` `.spot`
 - 工具位：`.corner-panel`（项目自己的工具位弹层挂它 + `claimCornerPanel`，见 §5）；
@@ -983,3 +983,12 @@ Commons Clause 一节的大意是「可以作为应用 / 网站的一部分使�
 
 其他第三方素材：Branched Menu 内置图标取自 Hugeicons 免费集（MIT，Copyright (c) 2025 Hugeicons），以内联 SVG 收录；
 字体 Geist（SIL OFL 1.1，`fonts/OFL.txt`，见 §7）。
+
+### 文字链接（v0.26.0）
+
+暗色下蓝灰主色与 `--text-dim` 很接近，只靠颜色区分不了链接，所以文字链接一律「主色 + 常驻细下划线」（下划线半透明，悬停加深）。
+
+- 显式写法：`<a class="link" href="…">`。
+- 正文、提示、说明文字（`p` `li` `dd` `td` `th` `figcaption` `blockquote` `.hint` `.callout` `.muted` `.small` `.tiny` `.page-sub` `.app-sub` `.err-text` `.ok-text` `.warn-text` `.empty`）里**不带 class** 的 `<a>` 自动套用，不用改标记。
+- 带 class 的链接（`.tab` `.btn` `.chip` `.corner-tool` 等导航 / 控件）不受影响。应用里自写的「主色链接」样式请删掉，改用 `.link`。
+
