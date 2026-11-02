@@ -4,7 +4,7 @@
      主题（theme）    html[data-theme]，背景效果（v0.19.0 起可插拔，见 themes/index.js）。
                       缺省 "random"（v0.21.0）：data-theme 为实际抽到的主题，另有 data-theme-mode="random"。
      配色（palette）  html[data-palette]，色彩变体，只覆盖 hue 相关 token，对所有主题通用。
-                      目前只有缺省配色青紫（:root 基础块）；v0.21.0 移除了 "aurora"。
+                      目前只有缺省配色蓝灰（:root 基础块，v0.25.0 由青紫改为蓝灰，id 仍为 default）；v0.21.0 移除了 "aurora"。
                       新配色 = :root[data-palette="<id>"] 块（含 --th-* 段）+ appearance-data.js 的 PALETTES。
      明暗（scheme）   html[data-scheme="dark" | "light" | "auto"]，缺省 dark。
 
@@ -25,7 +25,7 @@
   color-scheme: light dark;
 }
 
-/* ---------- 基础块 · 深空 —— 缺省配色 青紫（所有主题通用） ---------- */
+/* ---------- 基础块 · 深空 —— 缺省配色 蓝灰（所有主题通用；v0.25.0 起，之前为青紫） ---------- */
 
 :root {
   /* 基底 */
@@ -34,8 +34,8 @@
   --text-dim: light-dark(#5b6b81, #94a3b8);
 
   /* 点缀 */
-  --accent: light-dark(#0369a1, #38bdf8);
-  --accent2: light-dark(#7e22ce, #a855f7);
+  --accent: light-dark(#4e5f78, #9aaac2);
+  --accent2: light-dark(#6b5d93, #b6a9d6);
   --grad: linear-gradient(120deg, var(--accent), var(--accent2));
   /* 渐变按钮上的文字色：深色模式下渐变亮所以用深字，浅色模式反之 */
   --on-accent: light-dark(#ffffff, #04101c);
@@ -64,7 +64,7 @@
   --row-line: light-dark(color-mix(in srgb, var(--text-dim) 12%, transparent), rgba(148, 163, 184, 0.2));
   /* 开关关闭时的轨道（v0.25.0 起 token 化；浅色同之前的 text-dim 55%，暗色对卡片底 ≥ 3:1） */
   --switch-track: light-dark(color-mix(in srgb, var(--text-dim) 55%, transparent), rgba(148, 163, 184, 0.62));
-  --hover-tint: light-dark(rgba(3, 105, 161, 0.07), rgba(56, 189, 248, 0.06));
+  --hover-tint: light-dark(rgba(78, 95, 120, 0.07), rgba(154, 170, 194, 0.06));
   /* light-dark() 只接受颜色：整条阴影写进去会算成 none（v0.13.0 及之前 .lift:hover 的阴影因此从未生效） */
   --lift-shadow-color: light-dark(rgba(30, 41, 59, 0.12), rgba(0, 0, 0, 0.35));
   --lift-shadow: 0 10px 32px var(--lift-shadow-color);
@@ -99,8 +99,9 @@
   --tint-red-bg: light-dark(rgba(220, 38, 38, 0.12), rgba(239, 68, 68, 0.16));
   --tint-amber-bg: light-dark(rgba(180, 83, 9, 0.13), rgba(251, 191, 36, 0.14));
   --tint-green-bg: light-dark(rgba(5, 150, 105, 0.12), rgba(52, 211, 153, 0.14));
-  --tint-cyan-bg: light-dark(rgba(3, 105, 161, 0.11), rgba(56, 189, 248, 0.14));
-  --tint-violet-bg: light-dark(rgba(126, 34, 206, 0.11), rgba(168, 85, 247, 0.16));
+  /* cyan / violet 两档跟随 accent / accent2（v0.25.0 起为蓝灰 / 灰紫，类名保留） */
+  --tint-cyan-bg: light-dark(rgba(78, 95, 120, 0.12), rgba(154, 170, 194, 0.14));
+  --tint-violet-bg: light-dark(rgba(107, 93, 147, 0.12), rgba(182, 169, 214, 0.16));
 
   /* 补充状态色（v0.14.0：.pill.slate / .pill.pink）。
      slate = 中性灰蓝，表示「未知 / 未定」——比默认 .pill 多一层底色与带色描边，和 cyan 比饱和度低得多；
@@ -110,19 +111,20 @@
   --tint-slate-bg: light-dark(rgba(71, 85, 105, 0.12), rgba(148, 163, 184, 0.16));
   --tint-pink-bg: light-dark(rgba(190, 24, 93, 0.1), rgba(244, 114, 182, 0.15));
 
-  /* 图表分类色（v0.13.0）：系列按 1→6 取，随配色与明暗变；超过 6 个系列请合并成「其他」 */
-  --chart-1: light-dark(#0284c7, #38bdf8);
-  --chart-2: light-dark(#7e22ce, #a855f7);
+  /* 图表分类色（v0.13.0）：系列按 1→6 取，随配色与明暗变；超过 6 个系列请合并成「其他」。
+     v0.25.0：1 / 2 随配色改为蓝灰 / 灰紫，6 由靛蓝改为品红（降低蓝色占比） */
+  --chart-1: light-dark(#4e5f78, #9aaac2);
+  --chart-2: light-dark(#6b5d93, #b6a9d6);
   --chart-3: light-dark(#059669, #34d399);
   --chart-4: light-dark(#b45309, #fbbf24);
   --chart-5: light-dark(#be123c, #fb7185);
-  --chart-6: light-dark(#4338ca, #818cf8);
+  --chart-6: light-dark(#a21caf, #e879f9);
 
   /* 点阵背景（DotField 从这里取色与取参——主题级效果旋钮） */
   --df-sparkle: 1;
   --df-wave: 2.5;
-  --df-from: light-dark(rgba(3, 105, 161, 0.4), rgba(56, 189, 248, 0.5));
-  --df-to: light-dark(rgba(126, 34, 206, 0.32), rgba(168, 85, 247, 0.4));
+  --df-from: light-dark(rgba(78, 95, 120, 0.4), rgba(154, 170, 194, 0.5));
+  --df-to: light-dark(rgba(107, 93, 147, 0.32), rgba(182, 169, 214, 0.4));
   --df-glow: light-dark(#eef1f8, #0b1020);
 
   /* 动效与结构（不分明暗） */
@@ -137,7 +139,7 @@
   --term-text: #cbd5e1;
   --term-dim: #64748b;
   --term-border: rgba(148, 163, 184, 0.14);
-  --term-accent: #38bdf8;
+  --term-accent: #9aaac2;
   --term-ok: #34d399;
   --term-warn: #fbbf24;
   --term-err: #ef4444;
@@ -149,12 +151,12 @@
 
 :root {
   /* 渐变波浪：远处雾化到地平线色，近处波面 → 浪尖 */
-  --th-gradient-waves-horizon: light-dark(rgba(167, 139, 250, 0.9), #4c1d95);
-  --th-gradient-waves-wave: light-dark(rgba(56, 189, 248, 0.75), #0e7490);
-  --th-gradient-waves-crest: light-dark(rgba(237, 233, 254, 0.9), #c4b5fd);
+  --th-gradient-waves-horizon: light-dark(rgba(182, 169, 214, 0.9), #3b3557);
+  --th-gradient-waves-wave: light-dark(rgba(154, 170, 194, 0.75), #3e4f66);
+  --th-gradient-waves-crest: light-dark(rgba(232, 230, 242, 0.9), #cfc8e3);
   /* 侧光：主光 / 副光 */
-  --th-side-rays-1: light-dark(rgba(3, 105, 161, 0.75), rgba(56, 189, 248, 0.9));
-  --th-side-rays-2: light-dark(rgba(126, 34, 206, 0.65), rgba(168, 85, 247, 0.9));
+  --th-side-rays-1: light-dark(rgba(78, 95, 120, 0.75), rgba(154, 170, 194, 0.9));
+  --th-side-rays-2: light-dark(rgba(107, 93, 147, 0.65), rgba(182, 169, 214, 0.9));
   /* 像素爆破 */
-  --th-pixel-blast-color: light-dark(rgba(126, 34, 206, 0.32), rgba(180, 151, 207, 0.55));
+  --th-pixel-blast-color: light-dark(rgba(107, 93, 147, 0.32), rgba(170, 165, 200, 0.55));
 }

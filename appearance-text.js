@@ -57,7 +57,7 @@ const zh = {
     particles: "粒子"
   },
   cursors: { default: "默认", target: "Target Cursor" },
-  palettes: { default: "青紫（默认）" },
+  palettes: { default: "蓝灰（默认）" },
   schemes: { auto: "跟随系统", dark: "深色", light: "浅色" },
   controls: {
     dotRadius: "点大小",
@@ -121,7 +121,7 @@ const ja = {
     particles: "パーティクル"
   },
   cursors: { default: "標準", target: "ターゲットカーソル" },
-  palettes: { default: "シアン×バイオレット（既定）" },
+  palettes: { default: "ブルーグレー（既定）" },
   schemes: { auto: "システムに従う", dark: "ダーク", light: "ライト" },
   controls: {
     dotRadius: "ドットの大きさ",
@@ -185,7 +185,7 @@ const en = {
     particles: "Particles"
   },
   cursors: { default: "Default", target: "Target Cursor" },
-  palettes: { default: "Cyan–violet (default)" },
+  palettes: { default: "Blue gray (default)" },
   schemes: { auto: "Follow system", dark: "Dark", light: "Light" },
   controls: {
     dotRadius: "Dot size",

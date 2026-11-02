@@ -265,9 +265,9 @@ export function mountTechText(el, options = {}) {
   }
 
   /* ---------- 颜色 ---------- */
-  let colors = { stroke: null, accent: "#38bdf8", label: "#38bdf8", labelAlpha: 0.62 };
+  let colors = { stroke: null, accent: "#9aaac2", label: "#9aaac2", labelAlpha: 0.62 };
   function readColors() {
-    const accent = colorOf(s.accent, "#38bdf8");
+    const accent = colorOf(s.accent, "#9aaac2");
     colors = {
       stroke: s.stroke !== "auto" ? colorOf(s.stroke, null) : null,
       accent,
