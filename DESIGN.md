@@ -5,7 +5,7 @@
 
 ## 1. 气质
 
-深空。安静的底色上浮着毛玻璃层，青紫渐变只做点缀不做主角。
+深空。安静的底色上浮着毛玻璃层，蓝灰渐变只做点缀不做主角（v0.25.0 起缺省配色由青紫改为蓝灰，蓝色元素更少、更克制）。
 信息密度可以高，但视觉噪音必须低：细边框、低饱和、克制的动效。
 所有动效使用同一条缓动曲线 `--ease: cubic-bezier(0.22, 1, 0.36, 1)`——快出慢停，有弹性但不弹跳。
 
@@ -16,7 +16,9 @@
   切换主题时销毁旧背景、按需加载并挂上新背景，不刷新页面。毛玻璃层级、.spot 光斑与所有组件在各主题下一致。
   **v0.21.0 起缺省主题是「随机」（`random`）**：见 §2.2。`data-theme` 永远是实际挂着的主题；随机模式另有 `data-theme-mode="random"`。
   效果类参数尽量做成 token 旋钮（如 `--df-sparkle` / `--df-wave`），让主题只用 CSS 就能重配行为。
-- **配色（palette）**：`html[data-palette]`，只覆盖 hue 相关 token（accent/bg/tint/df-*/th-*）。目前只有缺省青紫（`:root` 基础块，不写属性）；
+- **配色（palette）**：`html[data-palette]`，只覆盖 hue 相关 token（accent/bg/tint/df-*/th-*）。目前只有缺省蓝灰（`:root` 基础块，不写属性；id 仍为 `default`，v0.25.0 前为青紫）：
+  主色 `--accent` 暗 `#9aaac2` / 浅 `#4e5f78`，辅色 `--accent2` 暗 `#b6a9d6` / 浅 `#6b5d93`；渐变按钮上的字 `--on-accent` 暗色用深字、浅色用白字（均 ≥ 4.5:1）。
+  
   v0.21.0 移除了 `aurora`（极光翠青），存着它的用户回到 `default`。只剩一种配色时外观弹层不显示配色栏，以后加回配色自动出现。
   v0.19.0 起**对所有主题通用**（tokens.css 的配色块本就不依赖 data-theme；`PALETTES[].theme` 只作来源标注）。
   各主题从 token 取色，配色 / 明暗切换即时换色、不重建。
@@ -139,8 +141,25 @@ z-index 62  .glide-select__menu  Glide Select 的选项菜单（v0.19.0，挂 bo
 最顶层      .target-cursor   Target Cursor（v0.19.0，fixed、pointer-events: none）
 ```
 
+主体栏：`.app-frame > .app-main`（v0.25.0，§15.1）——居中定宽的一栏自带半透明底 `--page-veil`，画在 `::before`（z-index -1，
+落在 `.app-frame` 的层叠上下文里、内容之下），不新建层叠上下文，上表各层级不受影响。
+
 玻璃三级：`--glass-bg`（卡片）→ `--inner-bg`（卡内嵌套）→ `--field-bg`（输入件）。
-弹层用更实的 `--sheet-bg`（92% 不透明），保证叠在任何内容上都可读。
+弹层用更实的 `--sheet-bg`（暗色 94% / 浅色 94% 不透明），保证叠在任何内容上都可读。
+
+**边缘与分隔（v0.25.0，暗色可读性）**。暗色下卡片底与页面底只差一点亮度，表面靠边框分开，所以边缘按下面的目标定（实测于 6 个背景主题）：
+
+| 用途 | token | 暗色目标 |
+|---|---|---|
+| 卡片 / 面板 / 弹层的边框 | `--glass-border` | 对卡片底约 1.9:1（细而清楚） |
+| 卡片 / 弹层上沿的内高光 | `--glass-highlight` → `--glass-inset`（`inset 0 1px 0`） | 一条极细亮线勾出轮廓；`.glass` / `.corner-tool` / `--pop-shadow` 自带 |
+| 可交互控件的描边（`.field` `.btn-ghost` `.btn-icon` `.chip` 颜色选择 工具位按钮 Glide Select 触发器） | `--control-border` | 对相邻表面 ≥ 3:1（WCAG 1.4.11） |
+| 标签页 / 分段控件轨道外圈 | `--seg-track-ring`（`inset 0 0 0 1px`） | ≥ 3:1 |
+| 开关关闭时的轨道 | `--switch-track` | ≥ 3:1 |
+| 分隔线 / 吸顶标题底线 / 表格行线 | `--line-soft` / `--row-line` | 约 1.5:1（分隔不抢内容） |
+
+浅色模式下这些 token 与 v0.24.0 的实际取值相同（新增的高光与外圈在浅色为透明），浅色外观不变。
+写组件时：可交互的边框用 `--control-border`，装饰性的表面边框用 `--glass-border`，别反过来。
 
 ## 4. DotField 点阵背景
 
@@ -527,7 +546,7 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
 
 **公开 API**（项目可以直接写在自己的标记里，跨版本保持语义；改动会进 CHANGELOG 并按 semver 处理）：
 
-- 布局：`.app-frame` `.bg-layer` `.row` `.spread` `.stack` `.wrap` `.field-row` `.actions` `.divider` `.section` `.section-name` `.section-head`
+- 布局：`.app-frame` `.app-main`（v0.25.0）`.bg-layer` `.row` `.spread` `.stack` `.wrap` `.field-row` `.actions` `.divider` `.section` `.section-name` `.section-head`
 - 容器：`.glass` `.panel` `.inner` `.lift` `.sheet` `.sheet-head` `.sheet-title` `.sheet-body` `.sheet-foot` `.overlay` `.close-x`
 - 表单：`.field` `.form-row` `.form-grid` `.chip` `.chip-row` `.switch` `.err-text` `.ok-text`
 - 按钮：`.btn` `.btn-ghost` `.btn-small` `.danger`
@@ -730,6 +749,26 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
 - **`mountOverlay(overlayEl, { onClose, lockScroll = true }) → { destroy() }`**（`@szyyw/design/overlay`）：遮罩点击关闭要求按下与松开都落在遮罩本身
   （拖选文字松手在遮罩上不误关）；嵌套弹层的 body 滚动锁引用计数；Esc 只关最上层；模块顶层不碰 DOM。
   它不搬动 / 移除元素，`onClose` 里由应用卸载并 `destroy()`。
+
+## 15.1 居中主体栏 `.app-main`（v0.25.0）
+
+「定宽居中、两侧留空」的那一栏统一用它，不再各自写 `max-width + margin: 0 auto` 的容器：
+
+```html
+<div class="bg-layer"></div>
+<div class="app-frame">
+  <header class="app-header">…</header>
+  <main class="app-main" style="--page-max-w: 980px">…</main>
+</div>
+```
+
+- 自带一层半透明底 `--page-veil`（暗 `rgba(11,16,32,.52)` / 浅 `rgba(238,241,248,.62)`）：压住背景主题、托起正文与卡片之间的文字，仍透出一点背景；
+  明暗两种模式都生效。左右边缘在内距里渐隐（`--page-veil-fade`，缺省 32px）；≤640px 铺满宽度、不渐隐，不产生横向滚动。
+- 旋钮：`--page-max-w`（缺省 1080px）、`--page-pad-x`（左右内距，缺省 24px，≤640px 为 16px）。上下内距由应用自定（`.app-main` 不设 padding-block）。
+- 底层画在 `::before`（z-index -1），不新建层叠上下文：`.drawer` / `.sheet` / `.overlay` / `.corner-panel` 等 fixed 浮层与
+  `.page-head.sticky` / `.section-head.sticky` 吸顶标题的层级都照旧（§3）。顶栏给工具位让位仍用 `.corner-clear` / `--corner-rail-w`。
+- `.app-frame` 与 `.app-main` 分两层写：别把两个类放在同一个元素上（`.app-frame` 是内容层，`.app-main` 是其中居中的一栏）。
+- 带侧栏、主体偏移的布局（如桌面左侧栏）不要用它。手测页 `demo/app-main.html`（`?veil=0` 为没有半透明底的对照组）。
 
 ## 14. TechText 字标（v0.15.0）
 

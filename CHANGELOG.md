@@ -1,5 +1,49 @@
 # Changelog
 
+## v0.25.0 — 2026-11-02
+
+三项一起发：**暗色可读性**（只在暗色可见，浅色不变）、**缺省配色由青紫改为蓝灰**（明暗都可见）、**新增居中主体栏 `.app-main`**（纯新增）。
+类名与标记不变，升级即生效。
+
+**暗色可读性：模块 / 卡片 / 控件的边缘**（DESIGN.md §3「边缘与分隔」）
+- 起因：暗色下卡片底与页面底几乎同色、只靠边框分开，而边框对卡片底只有约 1.35:1；输入框、次要按钮、胶囊、标签页轨道的描边对相邻表面只有 1.1–1.35:1。
+- 改后（6 个背景主题实测，取最低值）：卡片 / 面板 / 弹层 / `.inner` / `.callout` / 表头线的边框对卡片底约 1.9:1；
+  `.field` `.btn-ghost` `.btn-icon` `.chip` 工具位按钮的描边、`.tabs` / `.seg` 轨道外圈、`.switch` 关闭轨道对相邻表面 ≥ 3.1:1（WCAG 1.4.11）；
+  分隔线 1.16 → 1.54:1，表格行线 1.2 → 1.43:1。气质不变：仍是 1px 细边，只是看得见了。
+- 改了的 token（只改 `light-dark()` 的暗色分量）：
+  `--glass-bg` `rgba(15,23,42,.55)` → `rgba(24,33,56,.62)`（卡片底与页面底拉开一层）；
+  `--glass-border` `rgba(148,163,184,.18)` → `.34`；`--sheet-bg` `rgba(15,23,42,.92)` → `rgba(21,29,50,.94)`；
+  `--line-soft` `.1` → `.24`；`--seg-track` `rgba(255,255,255,.043)` → `.06`；`--pop-shadow` 前面多一层 `var(--glass-inset)`。
+- 新增 token（浅色取值与 v0.24.0 实际效果相同或为透明）：
+  `--glass-highlight` + `--glass-inset`（`inset 0 1px 0`，卡片 / 弹层上沿的细内高光；暗 `rgba(255,255,255,.07)`，浅透明）、
+  `--control-border`（可交互控件描边；暗 `rgba(148,163,184,.64)`，浅同 `--glass-border`）、
+  `--seg-track-ring`（标签页 / 分段轨道外圈；暗 `rgba(148,163,184,.58)`，浅透明）、
+  `--switch-track`（开关关闭轨道；暗 `rgba(148,163,184,.62)`，浅同之前的 text-dim 55%）、
+  `--row-line`（表格行线；暗 `rgba(148,163,184,.2)`，浅同之前的 text-dim 12%）。
+- 改了的规则：`.glass`、`.corner-tool` 加 `box-shadow: var(--glass-inset)`（`.glass.lift:hover` 保留高光）；
+  `.field` `.btn-ghost` `.btn-icon` `.chip` `input[type="color"]` `.corner-tool` `.glide-select__trigger:not(.field)` 的描边改用 `--control-border`；
+  `.switch` 轨道改用 `--switch-track`；`.tbl td` 行线改用 `--row-line`；`.tabs` / `.seg` 轨道加 `inset 0 0 0 1px var(--seg-track-ring)`。`corner.css` 同步重新生成。
+- 浅色：逐 token 解析后与 v0.24.0 相同（唯一差别是 `--pop-shadow` 多一层透明内阴影），手测页逐元素计算样式无可见差异。
+- 自写样式里拿 `--glass-border` 画输入件 / 按钮描边的应用，建议改用 `--control-border`。
+
+**缺省配色由青紫改为蓝灰**（明暗都是有意的可见变化）
+- 配色 id 仍是 `default`（存储兼容）；文案改为「蓝灰」/「ブルーグレー」/「Blue gray」。
+- `--accent` `#0369a1 / #38bdf8` → `#4e5f78 / #9aaac2`（浅 / 暗），`--accent2` `#7e22ce / #a855f7` → `#6b5d93 / #b6a9d6`；`--grad` 随之变化。
+  `--on-accent` 不变（暗色深字对渐变两端 ≥ 8:1，浅色白字 ≥ 5.8:1）。链接 / accent 文字对卡片：暗约 7.4:1，浅约 5.7:1。
+- 跟随配色一起换：`--hover-tint`、`--tint-cyan-bg` / `--tint-violet-bg`（`.pill.cyan` / `.pill.violet` 现为蓝灰 / 灰紫，类名保留）、
+  `--df-from` / `--df-to`（点阵）、全部 `--th-*`（渐变波浪 / 侧光 / 像素爆破）、`--chart-1` / `--chart-2`（蓝灰 / 灰紫），
+  `--chart-6` 靛蓝 `#4338ca / #818cf8` → 品红 `#a21caf / #e879f9`（降低蓝色占比）；终端窗 `--term-accent` `#38bdf8` → `#9aaac2`；TechText 取色失败时的兜底色同步。
+- `--bg` 与 `PALETTES` / `themeColorFor` 不变。
+
+**新增：居中主体栏 `.app-main`**（DESIGN.md §15.1，手测页 `demo/app-main.html`）
+- 结构 `.app-frame > .app-main > …`；`--page-max-w`（缺省 1080px）控宽、居中、两侧留空，`--page-pad-x` 左右内距（缺省 24px，≤640px 为 16px）。
+- 自带半透明底 `--page-veil`（新 token，暗 `rgba(11,16,32,.52)` / 浅 `rgba(238,241,248,.62)`，明暗都生效），左右在内距里渐隐（`--page-veil-fade`）；
+  窄屏铺满宽度、无横向滚动。底层在 `::before`（z-index -1），不新建层叠上下文，抽屉 / 弹层 / 工具位 / 吸顶标题层级不变。
+
+**升级提示**
+- CDN / npm 项目只改版本号；vendored 项目用 v0.25.0 的 `sync.sh`。
+- 自写「定宽居中」容器的应用可改用 `.app-main`（删掉自写的 `max-width` / `margin: 0 auto`，保留上下内距）；带侧栏的布局不用。
+
 ## v0.24.0 — 2026-11-02
 
 **Depth Carousel**（DESIGN.md §16，手测页 `demo/depth-carousel.html`）。纯新增，既有类与函数行为不变；`corner.css` 不变。

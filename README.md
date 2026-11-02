@@ -24,17 +24,17 @@ npm（钉精确 tag）：
 ```jsonc
 // package.json
 "dependencies": {
-  "@szyyw/design": "github:Szyoo/szyyw-design#v0.24.0"
+  "@szyyw/design": "github:Szyoo/szyyw-design#v0.25.0"
 }
 ```
 
 CDN（无构建步骤的项目，免 vendoring）：每个 `vX.Y.Z` tag 发布到 `https://design.szyyw.xyz/vX.Y.Z/`，内容即该 tag 的 `git archive`，发布后不再改写（`Cache-Control: immutable`，CORS `*`）。
 
 ```html
-<link rel="stylesheet" href="https://design.szyyw.xyz/v0.24.0/tokens.css">
-<link rel="stylesheet" href="https://design.szyyw.xyz/v0.24.0/components.css">
+<link rel="stylesheet" href="https://design.szyyw.xyz/v0.25.0/tokens.css">
+<link rel="stylesheet" href="https://design.szyyw.xyz/v0.25.0/components.css">
 <script type="module">
-  import { mountChrome } from "https://design.szyyw.xyz/v0.24.0/chrome.js";
+  import { mountChrome } from "https://design.szyyw.xyz/v0.25.0/chrome.js";
   mountChrome({ /* … */ });
 </script>
 ```
@@ -46,8 +46,8 @@ CDN（无构建步骤的项目，免 vendoring）：每个 `vX.Y.Z` tag 发布�
 vendoring（复制到项目目录）：只用上游 `sync.sh`，从目标 tag 取脚本，文件清单与该版本一致：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Szyoo/szyyw-design/v0.24.0/sync.sh \
-  | sh -s -- ./static/vendor/szyyw-design v0.24.0
+curl -fsSL https://raw.githubusercontent.com/Szyoo/szyyw-design/v0.25.0/sync.sh \
+  | sh -s -- ./static/vendor/szyyw-design v0.25.0
 ```
 
 它复制运行时文件（清单见 `sync.sh` 的 `FILES`）并写 / 刷新 `VENDORED.md`；第二个参数用 `--local` 可从本机 clone 同步未发版改动。
@@ -208,7 +208,7 @@ const a = readAppearanceFromCookies((n) => cookies().get(n)?.value, appearanceCo
 - 主题选择缺省 **随机**（v0.21.0）：存储里存 `random`，每个时间段（缺省 1 天，按本地日期）从全部主题里抽一个，同一时间段内所有页面 / 标签页一致，
   换段时避开上一次的主题；此时 `data-theme-mode="random"`，`data-theme` 是实际抽到的主题。显式选了某个主题时没有 `data-theme-mode`
 - `data-theme`：实际挂的背景主题，`nebula` | `cursor-grid` | `gradient-waves` | `side-rays` | `pixel-blast` | `particles`；只加载当前主题
-- `data-palette`：配色，目前只有缺省青紫（不写属性）；v0.21.0 移除 `aurora`，只剩一种配色时外观弹层不显示配色栏
+- `data-palette`：配色，目前只有缺省蓝灰（不写属性；id 为 `default`，v0.25.0 前为青紫）；v0.21.0 移除 `aurora`，只剩一种配色时外观弹层不显示配色栏
 - `data-scheme`：`dark`（缺省）| `light` | `auto`（跟随系统，靠 `color-scheme` + `light-dark()`，无需 JS）
 - `data-cursor`：鼠标效果，缺省不写（系统指针）| `target`（Target Cursor，仅精确指针设备）
 
