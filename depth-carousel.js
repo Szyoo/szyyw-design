@@ -35,6 +35,8 @@
    模块顶层不碰 DOM：SSR 时被求值也不会炸。
    ============================================================ */
 
+import { icon } from "./icons.js";
+
 export const DEFAULTS = Object.freeze({
   items: [],
   start: 0,
@@ -153,7 +155,6 @@ export function resolveEase(ease) {
 
 /* ---------- 工具 ---------- */
 
-const SVG_NS = "http://www.w3.org/2000/svg";
 const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), hi);
 const mod = (v, n) => ((v % n) + n) % n;
 const normalizeItem = (it) =>
@@ -161,23 +162,7 @@ const normalizeItem = (it) =>
 const reducedMotion = () =>
   typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-function svgIcon(d) {
-  const svg = document.createElementNS(SVG_NS, "svg");
-  svg.setAttribute("viewBox", "0 0 24 24");
-  svg.setAttribute("width", "20");
-  svg.setAttribute("height", "20");
-  svg.setAttribute("aria-hidden", "true");
-  svg.setAttribute("focusable", "false");
-  const path = document.createElementNS(SVG_NS, "path");
-  path.setAttribute("d", d);
-  path.setAttribute("fill", "none");
-  path.setAttribute("stroke", "currentColor");
-  path.setAttribute("stroke-width", "2");
-  path.setAttribute("stroke-linecap", "round");
-  path.setAttribute("stroke-linejoin", "round");
-  svg.appendChild(path);
-  return svg;
-}
+const svgIcon = (name) => icon(name, { size: 20 });
 
 /** getComputedStyle 的颜色串 → 相对亮度（0–1）；解析不了返回 null */
 function luminanceOf(color) {
@@ -242,13 +227,13 @@ export function mountDepthCarousel(el, options = {}) {
       prevBtn.type = "button";
       prevBtn.className = "depth-carousel__arrow depth-carousel__arrow--prev";
       prevBtn.setAttribute("aria-label", t.prev);
-      prevBtn.appendChild(svgIcon("M15 5l-7 7 7 7"));
+      prevBtn.appendChild(svgIcon("chevron-left"));
       prevBtn.addEventListener("click", () => navigateBy(-1));
       nextBtn = document.createElement("button");
       nextBtn.type = "button";
       nextBtn.className = "depth-carousel__arrow depth-carousel__arrow--next";
       nextBtn.setAttribute("aria-label", t.next);
-      nextBtn.appendChild(svgIcon("M9 5l7 7-7 7"));
+      nextBtn.appendChild(svgIcon("chevron-right"));
       nextBtn.addEventListener("click", () => navigateBy(1));
       el.append(prevBtn, nextBtn);
     }
@@ -333,7 +318,7 @@ export function mountDepthCarousel(el, options = {}) {
     const settle = (ok) => {
       card.dataset.state = ok ? "loaded" : "error";
       msg.textContent = ok ? "" : t.error;
-      if (!ok) msg.prepend(svgIcon("M4 5h16v14H4zM4 15l4.5-4.5 4 4L15 12l5 5M15.5 8.5h.01"));
+      if (!ok) msg.prepend(svgIcon("image"));
     };
     img.addEventListener("load", () => settle(true), { once: true });
     img.addEventListener("error", () => settle(false), { once: true });

@@ -60,6 +60,8 @@
   </main>
 </div>
 <script type="module">
+import { enhanceIcons } from "../icons.js";
+enhanceIcons();
   import { mountDepthCarousel } from "../depth-carousel.js";
   import { mountOverlay } from "../overlay.js";
 
@@ -121,13 +123,14 @@
     overlay.className = "overlay viewer";
     overlay.innerHTML = `
       <div class="sheet wide" role="dialog" aria-modal="true" aria-label="查看照片">
-        <div class="sheet-head"><button class="close-x" type="button" aria-label="关闭">✕</button></div>
+        <div class="sheet-head"><button class="close-x" type="button" aria-label="关闭"><i data-icon="x"></i></button></div>
         <div class="sheet-body">
           <div class="vc"></div>
           <div class="viewer-bar"><span class="num"></span><a class="orig" target="_blank" rel="noopener">原图</a></div>
         </div>
       </div>`;
     document.body.appendChild(overlay);
+    enhanceIcons(overlay);
     const num = overlay.querySelector(".num"), orig = overlay.querySelector(".orig");
     const sync = (i) => { num.textContent = `${i + 1} / ${list.length}`; orig.href = list[i].image; };
     const dc = mountDepthCarousel(overlay.querySelector(".vc"), {

@@ -15,6 +15,7 @@ import { mountCornerTool, CORNER_ORDER, claimCornerPanel } from "./corner.js";
 import { DEFAULTS, resolveTokenColor } from "./dotfield.js";
 import { VERSION, REPO } from "./version.js";
 import { appearanceText } from "./appearance-text.js";
+import { icon } from "./icons.js";
 
 const SLIDERS = [
   { key: "dotRadius", label: "点大小", min: 0.5, max: 4, step: 0.1 },
@@ -500,7 +501,7 @@ export function createPaletteToggle(label) {
 }
 
 /**
- * 弹层骨架：aside.glass.corner-panel.<extraClass> > .panel-head(标题 + ✕) + .panel-body (+ .panel-foot)。
+ * 弹层骨架：aside.glass.corner-panel.<extraClass> > .panel-head(标题 + 关闭键) + .panel-body (+ .panel-foot)。
  * @internal
  */
 export function createCornerPanel({ className, title, closeLabel, withFoot = true }) {
@@ -512,7 +513,8 @@ export function createCornerPanel({ className, title, closeLabel, withFoot = tru
 
   const head = el("div", "panel-head");
   head.append(el("h2", "panel-title", title));
-  const closeBtn = el("button", "close-x", "✕");
+  const closeBtn = el("button", "close-x");
+  closeBtn.append(icon("x"));
   closeBtn.type = "button";
   closeBtn.title = closeLabel;
   closeBtn.setAttribute("aria-label", closeLabel);

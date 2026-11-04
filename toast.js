@@ -27,20 +27,16 @@
    模块顶层不碰 DOM：SSR 时被求值也不会炸。
    ============================================================ */
 
+import { icon as lucide } from "./icons.js";
+
 const TONES = ["ok", "err", "warn", "info"];
 const MAX = 4;
 const LEAVE_MS = 300;
 const FLICK = 0.11; // px/ms，下甩速度阈值
 const DEAD_ZONE = 3;
 const RESIST_PX = 24;
-const SVG_NS = "http://www.w3.org/2000/svg";
-const ICON_PATHS = {
-  ok: ['<circle cx="12" cy="12" r="9.25"/>', '<path d="M8 12.4l2.8 2.8L16.2 9.6"/>'],
-  err: ['<circle cx="12" cy="12" r="9.25"/>', '<path d="M12 7.5v5.5"/>', '<path d="M12 16.6h.01"/>'],
-  warn: ['<path d="M12 3.6 21.2 19.6H2.8z"/>', '<path d="M12 10v4.4"/>', '<path d="M12 17.2h.01"/>'],
-  info: ['<circle cx="12" cy="12" r="9.25"/>', '<path d="M12 11v5.2"/>', '<path d="M12 7.7h.01"/>'],
-};
-const CLOSE_PATH = '<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>';
+/** 语气 → 图标（./icons，Lucide） */
+const TONE_ICONS = { ok: "circle-check", err: "circle-alert", warn: "triangle-alert", info: "info" };
 
 let region = null;
 const closers = new WeakMap(); // .toast 元素 → close()
@@ -60,21 +56,6 @@ function ensureRegion() {
 
 const reducedMotion = () =>
   typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-function svgIcon(paths, size = 18) {
-  const svg = document.createElementNS(SVG_NS, "svg");
-  svg.setAttribute("viewBox", "0 0 24 24");
-  svg.setAttribute("width", String(size));
-  svg.setAttribute("height", String(size));
-  svg.setAttribute("fill", "none");
-  svg.setAttribute("stroke", "currentColor");
-  svg.setAttribute("stroke-width", "2");
-  svg.setAttribute("stroke-linecap", "round");
-  svg.setAttribute("stroke-linejoin", "round");
-  svg.setAttribute("aria-hidden", "true");
-  svg.innerHTML = paths.join("");
-  return svg;
-}
 
 const rubberband = (over, dim, c = 0.55) => (over * dim * c) / (dim + c * Math.abs(over));
 
@@ -114,7 +95,7 @@ export function toast(message, options = {}) {
     ic.setAttribute("aria-hidden", "true");
     if (icon instanceof Node) ic.append(icon);
     else if (typeof icon === "string") ic.innerHTML = icon;
-    else ic.append(svgIcon(ICON_PATHS[t]));
+    else ic.append(lucide(TONE_ICONS[t]));
     el.append(ic);
   }
 
@@ -188,7 +169,7 @@ export function toast(message, options = {}) {
     btn.type = "button";
     btn.className = "toast-close";
     btn.setAttribute("aria-label", "Close");
-    btn.append(svgIcon([CLOSE_PATH], 12));
+    btn.append(lucide("x"));
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
       close("close");

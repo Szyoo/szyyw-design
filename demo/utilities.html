@@ -30,8 +30,8 @@
     <h2 class="panel-title">month 并排 + 清除键</h2>
     <p class="sub-hint">.sub-hint：紧跟标题的说明</p>
     <div class="form-grid">
-      <div class="field-wrap"><input type="month" class="field" value="2026-10" id="m1"><button type="button" class="field-clear" aria-label="清除" onclick="m1.value=''">✕</button></div>
-      <div class="field-wrap"><input type="month" class="field" value="2026-11"><button type="button" class="field-clear" aria-label="清除">✕</button></div>
+      <div class="field-wrap"><input type="month" class="field" value="2026-10" id="m1"><button type="button" class="field-clear" aria-label="清除" onclick="m1.value=''"><i data-icon="x"></i></button></div>
+      <div class="field-wrap"><input type="month" class="field" value="2026-11"><button type="button" class="field-clear" aria-label="清除"><i data-icon="x"></i></button></div>
       <input type="date" class="field" value="2026-10-13">
     </div>
     <div class="row u-mt-4"><input class="field w-sm" placeholder="w-sm"><input class="field w-md" placeholder="w-md"><input class="field w-lg" placeholder="w-lg"></div>
@@ -62,7 +62,7 @@
     <div class="field-inset"><input class="field" placeholder="名称"><button class="field-inset-btn" type="button">😀</button></div>
     <div class="tabs scroll u-mt-3"><button class="tab active">表情</button><button class="tab">食物</button><button class="tab">交通</button></div>
     <div class="icon-grid inner"><button class="icon-cell">😀</button><button class="icon-cell">🍜</button><button class="icon-cell">🚃</button><button class="icon-cell">🏠</button><button class="icon-cell">💰</button><button class="icon-cell">🎁</button></div>
-    <div class="row u-mt-3"><button class="btn-icon">−</button><button class="btn-icon">＋</button><button class="btn-icon xs">⇄</button><button class="btn-icon xs" disabled>×</button></div>
+    <div class="row u-mt-3"><button class="btn-icon" aria-label="减"><i data-icon="minus"></i></button><button class="btn-icon" aria-label="加"><i data-icon="plus"></i></button><button class="btn-icon xs" aria-label="交换"><i data-icon="arrow-left-right"></i></button><button class="btn-icon xs" disabled aria-label="删除"><i data-icon="x"></i></button></div>
   </section>
 
   <section class="glass panel">
@@ -84,6 +84,8 @@
   <div class="tall"></div>
 </main>
 <script type="module">
+import { enhanceIcons } from "../icons.js";
+enhanceIcons();
   import { mountOverlay } from "../overlay.js";
   const lock = document.getElementById("lock");
   const show = () => { lock.textContent = " body.overflow = " + JSON.stringify(document.body.style.overflow); };

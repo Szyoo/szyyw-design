@@ -1311,7 +1311,7 @@ table.tbl {
 /* ---------- 输入框清除键：.field-wrap > input.field + button.field-clear ----------
    <div class="field-wrap">
      <input type="month" class="field" value="2026-10">
-     <button type="button" class="field-clear" aria-label="清除">✕</button>
+     <button type="button" class="field-clear" aria-label="清除"><i data-icon="x"></i></button>
    </div>
    值为空时由应用自己不渲染（或 hidden）清除键；有清除键时输入框右侧自动让位 */
 .field-wrap { position: relative; display: block; min-width: 0; }
@@ -1452,7 +1452,7 @@ table.tbl {
 }
 .icon-cell:hover { background: var(--hover-tint); transform: scale(1.15); }
 
-/* ---------- .btn-icon：小型方形图标按钮（−/＋/⇄ 之类），.xs 更小 ---------- */
+/* ---------- .btn-icon：小型方形图标按钮（放 ./icons 的图标），.xs 更小 ---------- */
 .btn-icon {
   appearance: none;
   width: 30px;
@@ -1472,6 +1472,24 @@ table.tbl {
 .btn-icon.xs { width: 24px; height: 22px; font-size: 13px; border-radius: 7px; }
 .btn-icon:hover:not(:disabled) { color: var(--text); border-color: color-mix(in srgb, var(--text-dim) 45%, transparent); }
 .btn-icon:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ---------- .icon：线性图标（./icons，Lucide，v0.27.0） ----------
+   缺省 1em、跟随文字颜色、与文字基线对齐；放进下面这些按钮时尺寸自动适配，不必传 size。
+   .icon-spin 转圈（加载中），reduced-motion 下不转。 */
+.icon { display: inline-block; width: 1em; height: 1em; flex: none; vertical-align: -0.125em; }
+.btn-icon > .icon { width: 16px; height: 16px; }
+.btn-icon.xs > .icon { width: 14px; height: 14px; }
+.close-x > .icon { display: block; width: 18px; height: 18px; }
+.field-clear > .icon { width: 16px; height: 16px; }
+.pager-btn > .icon { display: block; width: 16px; height: 16px; margin: 0 auto; }
+.toast-close > .icon { width: 14px; height: 14px; }
+/* 文字按钮 / 胶囊 / 标签里放图标：图标与文字之间留 0.4em（含图标时才改为 inline-flex，不影响没有图标的） */
+:where(.btn, .btn-ghost, .chip, .tab, .seg > *):has(> .icon) { display: inline-flex; align-items: center; justify-content: center; gap: 0.4em; }
+:where(.btn, .btn-ghost, .chip, .tab, .seg > *, .link) > .icon { width: 1.15em; height: 1.15em; }
+.link > .icon { margin-inline: 0.15em; vertical-align: -0.2em; }
+.icon-spin { animation: icon-spin 0.9s linear infinite; }
+@keyframes icon-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .icon-spin { animation: none; } }
 
 /* ---------- .msg-list / .msg-item：消息列表（通知、提醒） ----------
    <div class="msg-list"><button class="msg-item unread"><span class="msg-dot warn"></span>

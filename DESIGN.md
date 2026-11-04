@@ -958,6 +958,41 @@ running 无 progress = 不定进度。选项：`color` `doneColor`（缺省 `--o
 - 只管界面：`onChange({ page, pageSize, reason })` 里取数，拿到新 total 后 `update({ total })`。服务端分页接口约定返回 `total`、`page`、`page_size`、`items`。
 - 公开类：`.pager`、`.pager-info`、`.pager-size`、`.pager-nav`、`.pager-tools`、`.pager-btn`（`.active`）、`.pager-gap`、`.pager-cur`、`.pager-jump`。
 
+## 16.2 图标 `./icons`（v0.27.0）
+
+所有站点的按钮图标统一用包里的 Lucide 线性图标，**不再用字符凑**（✕ ＋ − ‹ › ↗ ⟳ 之类粗细、大小、基线都对不齐），也不在应用里另收图标副本。
+
+```js
+import { icon, iconSvg, enhanceIcons } from "@szyyw/design/icons";
+closeBtn.append(icon("x"));                          // SVGSVGElement
+cell.innerHTML = iconSvg("copy");                    // 字符串：模板拼接 / 服务端渲染
+<span dangerouslySetInnerHTML={{ __html: iconSvg("x") }} />   // React
+```
+```html
+<button class="btn-icon" aria-label="复制"><i data-icon="copy"></i></button>
+<script type="module">import { enhanceIcons } from "@szyyw/design/icons"; enhanceIcons();</script>
+```
+
+- 外观：Lucide 原样（24 视框、`stroke="currentColor"`、`stroke-width` 2、round 端点），颜色跟随文字。
+- 选项：`size`（px 数或 CSS 长度；缺省不写 = `1em`）、`label`（有意义的图标给读屏文字，生成 `role="img"` + `aria-label`；缺省为装饰，`aria-hidden`）、
+  `className`、`strokeWidth`、`spin`（`.icon-spin` 转圈，reduced-motion 下不转）。
+  图标按钮本身要有 `aria-label`（图标是装饰）。
+- `enhanceIcons(root)`：把 `[data-icon]` 占位替换成 `svg.icon`；占位上的 class 追加到 svg，`aria-label` 当 label，`data-size` / `data-spin` / `data-stroke-width` 照用。
+  动态插入的内容插完后对那块再调一次。
+- 尺寸自动适配（不必传 `size`）：`.btn-icon` 16px、`.btn-icon.xs` 14px、`.close-x` 18px、`.field-clear` 16px、`.pager-btn` 16px、`.toast-close` 14px；
+  `.btn` `.btn-ghost` `.chip` `.tab` `.seg > *` 里为 1.15em，并与文字间隔 0.4em（含图标时这些元素改为 `inline-flex`）；`.link` 里跟文字同行。正文里 1em、对齐基线。
+- 名字是编译期穷举的（`IconName`），运行时未知名字直接抛错，不画占位；`hasIcon(name)` 给外部输入做判断。
+  另认 Lucide 改名前的常用旧名：`alert-triangle` `alert-circle` `help-circle` `check-circle` `x-circle` `more-horizontal` `more-vertical` `home`。
+- 收录（73 枚，`ICON_NAMES`；手测页 `demo/icons.html` 全列）：
+  增减 `x` `plus` `minus` `check`；方向 `chevron-left/right/up/down` `chevrons-left/right` `arrow-left/right/up/down` `arrow-up-right` `arrow-left-right`；
+  操作 `copy` `clipboard` `external-link` `link` `refresh-cw` `rotate-ccw` `search` `filter` `trash-2` `pencil` `save` `download` `upload` `share-2` `send`；
+  视图 `zoom-in` `zoom-out` `maximize` `minimize` `maximize-2` `minimize-2` `scan`（1:1 原尺寸）`eye` `eye-off` `menu` `ellipsis` `ellipsis-vertical` `grip-vertical` `settings` `sliders-horizontal`；
+  状态 `info` `circle-help` `circle-alert` `triangle-alert` `circle-check` `circle-x` `loader` `loader-circle`（配 `spin`）；
+  对象 `user` `users` `lock` `log-in` `log-out` `house` `calendar` `clock` `mail` `mic` `bell` `image` `file` `file-text` `folder` `star` `sun` `moon` `monitor`。
+- 要加图标：在 `scripts/build-icons.mjs` 的 `NAMES` 里加 Lucide 名字，按脚本头的说明从 `lucide-static` 重新生成，发版。不在应用里手抄 SVG。
+- 包内已改用：外观弹层关闭键、Swipe Toast 的语气图标与关闭键、分页器翻页键、Glide Select 的箭头与勾、Depth Carousel 的左右键与加载失败图标。
+  右上角工具位的三枚图标（切换器 / 账户 / 外观）与 Branched Menu、Status Mark、Lattice Loader 的图形按各自设计保留。
+
 ## 17. 出处与许可
 
 以下模块移植自 [React Bits](https://reactbits.dev)（David Haz），上游许可 **MIT + Commons Clause License Condition v1.0**
@@ -981,7 +1016,8 @@ Commons Clause 一节的大意是「可以作为应用 / 网站的一部分使�
 滑块分段（§12.1，`.tabs` / `.seg` + `tabs.js`）的外观参照 reactbits.dev 文档站点外壳里「Preview / Code」的分段切换样式
 （站点自身的界面，不是 React Bits 组件库里的组件），尺寸与动效按其观感自行实现，未移植其代码。
 
-其他第三方素材：Branched Menu 内置图标取自 Hugeicons 免费集（MIT，Copyright (c) 2025 Hugeicons），以内联 SVG 收录；
+其他第三方素材：`icons.js` 收录 [Lucide](https://lucide.dev) 图标子集（ISC，Copyright (c) 2026 Lucide Icons and Contributors；其中源自 Feather 的图标另为 MIT，Copyright (c) 2013-present Cole Bemis），许可全文附在 `LICENSE` 末尾；
+Branched Menu 内置图标取自 Hugeicons 免费集（MIT，Copyright (c) 2025 Hugeicons），以内联 SVG 收录；
 字体 Geist（SIL OFL 1.1，`fonts/OFL.txt`，见 §7）。
 
 ### 文字链接（v0.26.0）

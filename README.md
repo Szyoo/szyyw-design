@@ -24,17 +24,17 @@ npm（钉精确 tag）：
 ```jsonc
 // package.json
 "dependencies": {
-  "@szyyw/design": "github:Szyoo/szyyw-design#v0.26.1"
+  "@szyyw/design": "github:Szyoo/szyyw-design#v0.27.0"
 }
 ```
 
 CDN（无构建步骤的项目，免 vendoring）：每个 `vX.Y.Z` tag 发布到 `https://design.szyyw.xyz/vX.Y.Z/`，内容即该 tag 的 `git archive`，发布后不再改写（`Cache-Control: immutable`，CORS `*`）。
 
 ```html
-<link rel="stylesheet" href="https://design.szyyw.xyz/v0.26.1/tokens.css">
-<link rel="stylesheet" href="https://design.szyyw.xyz/v0.26.1/components.css">
+<link rel="stylesheet" href="https://design.szyyw.xyz/v0.27.0/tokens.css">
+<link rel="stylesheet" href="https://design.szyyw.xyz/v0.27.0/components.css">
 <script type="module">
-  import { mountChrome } from "https://design.szyyw.xyz/v0.26.1/chrome.js";
+  import { mountChrome } from "https://design.szyyw.xyz/v0.27.0/chrome.js";
   mountChrome({ /* … */ });
 </script>
 ```
@@ -46,8 +46,8 @@ CDN（无构建步骤的项目，免 vendoring）：每个 `vX.Y.Z` tag 发布�
 vendoring（复制到项目目录）：只用上游 `sync.sh`，从目标 tag 取脚本，文件清单与该版本一致：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Szyoo/szyyw-design/v0.26.1/sync.sh \
-  | sh -s -- ./static/vendor/szyyw-design v0.26.1
+curl -fsSL https://raw.githubusercontent.com/Szyoo/szyyw-design/v0.27.0/sync.sh \
+  | sh -s -- ./static/vendor/szyyw-design v0.27.0
 ```
 
 它复制运行时文件（清单见 `sync.sh` 的 `FILES`）并写 / 刷新 `VENDORED.md`；第二个参数用 `--local` 可从本机 clone 同步未发版改动。
@@ -228,6 +228,20 @@ const loader = mountLatticeLoader(el, { label: "处理中" });  loader.set({ sta
 
 `.switch` 不挂 JS 也有 Squish 动效；Gradual Blur、Branched Menu、Target Cursor 的用法见 DESIGN.md §16，手测页在 `demo/`。
 
+### 图标（Lucide）
+
+```js
+import { icon, iconSvg, enhanceIcons } from "@szyyw/design/icons";
+btn.append(icon("x"));                 // 元素
+el.innerHTML = iconSvg("copy");        // 字符串
+```
+
+```html
+<button class="btn-icon" aria-label="复制"><i data-icon="copy"></i></button>  <!-- enhanceIcons() 替换成 svg -->
+```
+
+73 枚 Lucide 图标（ISC），1em、跟随文字颜色；放进 `.btn-icon` / `.close-x` / `.field-clear` / `.btn` 等按钮时尺寸自动适配。名字与用法见 DESIGN.md §16.2，全列表见 `demo/icons.html`。
+
 ### 看图轮播（Depth Carousel）
 
 应用里点开照片时，在 `.overlay` + `.sheet.wide`（无标题头）里用它看图，不跳全屏查看器或新标签页。卡片尺寸 `"auto"` 时跟容器走，容器要给确定高度：
@@ -333,6 +347,7 @@ enhanceTabs();   // 跟进之后插入的标签条与选中态变化；返回 { 
 | `./techtext` | `enhanceTechText`、`mountTechText`、`runningCount`、`DEFAULTS` |
 | `./overlay` | `mountOverlay`（遮罩点击 / Esc 关闭 + body 滚动锁引用计数） |
 | `./depth-carousel` | `mountDepthCarousel`、`DEFAULTS`、`resolveEase`、`cubicBezier`（纵深轮播 / 弹层看图，DESIGN.md §16） |
+| `./icons` | `icon`、`iconSvg`、`enhanceIcons`、`hasIcon`、`ICON_NAMES`、`LUCIDE_VERSION`（Lucide 线性图标，DESIGN.md §16.2） |
 | `./version` | `VERSION`、`REPO` |
 
 每个 JS 模块都有同名 `.d.ts`，选项与返回值以其为准。

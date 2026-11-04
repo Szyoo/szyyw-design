@@ -42,6 +42,7 @@ const DEP_HEADS = [
   ".panel-head",
   ".panel-title",
   ".close-x",
+  ".icon",
   ".divider",
   ".err-text",
   ".num",

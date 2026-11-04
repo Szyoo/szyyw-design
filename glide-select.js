@@ -39,9 +39,10 @@
    模块顶层不碰 DOM。
    ============================================================ */
 
+import { icon } from "./icons.js";
+
 const GAP = 6;
 const EDGE = 8;
-const SVG_NS = "http://www.w3.org/2000/svg";
 
 let openClose = null;
 let uid = 0;
@@ -91,24 +92,8 @@ function fromData(select) {
   return o;
 }
 
-function svg(d, size, sw) {
-  const s = document.createElementNS(SVG_NS, "svg");
-  s.setAttribute("viewBox", "0 0 24 24");
-  s.setAttribute("width", size);
-  s.setAttribute("height", size);
-  s.setAttribute("fill", "none");
-  s.setAttribute("stroke", "currentColor");
-  s.setAttribute("stroke-width", sw);
-  s.setAttribute("stroke-linecap", "round");
-  s.setAttribute("stroke-linejoin", "round");
-  s.setAttribute("aria-hidden", "true");
-  const p = document.createElementNS(SVG_NS, "path");
-  p.setAttribute("d", d);
-  s.appendChild(p);
-  return s;
-}
-const chevron = () => svg("M6 9l6 6 6-6", 12, 2.5);
-const tick = () => svg("M5 12.5l4.5 4.5L19 7.5", 13, 2.5);
+const chevron = () => icon("chevron-down", { size: 12, strokeWidth: 2.5 });
+const tick = () => icon("check", { size: 13, strokeWidth: 2.5 });
 
 const registry = new WeakMap();
 

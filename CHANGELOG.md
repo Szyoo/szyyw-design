@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.27.0 — 2026-11-04
+
+- **新增 `./icons`：Lucide 线性图标**（73 枚精选，ISC），各站点的小按钮不再用字符（✕ ＋ − ‹ › ↗）凑。`icon(name, opts)` 返回 SVG 元素，`iconSvg(name, opts)` 返回字符串（React / 服务端拼接），
+  `enhanceIcons(root)` 把 `<i data-icon="x">` 占位替换成 svg。选项 `size` `label` `className` `strokeWidth` `spin`；无 `label` 时为装饰（`aria-hidden`）。名字编译期穷举（`IconName`），另认 `alert-triangle` 等 Lucide 旧名。
+- **新增 `.icon` 样式**：缺省 1em、对齐文字基线；在 `.btn-icon`（16px）/ `.btn-icon.xs`（14px）/ `.close-x`（18px）/ `.field-clear` / `.pager-btn` / `.toast-close` 里自动适配，
+  在 `.btn` `.btn-ghost` `.chip` `.tab` `.seg > *` 里与文字间隔 0.4em。`.icon-spin` 转圈（reduced-motion 下不转）。
+- 包内改用图标（可见变化）：外观弹层关闭键 ✕、Swipe Toast 语气图标与关闭键、分页器 « ‹ › »、Glide Select 箭头与勾、Depth Carousel 左右键与加载失败图标，外形换成 Lucide 同名图标。
+- `LICENSE` 末尾附 Lucide（ISC）与 Feather（MIT）许可全文；DESIGN.md §16.2、§17。
+- 应用侧：字符图标与自收的 SVG 图标可删，改用 `./icons`。Python 应用经 import map 引用 `@szyyw/design/icons.js`。
+
 ## v0.26.1 — 2026-11-02
 
 - **`.app-main` 至少铺满一屏**：外框里直接有 `.app-main` 时（`.app-frame:has(> .app-main)`），外框改为纵向弹性布局、主体栏吃掉剩余高度。内容很短的页面（登录、空列表）半透明底不再在内容下方截断成一条横线；页头 / 页脚放在主体栏外面时只分剩余高度，不多出滚动。没有 `.app-main` 的外框不受影响。

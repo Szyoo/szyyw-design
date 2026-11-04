@@ -102,7 +102,7 @@
 
 <template id="tpl-wide">
   <div class="sheet wide" role="dialog" aria-label="奖品详情">
-    <div class="sheet-head"><button class="close-x" type="button" aria-label="关闭" data-close>✕</button></div>
+    <div class="sheet-head"><button class="close-x" type="button" aria-label="关闭" data-close><i data-icon="x"></i></button></div>
     <div class="sheet-body">
       <div class="prize">
         <div class="prize-img" role="img" aria-label="奖品图"></div>
@@ -127,7 +127,7 @@
 
 <template id="tpl-plain">
   <div class="sheet" role="dialog" aria-label="普通弹层">
-    <div class="sheet-head"><h2 class="sheet-title">普通弹层</h2><button class="close-x" type="button" aria-label="关闭" data-close>✕</button></div>
+    <div class="sheet-head"><h2 class="sheet-title">普通弹层</h2><button class="close-x" type="button" aria-label="关闭" data-close><i data-icon="x"></i></button></div>
     <div class="sheet-body"><p>有标题时头部不变：标题靠左、✕ 靠右。</p></div>
     <div class="sheet-foot"><button class="btn-ghost danger" type="button">删除</button><button class="btn" type="button" data-close>好</button></div>
   </div>
@@ -135,12 +135,14 @@
 
 <template id="tpl-bare">
   <div class="sheet" role="dialog" aria-label="无标题">
-    <div class="sheet-head"><button class="close-x" type="button" aria-label="关闭" data-close>✕</button></div>
+    <div class="sheet-head"><button class="close-x" type="button" aria-label="关闭" data-close><i data-icon="x"></i></button></div>
     <div class="sheet-body"><p>头里只有 ✕：靠右、头部收成按钮高。</p></div>
   </div>
 </template>
 
 <script type="module">
+import { enhanceIcons } from "../icons.js";
+enhanceIcons();
   import { mountChrome } from "../chrome.js";
   import { openAppearancePanel } from "../appearance.js";
 

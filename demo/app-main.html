@@ -80,11 +80,13 @@
 
 <div class="overlay" id="ov" hidden></div>
 <aside class="drawer" id="drawer" hidden aria-label="详情">
-  <div class="drawer-head"><strong>详情</strong><button class="close-x" type="button" id="close-drawer" aria-label="关闭">×</button></div>
+  <div class="drawer-head"><strong>详情</strong><button class="close-x" type="button" id="close-drawer" aria-label="关闭"><i data-icon="x"></i></button></div>
   <div class="drawer-body"><div class="callout info">抽屉（z 51）盖在主体栏与工具位之上。</div></div>
 </aside>
 
 <script type="module">
+import { enhanceIcons } from "../icons.js";
+enhanceIcons();
   const q = new URLSearchParams(location.search);
   if (q.get("veil") === "0") { const c = document.getElementById("col"); c.classList.remove("app-main"); c.classList.add("plain-col"); }
   const merchants = ["セブン-イレブン 渋谷店", "JR 東日本", "Amazon.co.jp", "スターバックス", "ユニクロ 新宿", "東京電力"];

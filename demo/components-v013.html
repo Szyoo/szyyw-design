@@ -180,7 +180,7 @@
 <aside class="drawer" id="drawer" hidden aria-label="管理">
   <div class="drawer-head">
     <h2>管理</h2>
-    <button class="close-x" type="button" aria-label="关闭" id="close-drawer">✕</button>
+    <button class="close-x" type="button" aria-label="关闭" id="close-drawer"><i data-icon="x"></i></button>
   </div>
   <div style="padding: 0 18px 10px">
     <div class="tabs scroll">
@@ -199,6 +199,8 @@
 </aside>
 
 <script type="module">
+import { enhanceIcons } from "../icons.js";
+enhanceIcons();
   import { mountChrome } from "../chrome.js";
   import { createCornerButton } from "../corner.js";
   import { toast } from "../toast.js";

@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Icons · 手测</title>
+<!--
+  @szyyw/design 图标（./icons，Lucide）的静态手测页（不进 package files）。
+  仓库根目录 `python3 -m http.server 8080`，打开 http://localhost:8080/demo/icons.html
+  ?scheme=light|dark 可直接指定明暗（截图用）。
+-->
+<script>
+  (function () {
+    var d = document.documentElement, q = new URLSearchParams(location.search);
+    var s = q.get("scheme");
+    if (s === "auto" || s === "dark" || s === "light") d.setAttribute("data-scheme", s);
+  })();
+</script>
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../components.css">
+<style>
+  .demo { max-width: 920px; margin: 0 auto; padding: 24px 16px 64px; }
+  .demo > section { padding: 18px 20px; margin-bottom: 16px; }
+  .demo h2 { margin: 0 0 4px; font-size: 15px; }
+  .demo .note { margin: 0 0 14px; font-size: 12px; color: var(--text-dim); }
+  .grid { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(116px, 1fr)); }
+  .cell { display: grid; justify-items: center; gap: 6px; padding: 12px 6px; border-radius: 10px; font-size: 11px; color: var(--text-dim); }
+  .cell .icon { width: 22px; height: 22px; color: var(--text); }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+<main class="demo">
+  <section class="glass">
+    <h2>按钮里的图标</h2>
+    <p class="note">放进 .btn-icon / .close-x / .field-clear / .btn / .chip / .tab 时尺寸自动适配；文字旁的图标与文字间距自动留出。</p>
+    <div class="row">
+      <button class="btn-icon" aria-label="减"><i data-icon="minus"></i></button>
+      <button class="btn-icon" aria-label="加"><i data-icon="plus"></i></button>
+      <button class="btn-icon" aria-label="复制"><i data-icon="copy"></i></button>
+      <button class="btn-icon" aria-label="1:1"><i data-icon="scan"></i></button>
+      <button class="btn-icon xs" aria-label="上一张"><i data-icon="chevron-left"></i></button>
+      <button class="btn-icon xs" aria-label="下一张"><i data-icon="chevron-right"></i></button>
+      <button class="btn-icon xs" aria-label="关闭"><i data-icon="x"></i></button>
+      <button class="close-x" aria-label="关闭"><i data-icon="x"></i></button>
+      <button class="btn"><i data-icon="download"></i>下载</button>
+      <button class="btn-ghost"><i data-icon="refresh-cw"></i>刷新</button>
+      <button class="btn-ghost">打开<i data-icon="external-link"></i></button>
+      <span class="chip"><i data-icon="loader-circle" data-spin></i>同步中</span>
+      <a class="link" href="#">原图<i data-icon="arrow-up-right"></i></a>
+    </div>
+    <p class="u-mt-3">正文里的图标 <i data-icon="info"></i> 与文字基线对齐，<i data-icon="triangle-alert" aria-label="警告"></i> 有读屏文字。</p>
+  </section>
+  <section class="glass">
+    <h2>全部图标</h2>
+    <p class="note" id="count"></p>
+    <div class="grid" id="all"></div>
+  </section>
+</main>
+<script type="module">
+import { enhanceIcons, icon, ICON_NAMES, LUCIDE_VERSION } from "../icons.js";
+enhanceIcons();
+document.getElementById("count").textContent = `${ICON_NAMES.length} 枚，lucide-static v${LUCIDE_VERSION}；名字即 Lucide 名（另认 alert-triangle / home 等旧名）。`;
+const all = document.getElementById("all");
+for (const n of ICON_NAMES) {
+  const c = document.createElement("div");
+  c.className = "cell inner";
+  c.append(icon(n), n);
+  all.append(c);
+}
+</script>
+</body>
+</html>

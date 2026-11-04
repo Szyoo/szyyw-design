@@ -20,6 +20,8 @@
    模块顶层不碰 DOM。
    ============================================================ */
 
+import { icon } from "./icons.js";
+
 const TEXTS = {
   zh: {
     total: (n) => `共 ${n} 条`, range: (a, b) => `第 ${a}–${b} 条`, size: (n) => `${n} 条/页`, sizeLabel: "每页条数",
@@ -90,7 +92,8 @@ export function mountPager(el, options = {}) {
     const b = document.createElement("button");
     b.type = "button";
     b.className = `pager-btn${cls ? ` ${cls}` : ""}${current ? " active" : ""}`;
-    b.textContent = label;
+    if (typeof label === "string") b.textContent = label;
+    else b.append(label);
     if (aria) b.setAttribute("aria-label", aria);
     if (current) b.setAttribute("aria-current", "page");
     b.disabled = disabled || busy;
@@ -145,8 +148,8 @@ export function mountPager(el, options = {}) {
     const atFirst = o.page <= 1;
     const atLast = o.page >= last;
     nav.append(
-      btn("«", 1, { cls: "pager-edge", aria: t.first, disabled: atFirst }),
-      btn("‹", o.page - 1, { cls: "pager-step", aria: t.prev, disabled: atFirst })
+      btn(icon("chevrons-left"), 1, { cls: "pager-edge", aria: t.first, disabled: atFirst }),
+      btn(icon("chevron-left"), o.page - 1, { cls: "pager-step", aria: t.prev, disabled: atFirst })
     );
     for (const it of pageItems(o.page, last, o.siblings, o.boundaries)) {
       if (it === "gap") {
@@ -163,8 +166,8 @@ export function mountPager(el, options = {}) {
     cur.className = "pager-cur";
     cur.textContent = `${o.page} / ${last}`;
     nav.append(cur,
-      btn("›", o.page + 1, { cls: "pager-step", aria: t.next, disabled: atLast }),
-      btn("»", last, { cls: "pager-edge", aria: t.last, disabled: atLast }));
+      btn(icon("chevron-right"), o.page + 1, { cls: "pager-step", aria: t.next, disabled: atLast }),
+      btn(icon("chevrons-right"), last, { cls: "pager-edge", aria: t.last, disabled: atLast }));
     parts.push(nav);
     const tools = document.createElement("span");
     tools.className = "pager-tools";
