@@ -86,12 +86,26 @@
   --seg-muted: var(--text-dim);
   --seg-text: var(--text);
 
+  /* 选中态（v0.28.0）两族：
+     - 着色族 --selected-bg / --selected-border：列表项、.chip、Glide Select 选项、语言列表、应用切换器当前项
+     - 凸起族 --seg-raised*：.tabs / .seg / .pager 的选中块（见上） */
+  --selected-bg: color-mix(in srgb, var(--accent) 12%, transparent);
+  --selected-border: color-mix(in srgb, var(--accent) 55%, transparent);
+  /* 有边框控件的悬停描边（v0.28.0；accent 混合只用 45% / 12% / 55% 三档） */
+  --hover-border: color-mix(in srgb, var(--accent) 45%, transparent);
+
   /* 语义色 */
   --err: light-dark(#dc2626, #ef4444);
   --ok: light-dark(#059669, #34d399);
   --warn: light-dark(#b45309, #fbbf24);
   --exp: light-dark(#dc2626, #f87171);
-  --inc: light-dark(#059669, #34d399);
+  /* 收入色与 --ok 同值（v0.28.0 起改为别名） */
+  --inc: var(--ok);
+  /* 中性提示（v0.28.0）：偏青，和蓝灰 accent 区分得开。.callout.info / .toast.info 用它 */
+  --info: light-dark(#0e7490, #67c7da);
+  --tint-info-bg: light-dark(rgba(14, 116, 144, 0.1), rgba(103, 199, 218, 0.13));
+  /* 破坏性操作色（v0.28.0）：与 --err 同色，语义上用于 .danger 按钮 / 菜单项 */
+  --danger: var(--err);
   /* 红底上的字色（v0.13.0：.corner-badge 计数角标） */
   --on-err: light-dark(#ffffff, #1c0606);
 
@@ -129,6 +143,8 @@
 
   /* 动效与结构（不分明暗） */
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  /* 更陡的出场曲线（v0.28.0 收拢：Branched Menu / Glide Select / Status Mark / Lattice Loader 共用） */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --nav-h: 62px;
   --sidebar-w: 224px;
   /* 顶栏给右上角工具位让位时，工具位左缘再留的空隙（.corner-clear / .app-header，v0.13.0） */
@@ -143,6 +159,65 @@
   --term-ok: #34d399;
   --term-warn: #fbbf24;
   --term-err: #ef4444;
+}
+
+/* ===== 刻度（v0.28.0，明暗无关） =====
+   组件与应用的字号 / 行高 / 圆角 / 高度 / 间距 / 焦点 / 时长 / 模糊都从这里取，不写死 px。
+   规则见 DESIGN.md「刻度与交互状态」。 */
+:root {
+  /* 字号 */
+  --fs-xs: 11px;
+  --fs-sm: 12px;
+  --fs-md: 13px;
+  --fs-base: 14px;
+  --fs-body: 15px; /* body 正文 */
+  --fs-input: 16px; /* 输入框：小于 16px 时 iOS 聚焦会缩放页面 */
+  --fs-lg: 18px;
+  --fs-xl: 22px;
+  --fs-2xl: 26px;
+
+  /* 行高 */
+  --lh-tight: 1.2; /* 控件、标题 */
+  --lh-snug: 1.4; /* 紧凑列表、标题行 */
+  --lh-body: 1.6; /* 正文 */
+
+  /* 圆角：容器 lg；卡内块 / 菜单 / toast md；控件按高度 44 → md、28–36 → sm、≤24 → xs */
+  --r-xs: 6px;
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-pill: 999px;
+
+  /* 控件高度三档 + 列表行 */
+  --h-sm: 28px;
+  --h-md: 36px;
+  --h-lg: 44px;
+  --h-row: 36px;
+  /* 触屏（pointer: coarse）下 sm / md 档控件的最小点按高度 */
+  --h-touch: 40px;
+
+  /* 间距 */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+
+  /* 焦点环：所有可交互元素的 :focus-visible 统一用它 */
+  --focus: var(--accent);
+  --focus-ring: 2px solid var(--focus);
+  --focus-offset: 2px;
+
+  /* 时长：fast 颜色 / 底色 / 按下；base 描边 / 阴影 / 弹层出入；enter 入场 */
+  --dur-fast: 150ms;
+  --dur-base: 250ms;
+  --dur-enter: 400ms;
+
+  /* 背景模糊 */
+  --blur-sm: 8px;
+  --blur-md: 14px;
+  --blur-lg: 18px;
 }
 
 /* ===== themes-webgl ===== */
