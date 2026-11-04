@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.28.0 — （未发布）
+## v0.28.0 — 2026-11-04
 
 **刻度 token + 全部现有组件按刻度统一**（DESIGN.md §3.1，手测页 `demo/foundations.html`）。类名、标记、JS API 不变，升级即生效；以下可见变化都是有意的。
 
