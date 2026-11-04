@@ -1,5 +1,55 @@
 # Changelog
 
+## v0.28.0 — （未发布）
+
+**刻度 token + 全部现有组件按刻度统一**（DESIGN.md §3.1，手测页 `demo/foundations.html`）。类名、标记、JS API 不变，升级即生效；以下可见变化都是有意的。
+
+**新增 token**（`tokens.css`「刻度」段，明暗无关）
+- 字号 `--fs-xs/sm/md/base/body/title/input/lg/xl/2xl`（11 / 12 / 13 / 14 / 15 / 16 / 16 / 18 / 22 / 26）；行高 `--lh-tight/snug/body`（1.2 / 1.4 / 1.6）。
+- 圆角 `--r-xs/sm/md/lg/pill`（6 / 8 / 12 / 16 / 999）；控件高度 `--h-sm/md/lg`（28 / 36 / 44）、列表行 `--h-row` 36、触屏最小 `--h-touch` 40。
+- 间距 `--sp-1…6`（4 / 8 / 12 / 16 / 24 / 32）；焦点 `--focus` `--focus-ring` `--focus-offset`；时长 `--dur-fast/base/enter`（150 / 250 / 400ms）；
+  模糊 `--blur-sm/md/lg`（8 / 14 / 18）；曲线 `--ease-out`（Branched Menu / Glide Select / Status Mark / Lattice Loader 的出场曲线收拢到这里）。
+- 语义 `--info` `--tint-info-bg` `--danger`（= `--err`）；状态 `--hover-border`（accent 45%）、选中着色族 `--selected-bg`（12%）/ `--selected-border`（55%）。
+- 合并：`--inc` 改为 `--ok` 的别名（两者同值，外观不变）。其余审计到的近似 token 明暗取值不完全相同，未合并。
+
+**可见变化**
+- 控件三档等高：`.btn` 42.4 → 44、`.btn-ghost` 44.4 → 44、`.field` 47.6 → 44（`min-height`，textarea 随内容）、`.field.small` 36.4 → 36、
+  `.btn-small` 34.8 → 36、`.chip` 36.8 → 36、套 `.field` 的 Glide 38 → 44、套 `.field.small` 的 Glide 28 → 36、非 `.field` Glide 32 → 36（`size: "md"`）。
+- `.btn` / `.btn-ghost` 改为 `inline-flex` 居中（文字与图标 / 转圈间隔 0.4em），`.btn` 补 1px 透明边框；左右内距 20 → 24，`.btn-small` 14 → 12；`.btn-ghost` 字重 500 → 600。
+- 圆角：`.btn` `.btn-ghost` `.field` 10 → 12，`.btn-small` / `.field.small` 8，`.inner` `.callout` 10 → 12，`.sheet` 20 / 18 → 16（手机只圆上两角），
+  工具位按钮 11 → 8，`.tabs` / `.seg` 轨道 11 → 12、内块 8（紧凑 9 / 7 → 8 / 6），菜单项 10 → 8，Glide 小块 10 → 8。
+- 工具位按钮 `.corner-tool` 34 → 36（`.app-header` 最低高 54 → 56，工具位弹层缺省顶位置随之 +2；corner.js 实测值照常）；悬停不再上浮，按下 `scale(.97)`。
+- `.tabs` / `.seg`：轨道内距 3 → 4、内块 30 → 28；`.compact` 轨道 30 → 28、内块 26 → 24；按下 `.96` → `.97`；焦点环改为向内收 2px。
+- `.btn-icon` 30×28 → 28×28，`.xs` 24×22 → 24×24；悬停改为与其他有边框控件一致（描边 accent 45%）。`.pager-btn` 32 → 36，当前页改为凸起块（同 `.tabs` 选中）。
+- 菜单项统一：`.menu-item` 13px / 约 32 高 → 14px / 36；`.account-menu-item` 约 40 → 36；语言列表短名方块 28 → 24；工具位三种菜单内距 6 → 8。
+- `.close-x` 改为 32×32 方块、悬停衬底 `--hover-tint`；**留空**（`<button class="close-x" aria-label="关闭"></button>`）自动画 Lucide x，`.field-clear` 同理。
+  `.field-clear` 在 44 输入框里右缘 2 → 6（`.field.small` 里仍 2），输入框右内距 36 → 42。
+- 焦点：所有可交互元素统一 2px `--focus` 外框、外偏 2px（菜单项、输入框内按钮、横滚轨道里向内收 2px）；新增特异性为 0 的兜底规则（`a[href]` `button` `input` `select` `textarea` `summary` `[tabindex]`）。
+  `.field` 聚焦由 3px 淡光环改为描边变色 + 2px 实线环（向内收 1px）；Glide 触发器、toast、Branched Menu（原下划线）同一圈环。补齐了原来没有焦点样式的
+  `.btn` `.btn-ghost` `.btn-icon` `.chip` `.close-x` `.menu-item` `.corner-tool` 工具位三种菜单项 `.row-hover` `.msg-item` `.icon-cell` `.field-inset-btn` `.term-head` `.term-lvl`。
+- hover：`.btn-ghost` 悬停文字由 accent 改为 `--text`；`.chip` `.field`（仅精确指针）悬停加描边；Depth Carousel 箭头悬停文字不再变 accent、描边改 `--hover-border`。
+- disabled 透明度统一 .45（之前 .35 / .4 / .5 / .7 混用）：`.btn-ghost` `.btn-icon` `.field` `.pager-btn` Glide、Depth Carousel 箭头、终端窗级别键；新增 `.chip` `.close-x` `.corner-tool` 的禁用态。`.btn` 的实底熄灭态保留。
+- danger：`.btn-ghost.danger` 常驻红字（之前只在悬停时变红）、悬停衬 12% 红底；`.account-menu-item.danger`（退出登录）同样常驻红字；新增实底 `.btn.danger`。
+- selected：`.chip.active` 不变（换成 token），语言列表当前项 / 应用切换器当前项的底由 `--inner-bg` 改为 `--selected-bg`，Glide 选中项底 8% → 12%。
+- `.callout.info` / `.toast.info` 由 accent 改为 `--info`（偏青，与蓝灰 accent 区分）；`.callout.ok` 描边 40% → 45%。
+- 容器：`.panel` 内距 18 → 16，`.stat-card` 14/16 → 16，`.inset-list` `--inset` 18 → 16；`.sheet` / `.drawer` 头 16/18/10 → 16/16/8、体 → 4/16/16、脚 → 12/16/16，`.sheet-foot` 去掉上边线；
+  `.sheet` 与 `.corner-panel` 补 `--pop-shadow`；toast 内距 13/14 → 12/16、字号 13.5 → 14。
+- 文字：`.page-title` 700 → 600、`.stat-value` 700 → 600，两者与 `.panel-title` 等标题行高 1.2；`.panel-title` / `.drawer-head h*` 17 → 16；`.section-name` 字距 .14 → .12em、下边距 10 → 12；
+  `.app-sub` 字距 .14 → .12em；表头字距 .05 → .06em；零散字号归并（10 → 11、11.5 → 12、12.5 → 12、13.5 → 14），终端窗正文 11.5 → 12、行高 1.65 → 1.6。
+- 间距：`.form-row` 块底 14 → 16，`.hint` 上边距 6 → 4，`.section` 上边距 26 → 24，表格单元格 9/12 → 8/12，`.callout` 10/14 → 12/16，`.row-hover` 11/14 → 12。
+- 动效：`.rise` / `.stagger` 入场 0.65s / 0.6s → 400ms；弹层 / 抽屉 / 菜单 / 工具位弹层出入 → 250ms；所有 `ease` 关键字改为 `--ease`。
+- 触屏（`pointer: coarse`）：`.field.small` 最低 40，`.tabs` / `.seg` 缺省档轨道 40，`.btn-icon` 点按区扩到 40（外观不变）。
+
+**清理**
+- `icon-spin` / `dc-spin` 与 `spin` 三个相同关键帧合并为 `spin`；`.glide-select__menu` 的 `--gs-*` 缺省值与 `.glide-select` 合成一份；
+  `.toast-region` 被覆盖的 `gap`、被盖掉的 toast 字号、多余的 `.update-link:hover` 删除。`corner.css` 重新生成。
+
+**应用侧该做什么**
+- 自写样式里写死的字号 / 圆角 / 高度 / 间距 / 时长换成 token：`font-size: var(--fs-sm)`、`border-radius: var(--r-md)`、`min-height: var(--h-md)`、`padding: var(--sp-3)`、`transition: … var(--dur-fast) var(--ease)`。
+- 自写的焦点样式（`outline: none` + 光环）删掉或改为 `outline: var(--focus-ring)`；自写选中底改 `--selected-bg`；自写的 `.btn.danger` 底色可删，改用包里的。
+- 关闭键里的 ✕ 字符可删，留空 `<button class="close-x" aria-label="关闭"></button>`（标签之间不要留空白）。
+- 依赖 `.close-x` 旧尺寸（无宽高、`padding: 4px 8px`）或 `.btn-icon` 30 宽排版的地方检查一遍；校验失败的输入框加 `aria-invalid="true"`，说明放 `.field-msg.err`。
+
 ## v0.27.0 — 2026-11-04
 
 - **新增 `./icons`：Lucide 线性图标**（73 枚精选，ISC），各站点的小按钮不再用字符（✕ ＋ − ‹ › ↗）凑。`icon(name, opts)` 返回 SVG 元素，`iconSvg(name, opts)` 返回字符串（React / 服务端拼接），

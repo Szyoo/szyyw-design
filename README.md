@@ -249,7 +249,7 @@ el.innerHTML = iconSvg("copy");        // 字符串
 ```html
 <div class="overlay">
   <div class="sheet wide" role="dialog" aria-modal="true" aria-label="查看照片">
-    <div class="sheet-head"><button class="close-x" type="button" aria-label="关闭">✕</button></div>
+    <div class="sheet-head"><button class="close-x" type="button" aria-label="关闭"></button></div>
     <div class="sheet-body"><div id="viewer" style="--dc-height: min(68dvh, 580px)"></div><span class="num"></span> <a class="orig" target="_blank">原图</a></div>
   </div>
 </div>
@@ -304,6 +304,17 @@ enhanceTabs();   // 跟进之后插入的标签条与选中态变化；返回 { 
 ```
 
 修饰类 `.compact`（紧凑）、`.tabs.scroll`（横滚）；不要覆写它们的尺寸与底色，细则见 DESIGN.md §12.1，手测页 `demo/tabs.html`。
+
+### 刻度与交互状态（v0.28.0）
+
+`tokens.css` 带一套明暗无关的刻度：字号 `--fs-*`、行高 `--lh-*`、圆角 `--r-*`、控件高度 `--h-sm/md/lg`（28 / 36 / 44）、间距 `--sp-1…6`、
+焦点环 `--focus-ring`、时长 `--dur-*`、模糊 `--blur-*`。包内组件全部按它统一（同档控件等高、同一圈焦点环、同一套 hover / 禁用 / 选中 / 校验失败 / 危险态），
+应用自写样式也用这些 token，不写死 px。规则见 DESIGN.md §3.1，手测页 `demo/foundations.html`。
+
+```html
+<input class="field" aria-invalid="true"><p class="field-msg err">请输入邮箱</p>
+<button class="close-x" aria-label="关闭"></button>   <!-- 留空自动画关闭图标 -->
+```
 
 ### 表单排版
 

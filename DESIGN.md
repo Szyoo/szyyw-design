@@ -161,6 +161,78 @@ z-index 62  .glide-select__menu  Glide Select 的选项菜单（v0.19.0，挂 bo
 浅色模式下这些 token 与 v0.24.0 的实际取值相同（新增的高光与外圈在浅色为透明），浅色外观不变。
 写组件时：可交互的边框用 `--control-border`，装饰性的表面边框用 `--glass-border`，别反过来。
 
+## 3.1 刻度与交互状态（v0.28.0）
+
+`tokens.css` 的「刻度」段（明暗无关）是组件与应用取尺寸的唯一来源：**字号、圆角、高度、间距、时长都用 token，不写死 px**。
+包内全部组件按下面的规则统一；类名、标记、JS API 不变。手测页 `demo/foundations.html`（刻度色板、控件对齐、交互状态、容器）。
+
+### 刻度 token
+
+| 类 | token | 值 | 用途 |
+|---|---|---|---|
+| 字号 | `--fs-xs` `--fs-sm` `--fs-md` `--fs-base` `--fs-body` `--fs-title` `--fs-input` `--fs-lg` `--fs-xl` `--fs-2xl` | 11 / 12 / 13 / 14 / 15 / 16 / 16 / 18 / 22 / 26 | 角标小标签 / 提示表头 / 小号正文 / 按钮菜单项 / 正文 / 卡片弹层标题 / 输入框（防 iOS 缩放）/ 图标字符 / 页面标题 / 统计数字（桌面） |
+| 行高 | `--lh-tight` `--lh-snug` `--lh-body` | 1.2 / 1.4 / 1.6 | 控件与标题 / 紧凑列表与标题行 / 正文 |
+| 圆角 | `--r-xs` `--r-sm` `--r-md` `--r-lg` `--r-pill` | 6 / 8 / 12 / 16 / 999 | 见下「圆角与容器」 |
+| 高度 | `--h-sm` `--h-md` `--h-lg` `--h-row` `--h-touch` | 28 / 36 / 44 / 36 / 40 | 控件三档 / 列表行 / 触屏最小点按 |
+| 间距 | `--sp-1` … `--sp-6` | 4 / 8 / 12 / 16 / 24 / 32 | 内边距与 gap（2px 细缝例外） |
+| 焦点 | `--focus` `--focus-ring` `--focus-offset` | accent / `2px solid` / 2px | 所有 `:focus-visible` |
+| 时长 | `--dur-fast` `--dur-base` `--dur-enter` | 150 / 250 / 400ms | 颜色·底色·按下 / 描边·阴影·弹层出入 / 入场 |
+| 曲线 | `--ease` `--ease-out` | | 全部过渡用 token，不写 `ease` 关键字 |
+| 模糊 | `--blur-sm` `--blur-md` `--blur-lg` | 8 / 14 / 18 | 遮罩与小浮件 / 卡片·菜单·toast / 弹层·抽屉 |
+| 语义 | `--info` `--tint-info-bg` `--danger` | 偏青 / 淡底 / = `--err` | `.callout.info` `.toast.info`；`.danger` 按钮与菜单项 |
+| 状态 | `--hover-border` `--selected-bg` `--selected-border` | accent 45% / 12% / 55% | 悬停描边；选中着色族 |
+
+accent 的混合比例只用三档：45%（悬停描边）、12%（选中底）、55%（选中描边）。
+
+### 控件三档
+
+| 档 | 高 | 圆角 | 控件 |
+|---|---|---|---|
+| lg | 44 | `--r-md` | `.btn` `.btn-ghost` `.field` `select.field` 日期类输入、套 `.field` 的 Glide Select、Depth Carousel 箭头（桌面） |
+| md | 36 | `--r-sm` | `.btn-small` `.field.small`（含 Glide）`.chip`（胶囊）`.tabs` / `.seg` 轨道 `.corner-tool` `.pager-btn` 非 `.field` 的 Glide 触发器 |
+| sm | 28 | `--r-sm` | `.btn-icon`（28×28）`.tabs` / `.seg` 内块 `.tabs.compact` 轨道 `.toast-action` |
+| ≤24 | 24 | `--r-xs` | `.btn-icon.xs` `.tabs.compact` 内块 `.toast-close` `.locale-menu-short` |
+
+- 控件用 `min-height` 定高，不靠行高推；`.btn` 带 1px 透明边框，与 `.btn-ghost` 同高；按钮字重 600，`.tab` / `.chip` / Glide 触发器 500。
+- 列表行 `--h-row` 36：`.menu-item` `.account-menu-item` `.locale-menu-item` `.app-switcher-item` Glide 选项，14px、圆角 8、左右 12。
+- `.close-x` 32×32 方块、`.field-clear` / `.field-inset-btn` 32，垂直居中在 36 / 44 的输入框里。
+- 触屏（`pointer: coarse`）：`.field.small` `.pager-btn` 至少 40，`.tabs` / `.seg` 缺省档轨道 40，`.btn-icon` 点按区向外扩到 40（外观不变）。
+
+### 圆角与容器
+
+- 容器（`.glass` 卡片、`.sheet`、`.drawer`、`.corner-panel`）一律 `--r-lg` 16；手机底部抽屉只圆上两角。
+- 卡内块与浮件（`.inner` `.callout` `.menu` `.toast` Glide 菜单 `.table-wrap` `.term`）一律 `--r-md` 12。
+- 菜单类保持同心：外圆角 = 内圆角 + 内距（`.menu` 12 = 8 + 4；工具位菜单 16 = 8 + 8；`.tabs` 轨道 12 = 8 + 4，紧凑 8 = 6 + 2）。
+- 容器内边距 `--sp-4` 16：`.panel`、`.stat-card`、`.inset-list` 的 `--inset`、弹层与抽屉；`.sheet` 与 `.drawer` 头 16/16/8、体 4/16/16、脚 12/16/16，页脚不画上边线（靠间距分隔）。
+- 浮层都带 `--pop-shadow`（`.sheet` `.corner-panel` `.drawer` `.menu` `.toast` Glide 菜单）。
+
+### 文字层级
+
+页面标题 `.page-title` 22/600；卡片 / 弹层 / 抽屉标题（`.panel-title` `.sheet-title` `.drawer-head h*`）16/600；统计数字 `.stat-value` 22（桌面 26）/600；
+`.section-name` 12/600 大写、字距 .12em；表头、`.stat-label`、`.pill` 等小标签字距 .06em。标题行高 `--lh-tight`。
+
+### 交互状态
+
+| 状态 | 规则 |
+|---|---|
+| hover | 有边框的控件（`.btn-ghost` `.btn-icon` `.chip` `.field` `.corner-tool` Glide 触发器、Depth Carousel 箭头）→ 描边 `--hover-border` + 文字 `--text`；无边框的（`.close-x` 菜单项 `.pager-btn` `.row-hover` `.field-clear` `.msg-item`）→ 衬底 `--hover-tint`。`.btn` 渐变按钮保留上浮 + 投影 |
+| active | 可按的控件 `scale(.97)`；`.btn` 回到原位 + `scale(.98)` |
+| focus-visible | `outline: var(--focus-ring); outline-offset: var(--focus-offset)`；会被 overflow 裁切的（菜单项、输入框内的按钮、表格与横滚轨道里的）用 offset -2px；`.field` 聚焦描边变 `--focus` + 同一圈环向内收 1px（`.form-grid` 格子会裁切）。另有特异性为 0 的兜底规则覆盖所有 `a[href]` `button` `input` `select` `textarea` `summary` `[tabindex]` |
+| disabled | `opacity: .45; cursor: not-allowed`；`.btn` 例外，保留实底「熄灭」态 |
+| invalid | `.field[aria-invalid="true"]` / `.field.invalid` → 描边与焦点环 `--err`；下方 `.field-msg.err`（12px、上间距 4px），中性说明用 `.field-msg` |
+| danger | `.btn.danger` 实底 `--danger` + `--on-err` 字；`.btn-ghost.danger` `.menu-item.danger` `.account-menu-item.danger` 常驻 `--danger` 字、悬停衬 12% 底 |
+| selected | 两族：**着色族** `--selected-bg` / `--selected-border`（`.chip.active`、Glide 选项、语言列表当前项、应用切换器当前项、列表选中）；**凸起族** `--seg-raised*`（`.tabs` `.seg` 的选中块、`.pager-btn.active`） |
+
+```html
+<input class="field" aria-invalid="true" aria-describedby="m1"><p class="field-msg err" id="m1">请输入邮箱</p>
+<button class="close-x" aria-label="关闭"></button>   <!-- 留空（标签间不留空白）自动画 Lucide x；.field-clear 同理 -->
+```
+
+### 应用侧
+
+自写样式里的字号、圆角、高度、间距、时长改用上面的 token（`font-size: var(--fs-sm)`、`border-radius: var(--r-md)`、`min-height: var(--h-md)`、`padding: var(--sp-3)`），
+自写的焦点样式改为 `outline: var(--focus-ring)`，自写的选中底改为 `--selected-bg`。刻度变了，跟着 token 走的应用不用再改。
+
 ## 4. DotField 点阵背景
 
 DotField 是缺省主题 `nebula` 的背景（`themes/nebula.js` 是它的主题适配器，§4.1）。旧 API `mountDotField` / `mountDotFieldSettings` /
@@ -443,7 +515,7 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
 
 ## 7. 字体与数字
 
-- 正文 Inter + 中文回退（PingFang SC / Hiragino / 雅黑）；15px 基准
+- 正文 Inter + 中文回退（PingFang SC / Hiragino / 雅黑）；15px 基准（`--fs-body`，字号刻度见 §3.1）
 - 等宽 SF Mono / JetBrains Mono——终端窗、日志、代码
 - **所有数字加 `.num`**（tabular-nums），金额列才对得齐
 - 输入件字号 ≥16px：iOS 聚焦小于 16px 会触发页面缩放
@@ -478,7 +550,7 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
     ```html
     <div class="overlay">
       <div class="sheet wide" role="dialog" aria-label="奖品详情">
-        <div class="sheet-head"><button class="close-x" type="button" aria-label="关闭">✕</button></div>
+        <div class="sheet-head"><button class="close-x" type="button" aria-label="关闭"></button></div>
         <div class="sheet-body">…大图 + <dl class="kv">…</dl></div>
         <div class="sheet-foot">…</div>
       </div>
@@ -506,7 +578,7 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
 
 | 类 | 管什么 | 样子 |
 |---|---|---|
-| `.form-row` | 一个字段：`<label>` + 控件 + 可选提示 | 块级，块底 14px；**不排版子元素** |
+| `.form-row` | 一个字段：`<label>` + 控件 + 可选提示 | 块级，块底 16px（v0.28.0 起，之前 14px）；**不排版子元素** |
 | `.field-row`（v0.11.0） | 一行里的「输入框 + 按钮」/ 多个小控件 | flex、`gap: 8px`、居中对齐、放不下就换行；`.field` 吃剩余宽度（基准 12rem），按钮 / `.pill` / `.chip` 不伸缩 |
 | `.stack` | 纵向一串控件（无 label 的紧凑表单） | flex 纵向、`gap: 10px` |
 
@@ -517,7 +589,7 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
   <input id="name" class="field">
 </div>
 
-<!-- 输入框 + 按钮一行（可与 .form-row 叠加，保留块底 14px） -->
+<!-- 输入框 + 按钮一行（可与 .form-row 叠加，保留块底 16px） -->
 <div class="form-row field-row">
   <input class="field" placeholder="新用户名">
   <button class="btn btn-small">新增</button>
@@ -574,6 +646,8 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
   token 旋钮 `--sticky-top` `--sticky-page-h` `--sticky-clear`；JS `./sticky-heads`（`mountStickyHeads`）；`mountGradualBlur` 新选项 `outside`
 - v0.23.0（§12.1）：`.tabs` / `.seg` 改为滑块分段外观（类名不变）；`.seg.compact`；token `--seg-*`；属性 `data-pill` `data-pill-on` `data-pill-ready`
   与轨道上的 `--tab-pill-x/y/w/h`（tabs.js 写，应用不要手写）；JS `./tabs`（`enhanceTabs` `TABS_SELECTOR`）、`mountChrome({ tabs })` 与 `handle.tabs`
+- v0.28.0 新增（§3.1）：`.field-msg`（`.err`）`.field.invalid` / `.field[aria-invalid="true"]` `.btn.danger`（实底）；空 `.close-x` / `.field-clear` 自动画 x；
+  token 刻度段 `--fs-*` `--lh-*` `--r-*` `--h-*` `--sp-*` `--focus*` `--dur-*` `--blur-*` `--ease-out`，语义 `--info` `--tint-info-bg` `--danger`，状态 `--hover-border` `--selected-bg` `--selected-border`
 - v0.24.0 新增（§16）：`.depth-carousel` 及其 `__*` 子类与状态类、CSS 变量 `--dc-height` `--dc-min-height` `--dc-tint` `--dc-fit`；JS `./depth-carousel`（`mountDepthCarousel`）
 - v0.15.0 新增（§14）：JS `./techtext`（`mountTechText` `enhanceTechText` `DEFAULTS`）、`mountChrome({ techText })` 与 `handle.techText`；
   类 `.tech-text`（JS 加在被增强的元素上，可用来写选中色等外观）。`.tech-text-canvas` 是内部实现，别套用
@@ -598,12 +672,12 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
 | 组件 | 用法 | 替代 |
 |---|---|---|
 | `.warn-text` | 与 `.ok-text` / `.err-text` 同一族（13px、`--warn`） | cosme / 某表单类应用自写 `.warn-text` |
-| `.hint` | 字段下方提示：12px、`--text-dim`、上边距 6px | jppost / 某表单类应用自写 `.hint`、内联 `tiny muted` |
-| `.callout` + `.ok/.warn/.err/.info` | 提示条：tint 底 + 同色描边；首个 `<strong>` 着语义色；info 跟 accent | 各处内联 style 的提示块 |
+| `.hint` | 字段下方提示：12px、`--text-dim`、上边距 4px（v0.28.0；校验信息用 `.field-msg`，§3.1） | jppost / 某表单类应用自写 `.hint`、内联 `tiny muted` |
+| `.callout` + `.ok/.warn/.err/.info` | 提示条：tint 底 + 同色描边；首个 `<strong>` 着语义色；info 用 `--info`（v0.28.0 起，之前跟 accent） | 各处内联 style 的提示块 |
 | `.tabs > .tab` | 选中 `.active` 或 `[aria-selected="true"]`；`.tabs.compact` 紧凑；`.tabs.scroll` 不换行横滚（v0.23.0 起外观见 §12.1） | jppost / 某看板类应用 `.nav-tabs .tab`（样子一致）、portal `.tab-bar .tab-btn` |
 | `.seg > button` | 分段控件，选中 `.active` 或 `aria-pressed="true"`（v0.23.0 起与 `.tabs` 同一外观，§12.1） | 某看板类应用 `.mode-switch`、portal `.lay-seg`（cosme 的 `.acct-seg` 是账号进度条的色段，不是分段控件，不在此列） |
 | `toast()`（toast.js） | `toast(msg, { tone, timeout })`，底部居中堆叠、aria-live；有底部导航时设 `--toast-offset`。v0.19.0 起为 Swipe Toast（下滑关闭，§16） | portal `toast.jsx`、某控制台类 / 看板类应用 `.toast` |
-| `.field.small` | 紧凑输入（14px、6px 10px）；触屏 / ≤640px 仍 16px 防 iOS 缩放 | portal `.field-small`、某看板类应用 `select.field.small` |
+| `.field.small` | 紧凑输入（md 档 36、14px）；触屏 / ≤640px 仍 16px 防 iOS 缩放，触屏最低 40 | portal `.field-small`、某看板类应用 `select.field.small` |
 | `.field:disabled` / `.switch:disabled` | 熄灭态 | — |
 | `.spinner`（`.lg`） | 跟随文字色与字号；减少动效时停转但可见 | 各自的「加载中…」文字 / 自写转圈 |
 | `.tbl.sticky` | 表头吸顶；放在 `.table-wrap` 里，wrap 自动限高 `--table-max-h`（缺省 70vh）并纵向滚动 | — |
@@ -620,7 +694,7 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
 几条注意：
 
 - v0.14.1 起 `components.css` 带全局 `[hidden] { display: none !important }`：`.overlay` / `.stack` / `.callout` 等自带 `display` 的类加 `hidden` 也会隐藏，应用不必再逐个补兜底（只挂 `corner.css` 的应用不含这条，工具位组件各自处理了 `[hidden]`）。
-- 抽屉想让右上角工具位露出来：`--drawer-top: calc(10px + var(--corner-rail-h, 34px) + 12px)`。
+- 抽屉想让右上角工具位露出来：`--drawer-top: calc(10px + var(--corner-rail-h, 36px) + 12px)`。
 - `.menu` 纯 CSS 版本只适合不在滚动容器 / 玻璃卡里的场景；表格行操作一律 `attachMenu`。
 - `.tbl .num` 不改对齐（已有表格用 `.num` 标日期等，改了会跳）——数字列右对齐用 `.col-num`。
 - `.spinner` 的旋转是匀速 `linear`，是唯一不走 `--ease` 的动效（等待语义）。
@@ -632,9 +706,9 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
 所有标签页与分段切换统一用 `.tabs > .tab` 或 `.seg > button|a`，**应用不再自写标签条**（`.chip` / 链接组当标签页、自写 `.nav-tabs` 都换掉）。
 手测页 `demo/tabs.html`（`?js=0` 纯 CSS、`?scheme=light`）。
 
-- **外观**：浅底圆角轨道（`--seg-track`，高 36px、内距 3px、圆角 11px），各段 30px 高、14px / 500、未选中 `--seg-muted`；
-  选中项是一块凸起的滑块（`--seg-raised` + `--seg-raised-shadow`，文字 `--seg-text`），悬停浅底 `--seg-hover`，按下 `scale(.96)`，
-  `:focus-visible` 2px `--accent` 外框。段内可放 16px 的 `<svg>` 图标（间距 7px）。`.compact`（`.tabs` / `.seg` 都有）轨道 30px、段 26px、13px。
+- **外观**：浅底圆角轨道（`--seg-track`，高 36px、内距 4px、圆角 12px），各段 28px 高、圆角 8px、14px / 500、未选中 `--seg-muted`（v0.28.0 起按 §3.1 刻度）；
+  选中项是一块凸起的滑块（`--seg-raised` + `--seg-raised-shadow`，文字 `--seg-text`），悬停浅底 `--seg-hover`，按下 `scale(.97)`，
+  `:focus-visible` 为统一焦点环（向内收 2px，横滚时不被裁）。段内可放 16px 的 `<svg>` 图标（间距 7px）。`.compact`（`.tabs` / `.seg` 都有）轨道 28px、段 24px、13px。触屏下缺省档轨道 40px。
 - **`.tabs` 与 `.seg` 的差别只在布局**：`.tabs` 是块级、宽度随内容（`fit-content`），放不下换行（`.scroll` 改横滚）；≤767px 撑满一行、各段均分。
   `.seg` 是内联、超出横滚，窄屏不撑满（它常嵌在工具条 / 行内）。
 - **纯 CSS 即完整可用**：选中项自己画凸起底。挂了 `tabs.js`（`mountChrome` 缺省挂）后轨道带 `[data-pill]`，选中项的底与阴影去掉，
@@ -669,7 +743,7 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
 ## 13.1 分区标题行 `.section-head`（v0.16.0）
 
 「小标题 + 右侧操作按钮」的行用 `<div class="section-head"><h3 class="section-name">…</h3><button class="btn btn-small">…</button></div>`。
-原因：`.spread` 只有 flex 排版，`.section-name` 自带 10px 下边距在 flex 里只作用于标题，管不到按钮，
+原因：`.spread` 只有 flex 排版，`.section-name` 自带下边距（v0.28.0 起 12px）在 flex 里只作用于标题，管不到按钮，
 按钮会贴着下方内容；窄屏标题与按钮换行时也无行距。`.section-head` 行下留 12px、换行间距 8px 12px，内部 `.section-name` 边距归零。
 勿用裸 `.spread` 后紧跟内容；纯新增，`.spread` / `.section-name` 行为不变。
 
@@ -730,7 +804,7 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
 - **month 输入**：`input[type="month"].field` 与 date / datetime-local 同款处理（`appearance: none`、`min-width: 0`、`max-width: 100%`、
   文字左对齐、`::-webkit-date-and-time-value` 左对齐）。这是缺陷修复，并排的 month 不再被 iOS 固有宽度顶出、截断。
 - **清除键** `.field-wrap` + `.field-clear`：输入框内最右侧的 ✕，可点区域不小于 32px；有清除键时输入框右内边距自动让位。
-  `<div class="field-wrap"><input type="month" class="field"><button type="button" class="field-clear" aria-label="清除">✕</button></div>`。
+  `<div class="field-wrap"><input type="month" class="field"><button type="button" class="field-clear" aria-label="清除"></button></div>`（留空自动画 x，v0.28.0）。
   值为空时由应用不渲染 / `hidden` 清除键。
 - **工具类**（统一 `u-` 前缀，因部分应用已有 `.tbl.clickable`）：`.u-m0`；`.u-mt-1/2/3/4`、`.u-mb-1/2/3/4`（4/6/8/12px）；
   `.u-gap-1/2/3/4/6`（2/4/6/8/12px，写在 `.row/.stack/.spread` 之后且有复合选择器，**能压过它们固定的 10px**）；
@@ -738,11 +812,11 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
   `.u-clickable` `.u-fw-600` `.u-fw-400` `.u-block` `.u-ta-right`。用于一次性微调，别拿它们搭整页布局，重复出现的组合应成为语义类。
 - **字段限宽** `.field.w-sm / .w-md / .w-lg`（130 / 160 / 200px）：`max-width` 语义，窄屏收缩不溢出。
 - **`.sub-hint`**：紧跟 `h3` / `.panel-title` 的说明段（上拉 6px、下留 8px）。不改 `.panel-title + *` 的既有行为。
-- **`.inset-list` + `.row-hover`**：可点击行列表拉到卡片内边距外，hover 背景铺满卡片宽。`--inset` 缺省 18px（= `.panel` 的 padding），
+- **`.inset-list` + `.row-hover`**：可点击行列表拉到卡片内边距外，hover 背景铺满卡片宽。`--inset` 缺省 16px（= `.panel` 的 padding，v0.28.0 起，之前 18px），
   卡片 padding 不同就在 `.inset-list` 上改该变量；行内容仍与卡片内容对齐。
 - **`.chip-group` + `.chip-group-label`** + `.chip-row`：行首标签 + 胶囊，≤520px 标签单独占一行。
 - **`.field-inset` + `.field-inset-btn`**：输入框内嵌图标触发钮；**`.icon-grid` + `.icon-cell`**：auto-fill 图标网格；分类标签条复用 `.tabs.scroll`。
-- **`.btn-icon`**（`.xs` 更小）：小型方形图标按钮。
+- **`.btn-icon`**（`.xs` 更小）：小型方形图标按钮，28×28（`.xs` 24×24，v0.28.0）。
 - **`.msg-list` / `.msg-item`**：消息列表。`.msg-item.unread` 为未读（没有则标题不加粗、圆点淡化）；`.msg-dot`（`.warn` `.err`）、
   `.msg-text` 内放 `.msg-title` `.msg-body` `.msg-time`。
 - **`.back-link`**：页首返回条（`<a class="back-link" href="…">← 返回</a>`）。凡不在手机底栏的页面都应有。
@@ -954,7 +1028,7 @@ running 无 progress = 不定进度。选项：`color` `doneColor`（缺省 `--o
 
 - 结构：「共 N 条 · 第 a–b 条」+ 每页条数下拉（缺省 20 / 50 / 100 / 200）+ 首页 « / 上一页 ‹ / 页码（首尾与当前页两侧，中间省略号）/ 下一页 › / 末页 » + 跳页输入。
 - 交互：焦点在分页器内时 ← → 翻页；改每页条数保持当前第一条仍在页内；`setBusy(true)` 取数期间禁用全部控件（`aria-busy`）。
-- 窄屏（≤520px）页码收成「3 / 20」，首末与上下页按钮保留；触屏按钮 40px。
+- 窄屏（≤520px）页码收成「3 / 20」，首末与上下页按钮保留；页码键 36px（v0.28.0 起，之前 32），触屏 40px；当前页用凸起族（同 `.tabs` 选中块）。
 - 只管界面：`onChange({ page, pageSize, reason })` 里取数，拿到新 total 后 `update({ total })`。服务端分页接口约定返回 `total`、`page`、`page_size`、`items`。
 - 公开类：`.pager`、`.pager-info`、`.pager-size`、`.pager-nav`、`.pager-tools`、`.pager-btn`（`.active`）、`.pager-gap`、`.pager-cur`、`.pager-jump`。
 
