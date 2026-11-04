@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>刻度与交互状态 · 手测</title>
+<!--
+  v0.28.0 刻度 token 与组件统一的静态手测页（不进 package files），对应 DESIGN.md「刻度与交互状态」。
+  仓库根目录 `python3 -m http.server 8080`，打开 http://localhost:8080/demo/foundations.html
+    ?scheme=light|dark|auto   明暗（缺省 dark）
+  看点：同档控件等高（细线是该档的上下沿）；状态板每列同一种状态；容器板圆角 / 内边距 / 阴影一致。
+  状态板里的 hover / focus 用本页的 .is-hover / .is-focus 演示类模拟（只在本页 <style> 里，不是包里的类）。
+-->
+<script>
+  (function () {
+    var s = new URLSearchParams(location.search).get("scheme");
+    document.documentElement.setAttribute("data-scheme", s === "light" || s === "auto" ? s : "dark");
+  })();
+</script>
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../components.css">
+<style>
+  .demo { padding-bottom: 64px; }
+  .demo > section { margin-bottom: var(--sp-4); }
+  .demo h2.panel-title { margin-bottom: var(--sp-1); }
+  .note { margin: 0 0 var(--sp-3); font-size: var(--fs-sm); color: var(--text-dim); }
+  .demo code { font-size: var(--fs-sm); }
+
+  /* 刻度色板 */
+  .scale { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--sp-3); }
+  .swatch { display: flex; flex-direction: column; gap: var(--sp-1); min-width: 0; }
+  .swatch .lbl { font-size: var(--fs-xs); color: var(--text-dim); font-family: "SF Mono", Menlo, monospace; }
+  .fs-row { display: flex; align-items: baseline; gap: var(--sp-3); padding: var(--sp-1) 0; border-bottom: 1px solid var(--row-line); }
+  .fs-row .lbl { flex: 0 0 9.5em; font-size: var(--fs-xs); color: var(--text-dim); font-family: "SF Mono", Menlo, monospace; }
+  .r-box { height: 56px; background: var(--inner-bg); border: 1px solid var(--control-border); }
+  .h-bar { width: 100%; background: var(--selected-bg); border: 1px solid var(--selected-border); border-radius: var(--r-xs); }
+  .sp-bar { height: 12px; background: var(--accent); border-radius: 2px; }
+  .dur-box { height: 36px; border-radius: var(--r-sm); background: var(--inner-bg); border: 1px solid var(--control-border); position: relative; overflow: hidden; }
+  .dur-box::after { content: ""; position: absolute; inset: 0 auto 0 0; width: 30%; background: var(--selected-bg); transition-property: width; transition-duration: var(--d); transition-timing-function: var(--ease); }
+  .dur-box:hover::after { width: 100%; }
+
+  /* 控件对齐板：子项顶端对齐，细线画在该档的上下沿 */
+  .tier { --tier: var(--h-lg); position: relative; display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--sp-2); padding: var(--sp-2) 0; }
+  .tier::before, .tier::after { content: ""; position: absolute; left: 0; right: 0; height: 0; border-top: 1px dashed color-mix(in srgb, var(--err) 60%, transparent); pointer-events: none; z-index: 2; }
+  .tier::before { top: var(--sp-2); }
+  .tier::after { top: calc(var(--sp-2) + var(--tier)); }
+  .tier.md { --tier: var(--h-md); }
+  .tier.sm { --tier: var(--h-sm); }
+  .tier > .field, .tier > .glide-select, .tier > select.field { width: 180px; flex: none; }
+  .tier-name { margin: var(--sp-3) 0 0; font-size: var(--fs-sm); font-weight: 600; color: var(--text-dim); }
+
+  /* 状态板 */
+  .states { overflow-x: auto; }
+  .states table { border-collapse: collapse; min-width: 760px; }
+  .states th { font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.06em; color: var(--text-dim); text-align: left; padding: var(--sp-2); }
+  .states td { padding: var(--sp-2); vertical-align: middle; border-top: 1px solid var(--row-line); }
+  .states td:first-child { font-size: var(--fs-xs); color: var(--text-dim); font-family: "SF Mono", Menlo, monospace; white-space: nowrap; }
+  .states .field { width: 140px; }
+  .states .menu-item, .states .account-menu-item, .states .locale-menu-item { width: 140px; }
+  .na { color: var(--text-dim); opacity: 0.5; font-size: var(--fs-xs); }
+
+  /* 本页演示类：模拟 hover / focus-visible（只在本页） */
+  .is-focus { outline: var(--focus-ring) !important; outline-offset: var(--focus-offset) !important; }
+  .field.is-focus, .menu-item.is-focus, .account-menu-item.is-focus, .locale-menu-item.is-focus, .tab.is-focus, .row-hover.is-focus { outline-offset: -2px !important; }
+  .field.is-focus { border-color: var(--focus); outline-offset: -1px !important; }
+  .field.invalid.is-focus { border-color: var(--err); outline-color: var(--err) !important; }
+  .btn.is-hover { transform: translateY(-1px); box-shadow: 0 6px 24px color-mix(in srgb, var(--accent) 45%, transparent); }
+  .btn.danger.is-hover { box-shadow: 0 6px 24px color-mix(in srgb, var(--danger) 45%, transparent); }
+  :is(.btn-ghost, .btn-icon, .chip, .corner-tool, .field).is-hover { color: var(--text); border-color: var(--hover-border); }
+  .btn-ghost.danger.is-hover { color: var(--danger); background: color-mix(in srgb, var(--danger) 12%, transparent); border-color: color-mix(in srgb, var(--danger) 45%, transparent); }
+  :is(.close-x, .menu-item, .account-menu-item, .locale-menu-item, .pager-btn, .row-hover).is-hover { color: var(--text); background: var(--hover-tint); }
+  .menu-item.danger.is-hover, .account-menu-item.danger.is-hover { color: var(--danger); background: color-mix(in srgb, var(--danger) 12%, transparent); }
+  .tab.is-hover { color: var(--seg-text); background: var(--seg-hover); }
+
+  /* 容器板：弹层静态摆出来 */
+  .containers { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--sp-4); align-items: start; }
+  .containers .lbl { margin: 0 0 var(--sp-2); font-size: var(--fs-xs); color: var(--text-dim); font-family: "SF Mono", Menlo, monospace; }
+  .static-pop { position: static !important; animation: none !important; }
+  .sheet.static-pop { max-height: none; border-bottom: 1px solid var(--glass-border); border-radius: var(--r-lg); }
+  .toast.static-pop { width: auto; min-width: 0; max-width: none; }
+  .corner-panel.static-pop { max-width: none; max-height: none; }
+</style>
+</head>
+<body>
+<div class="bg-layer" aria-hidden="true"></div>
+<div class="app-frame">
+  <header class="app-header">
+    <div class="app-brand">
+      <h1 class="app-title">刻度与状态</h1>
+      <span class="app-sub">foundations · v0.28.0</span>
+    </div>
+  </header>
+
+  <main class="app-main demo">
+    <section class="glass panel">
+      <h2 class="panel-title">字号 · 行高</h2>
+      <p class="note">--fs-*（body 正文 15，输入框 16 防 iOS 缩放）；--lh-tight 1.2 / snug 1.4 / body 1.6。</p>
+      <div class="fs-row"><span class="lbl">--fs-xs 11</span><span style="font-size: var(--fs-xs)">角标 · 小标签 Aa 永</span></div>
+      <div class="fs-row"><span class="lbl">--fs-sm 12</span><span style="font-size: var(--fs-sm)">提示 · 表头 Aa 永</span></div>
+      <div class="fs-row"><span class="lbl">--fs-md 13</span><span style="font-size: var(--fs-md)">小号正文 · 紧凑控件 Aa 永</span></div>
+      <div class="fs-row"><span class="lbl">--fs-base 14</span><span style="font-size: var(--fs-base)">按钮 · 菜单项 Aa 永</span></div>
+      <div class="fs-row"><span class="lbl">--fs-body 15</span><span style="font-size: var(--fs-body)">正文 Aa 永</span></div>
+      <div class="fs-row"><span class="lbl">--fs-input / title 16</span><span style="font-size: var(--fs-title); font-weight: 600">卡片 / 弹层标题 Aa 永</span></div>
+      <div class="fs-row"><span class="lbl">--fs-lg 18</span><span style="font-size: var(--fs-lg)">图标字符 Aa 永</span></div>
+      <div class="fs-row"><span class="lbl">--fs-xl 22</span><span style="font-size: var(--fs-xl); font-weight: 600; line-height: var(--lh-tight)">页面标题 Aa 永</span></div>
+      <div class="fs-row"><span class="lbl">--fs-2xl 26</span><span style="font-size: var(--fs-2xl); font-weight: 600; line-height: var(--lh-tight)">统计数字 1,234</span></div>
+    </section>
+
+    <section class="glass panel">
+      <h2 class="panel-title">圆角 · 高度 · 间距 · 时长 · 焦点</h2>
+      <p class="note">容器 16，卡内块 / 菜单 / toast 12，控件按高度 44 → 12、28–36 → 8、≤24 → 6；悬停「时长」格看过渡快慢。</p>
+      <div class="scale">
+        <div class="swatch"><div class="r-box" style="border-radius: var(--r-xs)"></div><span class="lbl">--r-xs 6</span></div>
+        <div class="swatch"><div class="r-box" style="border-radius: var(--r-sm)"></div><span class="lbl">--r-sm 8</span></div>
+        <div class="swatch"><div class="r-box" style="border-radius: var(--r-md)"></div><span class="lbl">--r-md 12</span></div>
+        <div class="swatch"><div class="r-box" style="border-radius: var(--r-lg)"></div><span class="lbl">--r-lg 16</span></div>
+        <div class="swatch"><div class="r-box" style="border-radius: var(--r-pill)"></div><span class="lbl">--r-pill</span></div>
+      </div>
+      <div class="scale u-mt-4" style="align-items: end">
+        <div class="swatch"><div class="h-bar" style="height: var(--h-sm)"></div><span class="lbl">--h-sm 28</span></div>
+        <div class="swatch"><div class="h-bar" style="height: var(--h-md)"></div><span class="lbl">--h-md 36 / --h-row</span></div>
+        <div class="swatch"><div class="h-bar" style="height: var(--h-touch)"></div><span class="lbl">--h-touch 40</span></div>
+        <div class="swatch"><div class="h-bar" style="height: var(--h-lg)"></div><span class="lbl">--h-lg 44</span></div>
+      </div>
+      <div class="scale u-mt-4">
+        <div class="swatch"><div class="sp-bar" style="width: var(--sp-1)"></div><span class="lbl">--sp-1 4</span></div>
+        <div class="swatch"><div class="sp-bar" style="width: var(--sp-2)"></div><span class="lbl">--sp-2 8</span></div>
+        <div class="swatch"><div class="sp-bar" style="width: var(--sp-3)"></div><span class="lbl">--sp-3 12</span></div>
+        <div class="swatch"><div class="sp-bar" style="width: var(--sp-4)"></div><span class="lbl">--sp-4 16</span></div>
+        <div class="swatch"><div class="sp-bar" style="width: var(--sp-5)"></div><span class="lbl">--sp-5 24</span></div>
+        <div class="swatch"><div class="sp-bar" style="width: var(--sp-6)"></div><span class="lbl">--sp-6 32</span></div>
+      </div>
+      <div class="scale u-mt-4">
+        <div class="swatch"><div class="dur-box" style="--d: var(--dur-fast)"></div><span class="lbl">--dur-fast 150ms</span></div>
+        <div class="swatch"><div class="dur-box" style="--d: var(--dur-base)"></div><span class="lbl">--dur-base 250ms</span></div>
+        <div class="swatch"><div class="dur-box" style="--d: var(--dur-enter)"></div><span class="lbl">--dur-enter 400ms</span></div>
+        <div class="swatch"><div class="u-block"><button class="btn-ghost btn-small is-focus" type="button">焦点环</button></div><span class="lbl">--focus-ring 2px / offset 2</span></div>
+      </div>
+    </section>
+
+    <section class="glass panel">
+      <h2 class="panel-title">控件对齐</h2>
+      <p class="note">虚线是该档的上下沿：同一行的控件应与两条线都贴齐。</p>
+      <p class="tier-name">lg 44 · .field / select.field / Glide（.field）/ date / .btn / .btn-ghost</p>
+      <div class="tier">
+        <input class="field" placeholder=".field">
+        <select class="field"><option>select.field</option></select>
+        <select class="field" data-glide><option>Glide .field</option><option>第二项</option><option>第三项</option></select>
+        <input class="field" type="date" value="2026-11-04">
+        <button class="btn" type="button">.btn</button>
+        <button class="btn-ghost" type="button">.btn-ghost</button>
+      </div>
+      <p class="tier-name">md 36 · .field.small / Glide（.field.small）/ .btn-small / .chip / .seg / .tabs / .pager-btn / .corner-tool</p>
+      <div class="tier md">
+        <input class="field small" placeholder=".field.small">
+        <select class="field small" data-glide><option>Glide small</option><option>第二项</option></select>
+        <select data-glide><option>Glide 小块</option><option>第二项</option></select>
+        <button class="btn btn-small" type="button">.btn-small</button>
+        <button class="btn-ghost btn-small" type="button">ghost small</button>
+        <button class="chip" type="button">.chip</button>
+        <button class="chip active" type="button">选中</button>
+      </div>
+      <div class="tier md">
+        <div class="seg"><button class="active" type="button">日</button><button type="button">周</button><button type="button">月</button></div>
+        <div class="tabs" role="tablist" style="width: auto"><button class="tab" role="tab" aria-selected="true">标签</button><button class="tab" role="tab">另一个</button></div>
+        <button class="pager-btn" type="button">1</button>
+        <button class="pager-btn active" type="button">2</button>
+        <button class="corner-tool" type="button" aria-label="工具位按钮"><i data-icon="settings"></i></button>
+      </div>
+      <p class="tier-name">sm 28 · .btn-icon / .tabs.compact / .toast-action（≤24：.btn-icon.xs / .toast-close）</p>
+      <div class="tier sm">
+        <button class="btn-icon" type="button" aria-label="编辑"><i data-icon="pencil"></i></button>
+        <button class="btn-icon" type="button" aria-label="删除"><i data-icon="trash-2"></i></button>
+        <div class="tabs compact" role="tablist" style="width: auto"><button class="tab" role="tab" aria-selected="true">紧凑</button><button class="tab" role="tab">标签</button></div>
+        <button class="btn-icon xs" type="button" aria-label="关闭"><i data-icon="x"></i></button>
+      </div>
+      <p class="tier-name">输入框里的清除键 / 关闭键（留空自动画 x）</p>
+      <div class="row wrap u-ai-start">
+        <div class="field-wrap" style="width: 200px"><input class="field" value="可清除"><button type="button" class="field-clear" aria-label="清除"></button></div>
+        <div class="field-wrap" style="width: 200px"><input class="field small" value="small 可清除"><button type="button" class="field-clear" aria-label="清除"></button></div>
+        <button class="close-x" type="button" aria-label="关闭"></button>
+        <button class="close-x" type="button" aria-label="关闭"><i data-icon="x"></i></button>
+      </div>
+    </section>
+
+    <section class="glass panel states">
+      <h2 class="panel-title">交互状态</h2>
+      <p class="note">hover / focus 列用本页演示类模拟。有边框的控件悬停 = 描边 accent 45% + 文字 --text；无边框的 = 衬底 --hover-tint。</p>
+      <table>
+        <thead><tr><th>组件</th><th>默认</th><th>hover</th><th>focus-visible</th><th>disabled</th><th>selected</th><th>invalid / danger</th></tr></thead>
+        <tbody>
+          <tr><td>.btn</td>
+            <td><button class="btn btn-small" type="button">保存</button></td>
+            <td><button class="btn btn-small is-hover" type="button">保存</button></td>
+            <td><button class="btn btn-small is-focus" type="button">保存</button></td>
+            <td><button class="btn btn-small" type="button" disabled>保存</button></td>
+            <td><span class="na">—</span></td>
+            <td><button class="btn btn-small danger" type="button">删除</button></td></tr>
+          <tr><td>.btn-ghost</td>
+            <td><button class="btn-ghost btn-small" type="button">取消</button></td>
+            <td><button class="btn-ghost btn-small is-hover" type="button">取消</button></td>
+            <td><button class="btn-ghost btn-small is-focus" type="button">取消</button></td>
+            <td><button class="btn-ghost btn-small" type="button" disabled>取消</button></td>
+            <td><span class="na">—</span></td>
+            <td><button class="btn-ghost btn-small danger" type="button">删除</button> <button class="btn-ghost btn-small danger is-hover" type="button">悬停</button></td></tr>
+          <tr><td>.field</td>
+            <td><input class="field small" value="文字"></td>
+            <td><input class="field small is-hover" value="文字"></td>
+            <td><input class="field small is-focus" value="文字"></td>
+            <td><input class="field small" value="文字" disabled></td>
+            <td><span class="na">—</span></td>
+            <td><input class="field small" value="格式不对" aria-invalid="true"><p class="field-msg err">请输入邮箱</p></td></tr>
+          <tr><td>.field 无效 + 聚焦</td>
+            <td colspan="2"><input class="field small invalid is-focus" value="聚焦中仍是红色"></td>
+            <td colspan="4"><p class="field-msg u-m0">.field-msg 中性说明（12px · --text-dim）</p></td></tr>
+          <tr><td>.chip</td>
+            <td><button class="chip" type="button">全部</button></td>
+            <td><button class="chip is-hover" type="button">全部</button></td>
+            <td><button class="chip is-focus" type="button">全部</button></td>
+            <td><button class="chip" type="button" disabled>全部</button></td>
+            <td><button class="chip active" type="button">全部</button></td>
+            <td><span class="na">—</span></td></tr>
+          <tr><td>.btn-icon</td>
+            <td><button class="btn-icon" type="button" aria-label="编辑"><i data-icon="pencil"></i></button></td>
+            <td><button class="btn-icon is-hover" type="button" aria-label="编辑"><i data-icon="pencil"></i></button></td>
+            <td><button class="btn-icon is-focus" type="button" aria-label="编辑"><i data-icon="pencil"></i></button></td>
+            <td><button class="btn-icon" type="button" aria-label="编辑" disabled><i data-icon="pencil"></i></button></td>
+            <td><span class="na">—</span></td>
+            <td><span class="na">—</span></td></tr>
+          <tr><td>.close-x</td>
+            <td><button class="close-x" type="button" aria-label="关闭"></button></td>
+            <td><button class="close-x is-hover" type="button" aria-label="关闭"></button></td>
+            <td><button class="close-x is-focus" type="button" aria-label="关闭"></button></td>
+            <td><button class="close-x" type="button" aria-label="关闭" disabled></button></td>
+            <td><span class="na">—</span></td>
+            <td><span class="na">—</span></td></tr>
+          <tr><td>.corner-tool</td>
+            <td><button class="corner-tool" type="button" aria-label="设置"><i data-icon="settings"></i></button></td>
+            <td><button class="corner-tool is-hover" type="button" aria-label="设置"><i data-icon="settings"></i></button></td>
+            <td><button class="corner-tool is-focus" type="button" aria-label="设置"><i data-icon="settings"></i></button></td>
+            <td><button class="corner-tool" type="button" aria-label="设置" disabled><i data-icon="settings"></i></button></td>
+            <td><button class="corner-tool settings-toggle" aria-expanded="true" type="button" aria-label="设置"><i data-icon="settings"></i></button></td>
+            <td><span class="na">—</span></td></tr>
+          <tr><td>.menu-item</td>
+            <td><button class="menu-item" type="button">编辑</button></td>
+            <td><button class="menu-item is-hover" type="button">编辑</button></td>
+            <td><button class="menu-item is-focus" type="button">编辑</button></td>
+            <td><button class="menu-item" type="button" disabled>编辑</button></td>
+            <td><span class="na">—</span></td>
+            <td><button class="menu-item danger" type="button">删除</button><button class="menu-item danger is-hover" type="button">删除（悬停）</button></td></tr>
+          <tr><td>.locale-menu-item</td>
+            <td><button class="locale-menu-item" type="button"><span class="locale-menu-short">EN</span>English</button></td>
+            <td><button class="locale-menu-item is-hover" type="button"><span class="locale-menu-short">EN</span>English</button></td>
+            <td><button class="locale-menu-item is-focus" type="button"><span class="locale-menu-short">EN</span>English</button></td>
+            <td><span class="na">—</span></td>
+            <td><button class="locale-menu-item active" type="button"><span class="locale-menu-short">中</span>中文</button></td>
+            <td><span class="na">—</span></td></tr>
+          <tr><td>.tab / .pager-btn</td>
+            <td><div class="tabs" style="width: auto"><button class="tab" type="button">标签</button></div></td>
+            <td><div class="tabs" style="width: auto"><button class="tab is-hover" type="button">标签</button></div></td>
+            <td><div class="tabs" style="width: auto"><button class="tab is-focus" type="button">标签</button></div></td>
+            <td><div class="tabs" style="width: auto"><button class="tab" type="button" disabled>标签</button></div></td>
+            <td><div class="tabs" style="width: auto"><button class="tab active" type="button">标签</button></div> <button class="pager-btn active" type="button">3</button></td>
+            <td><span class="na">—</span></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="glass panel">
+      <h2 class="panel-title">容器</h2>
+      <p class="note">容器圆角 16、内边距 16；卡内块 / callout / 菜单 / toast 圆角 12；弹层带 --pop-shadow。</p>
+      <div class="containers">
+        <div>
+          <p class="lbl">.glass.panel + .inner</p>
+          <div class="glass panel">
+            <div class="panel-head"><h3 class="panel-title">卡片标题</h3><button class="btn-ghost btn-small" type="button">操作</button></div>
+            <div class="inner" style="padding: var(--sp-3)">卡内块 .inner（圆角 12）</div>
+          </div>
+        </div>
+        <div>
+          <p class="lbl">.callout（中性 / info / ok / warn / err）</p>
+          <div class="stack u-gap-4">
+            <div class="callout">中性提示条</div>
+            <div class="callout info"><strong>提示</strong> info 改用 --info</div>
+            <div class="callout ok"><strong>完成</strong> 已保存</div>
+            <div class="callout warn"><strong>注意</strong> 不可撤销</div>
+            <div class="callout err"><strong>失败</strong> 网络错误</div>
+          </div>
+        </div>
+        <div>
+          <p class="lbl">.menu &gt; .menu-item</p>
+          <div class="menu static-pop">
+            <button class="menu-item" type="button"><i data-icon="pencil"></i>编辑</button>
+            <button class="menu-item" type="button"><i data-icon="copy"></i>复制</button>
+            <div class="menu-sep"></div>
+            <button class="menu-item danger" type="button"><i data-icon="trash-2"></i>删除</button>
+          </div>
+        </div>
+        <div>
+          <p class="lbl">.toast（ok / info）</p>
+          <div class="stack u-gap-4">
+            <div class="toast ok static-pop" role="status"><span class="toast-icon"><i data-icon="check"></i></span><span class="toast-body"><span class="toast-title">已保存</span><span class="toast-desc">设置会在下次打开时生效</span></span><button class="toast-action" type="button">撤销</button><button class="toast-close" type="button" aria-label="关闭"><i data-icon="x"></i></button></div>
+            <div class="toast info static-pop" role="status"><span class="toast-icon"><i data-icon="info"></i></span><span class="toast-body"><span class="toast-title">有新版本</span></span></div>
+          </div>
+        </div>
+        <div>
+          <p class="lbl">.sheet（静态摆放）</p>
+          <div class="sheet static-pop" role="dialog" aria-label="示例">
+            <div class="sheet-head"><h3 class="sheet-title">弹层标题</h3><button class="close-x" type="button" aria-label="关闭"></button></div>
+            <div class="sheet-body"><p class="muted small u-m0">头 16/16/8 · 体 4/16/16 · 脚 12/16/16，页脚无上边线。</p></div>
+            <div class="sheet-foot"><button class="btn-ghost btn-small danger" type="button">删除</button><button class="btn-ghost btn-small" type="button">取消</button><button class="btn btn-small" type="button">保存</button></div>
+          </div>
+        </div>
+        <div>
+          <p class="lbl">.corner-panel 菜单（账户）</p>
+          <div class="glass corner-panel account-menu static-pop">
+            <div class="account-menu-head"><span class="account-menu-dot">S</span><span class="account-menu-name">示例用户</span></div>
+            <button class="account-menu-item" type="button">账号设置</button>
+            <button class="account-menu-item danger" type="button">退出登录</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+<script type="module">
+  import { enhanceIcons } from "../icons.js";
+  import { enhanceTabs } from "../tabs.js";
+  import { enhanceSelects } from "../glide-select.js";
+  enhanceIcons();
+  enhanceTabs();
+  enhanceSelects();
+</script>
+</body>
+</html>
