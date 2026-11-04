@@ -1,5 +1,35 @@
 # Changelog
 
+## v0.29.0 — （未发布）
+
+**通用组件**（DESIGN.md §16.3，手测页 `demo/components-v029.html`）：多个站点各自手写的形态收进包里，全部按 §3.1 刻度。纯新增，旧类保留。
+
+**新增**
+- 列表行 `.list > .list-row`（`.row-lead` / `.row-main` > `.row-title` `.row-sub` / `.row-end` / `.row-chevron`）：容器 `.list` / `.divided` / `.gap` / `.bleed`，缺省 52 高（新 token `--h-item`）、`.compact` 44；
+  可点行悬停 / 焦点 / 按下，选中着色族，禁用 .45，窄屏标题省略、行尾不被挤没；头像 `.avatar`（`.sm`）。
+- 折叠区块 `.disclosure`：原生 `<details>` 或 `button.disclosure-summary[aria-expanded]` + `.disclosure-body`；chevron 随展开旋转（`.lead-chevron` 左置），`.summary-meta`，`.flush`；
+  新模块 `./disclosure`（`mountDisclosure` / `enhanceDisclosures`，aria 同步 + 高度动画）。
+- 二次确认 `./confirm`：`armConfirm(button, { onConfirm, timeout })`（`.btn` / `.btn-ghost` / `.btn-icon` / `.menu-item` 的 `.armed` 态）与 `confirm({ title, message, danger, input })` → `Promise`
+  （`.overlay` + `.sheet.confirm`，焦点陷阱、初始焦点在取消、关闭后还原；输入版返回字符串或 null）。文案 zh / ja / en。
+- 状态点 `.dot`（`.ok .warn .err .info .idle`，`.pulse`，新 token `--dot`）、`.dot-label`；徽标 `.badge-dot`、数字 `.badge`（`.neutral` `.float`）。
+- 胶囊语义名 `.pill.ok/.warn/.err/.info/.neutral`（`green` `amber` `red` `slate` 为别名）；可点 `button.pill` / `a.pill`；计数 `.chip > .count` / `.pill > .count`；`.chip` 选中也认 `aria-pressed` / `aria-selected`。
+- 进度条：`.bar.ok/.warn/.err/.info`、多段 `.bar.stacked > .bar-seg`、限额刻度 `.bar-mark`、不定进度 `.bar.indeterminate`、`.meter`（标签 + 数值 + 条）。
+- 搜索框 `.field-wrap.search`（左侧放大镜、去掉原生清除键）、筛选条 `.filter-bar`（+ `.chip-row.scroll`、`.filter-meta`）。
+- 登录卡外壳 `.auth-shell` + `.glass.auth-card`（`.auth-sub` `.auth-foot`），与 `.app-main` 叠用，手机键盘弹出时不跳。
+- 校验态补全：Glide Select 触发器跟随原生 select 的 `aria-invalid` / `.invalid`；`.search` 校验失败时放大镜变红。
+
+**可见变化**（都很小）
+- `.pill` 的彩色描边浓度 50% → 45%（与 `.callout` 一致）。
+- `textarea.field` 改为顶对齐，下方 `.field-msg` / `.hint` 与单行输入框同距（少了约 5px 行距）。
+- `.bar` 加了 `position: relative`（给刻度与不定进度定位，外观不变）。
+
+**应用侧怎么迁**（逐条前后对照见 DESIGN.md §16.3）
+- 自写的列表行（用户行、流水行、项目行、消息行…）→ `.list-row`；`.row-hover` + `.inset-list` 可换成 `.list.bleed`，不换也照常。
+- ▾ / ▸ 字符 + 自写显隐 → `<details class="disclosure">`；`window.confirm` → `await confirm({ … })`；自写的「再点一次确认」→ `armConfirm`。
+- 自写状态点 / 红点 / 数字角标 → `.dot` / `.badge-dot` / `.badge`；胶囊新代码写语义名；自写多段条 / 限额刻度 / 「标签 + 数值」行 → `.bar.stacked` / `.bar-mark` / `.meter`。
+- 自写搜索框图标与筛选条 → `.field-wrap.search` + `.filter-bar`；各自的登录卡 → `.auth-shell` + `.auth-card`。
+- 新增运行时文件 `confirm.js` `disclosure.js`：用 `sync.sh` 同步的应用重新同步即可（已在清单里）。
+
 ## v0.28.1 — 2026-11-05
 
 - 修：`.field-row` 里按钮比输入框矮（`.btn-small` 36 对 `.field` 44；输入框为防 iOS 聚焦缩放固定 16px 字号）。行里有 `.field` / `.field-wrap` 时，

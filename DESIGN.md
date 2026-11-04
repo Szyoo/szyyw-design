@@ -174,6 +174,7 @@ z-index 62  .glide-select__menu  Glide Select 的选项菜单（v0.19.0，挂 bo
 | 行高 | `--lh-tight` `--lh-snug` `--lh-body` | 1.2 / 1.4 / 1.6 | 控件与标题 / 紧凑列表与标题行 / 正文 |
 | 圆角 | `--r-xs` `--r-sm` `--r-md` `--r-lg` `--r-pill` | 6 / 8 / 12 / 16 / 999 | 见下「圆角与容器」 |
 | 高度 | `--h-sm` `--h-md` `--h-lg` `--h-row` `--h-touch` | 28 / 36 / 44 / 36 / 40 | 控件三档 / 列表行 / 触屏最小点按 |
+| 列表 / 点 | `--h-item` `--dot` | 52 / 8 | `.list-row` 缺省高 / `.dot` `.badge-dot` 直径（v0.29.0） |
 | 间距 | `--sp-1` … `--sp-6` | 4 / 8 / 12 / 16 / 24 / 32 | 内边距与 gap（2px 细缝例外） |
 | 焦点 | `--focus` `--focus-ring` `--focus-offset` | accent / `2px solid` / 2px | 所有 `:focus-visible` |
 | 时长 | `--dur-fast` `--dur-base` `--dur-enter` | 150 / 250 / 400ms | 颜色·底色·按下 / 描边·阴影·弹层出入 / 入场 |
@@ -648,6 +649,12 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
   与轨道上的 `--tab-pill-x/y/w/h`（tabs.js 写，应用不要手写）；JS `./tabs`（`enhanceTabs` `TABS_SELECTOR`）、`mountChrome({ tabs })` 与 `handle.tabs`
 - v0.28.0 新增（§3.1）：`.field-msg`（`.err`）`.field.invalid` / `.field[aria-invalid="true"]` `.btn.danger`（实底）；空 `.close-x` / `.field-clear` 自动画 x；
   token 刻度段 `--fs-*` `--lh-*` `--r-*` `--h-*` `--sp-*` `--focus*` `--dur-*` `--blur-*` `--ease-out`，语义 `--info` `--tint-info-bg` `--danger`，状态 `--hover-border` `--selected-bg` `--selected-border`
+- v0.29.0 新增（§16.3）：`.list`（`.divided` `.gap` `.bleed` `.compact`）`.list-row`（`.selected` `.compact`）`.row-lead` `.row-main` `.row-title` `.row-sub` `.row-end` `.row-chevron` `.avatar`（`.sm`）
+  `.disclosure`（`.lead-chevron` `.flush`）`.disclosure-summary` `.disclosure-body` `.summary-meta` `.armed` `.sheet.confirm` `.confirm-message`
+  `.dot`（`.ok` `.warn` `.err` `.info` `.idle` `.pulse`）`.dot-label` `.badge-dot` `.badge`（`.neutral` `.float`）、`.pill` 语义名 `.ok` `.warn` `.err` `.info` `.neutral` 与可点 `button.pill` / `a.pill`、`.count`
+  `.bar` 语义 `.ok/.warn/.err/.info` `.bar.stacked` `.bar-seg` `.bar-mark` `.bar.indeterminate` `.meter` `.meter-head` `.meter-label` `.meter-value`
+  `.field-wrap.search` `.chip-row.scroll` `.filter-bar` `.filter-meta` `.auth-shell` `.auth-card` `.auth-sub` `.auth-foot`；token `--h-item` `--dot`；CSS 变量 `--w` `--c` `--at`；
+  JS `./confirm`（`armConfirm` `confirm` `CONFIRM_TEXTS`）`./disclosure`（`mountDisclosure` `enhanceDisclosures`）
 - v0.24.0 新增（§16）：`.depth-carousel` 及其 `__*` 子类与状态类、CSS 变量 `--dc-height` `--dc-min-height` `--dc-tint` `--dc-fit`；JS `./depth-carousel`（`mountDepthCarousel`）
 - v0.15.0 新增（§14）：JS `./techtext`（`mountTechText` `enhanceTechText` `DEFAULTS`）、`mountChrome({ techText })` 与 `handle.techText`；
   类 `.tech-text`（JS 加在被增强的元素上，可用来写选中色等外观）。`.tech-text-canvas` 是内部实现，别套用
@@ -1066,6 +1073,158 @@ cell.innerHTML = iconSvg("copy");                    // 字符串：模板拼接
 - 要加图标：在 `scripts/build-icons.mjs` 的 `NAMES` 里加 Lucide 名字，按脚本头的说明从 `lucide-static` 重新生成，发版。不在应用里手抄 SVG。
 - 包内已改用：外观弹层关闭键、Swipe Toast 的语气图标与关闭键、分页器翻页键、Glide Select 的箭头与勾、Depth Carousel 的左右键与加载失败图标。
   右上角工具位的三枚图标（切换器 / 账户 / 外观）与 Branched Menu、Status Mark、Lattice Loader 的图形按各自设计保留。
+
+## 16.3 通用组件（v0.29.0）
+
+多个站点各自手写的同一类形态收进包里：列表行、折叠区块、二次确认、状态点与徽标、胶囊语义、进度条扩展、搜索与筛选条、登录卡外壳、校验态补全。
+全部按 §3.1 刻度写（同档等高、统一焦点环与交互状态），颜色只从 token；纯新增，旧类保留不删。手测页 `demo/components-v029.html`（`?scheme=light`）。
+
+### 列表行 `.list > .list-row`
+
+```html
+<div class="list divided">
+  <div class="list-row">
+    <span class="row-lead"><span class="avatar">AC</span></span>
+    <span class="row-main"><span class="row-title">名字</span><span class="row-sub">name@example.com</span></span>
+    <span class="row-end"><span class="pill info">admin</span><span class="dot ok"></span><button class="btn-icon" aria-label="更多"><i data-icon="ellipsis"></i></button></span>
+  </div>
+</div>
+```
+
+- 结构：`.row-lead`（可选：`./icons` 图标 20px、`<img>` 36 圆角 8、`.avatar` 头像、`.dot`）+ `.row-main`（`.row-title` 14/500 单行省略，`.row-sub` 12 次行省略，可多个）+ `.row-end`（可选：数值 / 胶囊 / 操作 / `.row-chevron`，不收缩、最多占 60%，窄屏只有 `.row-main` 省略）。
+- 高度：缺省 `--h-item` 52（两行文字或 36 头像），`.compact`（行或容器上）44；高度由 `min-height` 定、内容垂直居中，分隔线不会把行撑高。
+- 容器：`.list`（行间 2px、圆角悬停，像菜单）· `.list.divided`（行间 `--row-line` 分隔线、行不圆角）· `.list.gap`（每行一块 `.inner` 式卡内块，行间 8px）；
+  `.list.bleed` 把行拉到卡片内边距外、悬停底铺满卡片宽（`--inset` 缺省 16，同 `.inset-list`）。`ul.list` / `ol.list` 自动去掉列表样式。
+- 状态：`a` / `button` / `[role=option]` / `[tabindex]` 的行可点——无边框时悬停衬 `--hover-tint`，`.list.gap` 里悬停描边 `--hover-border`；按下叠一层衬底；焦点环向内收 2px。
+  选中 `.selected` / `[aria-selected=true]` / `[aria-current]` 用着色族（`--selected-bg` + 1px `--selected-border`）；禁用 `:disabled` / `[aria-disabled=true]` 为 .45。不提供 `.danger` 行（危险操作放进行尾菜单）。
+- `.avatar`：36 圆形首字母或图片（`.sm` 28），底 `--selected-bg`、字 accent。
+- 与旧类：新写的列表一律用 `.list-row`。`.row-hover` + `.inset-list`（v0.17.0）等价于 `.list.bleed > .list-row`；`.msg-list` / `.msg-item` 保留给通知面板（未读加粗、圆点淡化的语义）；三者都不删。
+
+迁移示例：
+
+```html
+<!-- 前：门户用户行 / 账本流水行各写一套 flex + 省略 -->
+<div class="user-row"><div class="avatar-x">Y</div><div class="user-meta"><b>…</b><small>…</small></div><span class="role">admin</span></div>
+<!-- 后 -->
+<div class="list-row"><span class="row-lead"><span class="avatar">Y</span></span><span class="row-main"><span class="row-title">…</span><span class="row-sub">…</span></span><span class="row-end"><span class="pill info">admin</span></span></div>
+```
+
+### 折叠区块 `.disclosure`
+
+```html
+<details class="disclosure"><summary>高级选项<span class="summary-meta">3 项</span></summary><div class="disclosure-body">…</div></details>
+
+<div class="disclosure">
+  <button type="button" class="disclosure-summary" aria-expanded="false" aria-controls="p1">同步日志</button>
+  <div class="disclosure-body" id="p1" hidden>…</div>
+</div>
+```
+
+- 标题行（`summary` / `.disclosure-summary`）：44 高、14/600、去掉原生三角；右侧 Lucide chevron-down（遮罩画，`--text-dim`），展开转 180°，过渡 `--dur-base`；
+  `.lead-chevron` 改为左侧 chevron-right、展开转 90°（正文随之缩进）。悬停衬底、焦点环向内收 2px。`.summary-meta` 是靠右的次要信息（13、等宽数字）。
+- 内容 `.disclosure-body`：左右 12、下 12。`.flush`：整块左右外扩 12，标题文字与卡片内容对齐、悬停底伸进卡片内边距。
+- 放进容器：`.list.divided` 里每块之间画分隔线、标题不圆角；`.list.gap` 里每块是卡内块；`.inner` 里自洽。
+- details 的高度动画只在支持 `interpolate-size` 的浏览器里有（Chromium 129+），其余直接展开；reduced-motion 下都没有过渡。
+- **JS `./disclosure`**（只给按钮写法）：`mountDisclosure(button, { panel?, open?, animate = true, onToggle? }) → { open(), close(), toggle(force?), expanded, destroy() }`，
+  同步 `aria-expanded` 与内容区 `hidden`，展开收起用 WAAPI 做高度动画（`--dur-base` / `--ease`）；`enhanceDisclosures(root?) → () => void` 处理所有 `.disclosure-summary[aria-controls]`。
+- 迁移：`<div class="sec" onclick="toggle()">▸ 明细</div>` + 自写显隐 → 原生 `<details class="disclosure"><summary>明细</summary>…</details>`，▾ / ▸ 字符删掉。
+
+### 二次确认（`./confirm`）
+
+**按钮版** `armConfirm(button, { onConfirm?, timeout = 3000, label?, locale?, labels?, onArm?, onDisarm? }) → { armed, disarm(), destroy() }`：
+
+- 第一次点：拦下（`preventDefault` + 停止传播），按钮加 `.armed`、文字换成「再点一次确认」（`labels.armed`，zh / ja / en），宽度锁住不缩；`.btn-icon` 或无文字按钮只换 `aria-label` / `title`。
+- 再点：复原并调用 `onConfirm(e)`；不给 `onConfirm` 时第二次点击照常冒泡，交给应用自己的点击委托。失焦、点别处、Esc、超时都复原（`onDisarm(reason)`）。
+- 外观：`.btn.armed` 实底 `--danger` + `--on-err` 字（同 `.btn.danger`）；`.btn-ghost.armed` `.btn-icon.armed` `.menu-item.armed` 红字 + 红描边 + 12% 红底；焦点环变红。
+- 行操作菜单里用：`attachMenu(btn, menu, { closeOnSelect: false })`，上膛那一下菜单不关；菜单打开时被搬到 body 下，所在行要在挂载时记住（`closest()` 找不到）。
+
+**对话框版** `confirm({ title?, message?, confirmLabel?, cancelLabel?, danger?, input?, locale?, labels?, signal? })`：
+
+- 返回 `Promise<boolean>`：确认 true；取消 / Esc / 点遮罩 false。带 `input: { value, placeholder, type, maxLength, label, required, requiredMessage, validate }` 时返回 `Promise<string | null>`，
+  Enter 确认；`required` 为空或 `validate(v)` 返回文案时不关闭，输入框 `aria-invalid` + 下方 `.field-msg.err`。
+- 结构：`.overlay > .sheet.confirm`（`role="dialog"`，`danger` 时 `alertdialog`，`aria-modal`，标题 / 说明作可访问名与描述）；`mountOverlay` 处理 Esc / 点遮罩 / 滚动锁。
+  焦点困在弹层内，初始焦点在「取消」（有输入框时在输入框并全选），关闭后还原到打开前的元素。
+- `.sheet.confirm`：桌面 420 宽的窄弹层（手机仍是底部抽屉）；`danger` 确认键是实底 `.btn.danger`，**不**按 §8 靠左隔离（它就是主操作）；说明 `.confirm-message` 14、`--text-dim`。
+- 迁移：`if (!window.confirm("删除？")) return;` → `if (!(await confirm({ title: "删除？", danger: true, confirmLabel: "删除" }))) return;`；
+  自写的「再点一次确认」（`.armed` / `.bp-armed` 一类） → `armConfirm(btn, { onConfirm })`。
+
+### 状态点与徽标 `.dot` `.badge-dot` `.badge`
+
+- `.dot`：`--dot` 8px 圆，缺省 accent；语义 `.ok .warn .err .info .idle`（idle = `--text-dim`）；`.pulse` 呼吸光圈（reduced-motion 下静止）。
+  配文字用 `<span class="dot-label"><span class="dot ok"></span>在线</span>`（居中对齐、间距 `--sp-2`）；放在 flex 容器（`.row-lead` `.row-end`）里直接用。
+- `.badge-dot`：贴在父元素右上角的红点（`--danger`，2px 底色描边把它从按钮边框上剪出来）；`.badge`：数字徽标（16 高、最小宽 16、`--fs-xs`、pill），
+  缺省红底，`.neutral` 灰；`.badge.float` 贴右上角。含这两种的父元素自动 `position: relative`（特异性 0）。外观与工具位的 `.corner-badge` 一致——工具位按钮仍用 `.corner-badge`。
+- 与旧类：`.msg-dot` 保留在 `.msg-item` 里；新代码的状态点用 `.dot`。迁移：`<i class="status-dot online"></i>` → `<span class="dot ok"></span>`。
+
+### 胶囊 `.pill` 语义与可点
+
+- 语义名 `.ok .warn .err .info .neutral`：淡底 tint + 同色 45% 描边（与 `.callout` 同浓度；v0.29.0 前描边 50%）。旧颜色名是别名：`green` = ok、`amber` = warn、`red` = err、`slate` = neutral；
+  `cyan`（跟 accent）、`violet`（跟 accent2）、`pink` 仍是颜色名，**`cyan` 不是 `info`**（info 是 `--info` 偏青；cyan 自 v0.25.0 起其实是蓝灰 accent）。
+- 可点：`button.pill` / `a.pill`——字号显式回到 11px（按钮的 `font` 简写不再盖掉它）；悬停无色胶囊描边 `--hover-border` + `--text` 字、语义胶囊描边加深到本色；按下 .97；焦点环；禁用 .45。
+- 计数 `.count`：`.chip > .count` / `.pill > .count`，当前色 14% 淡底的小圆角块、等宽数字。`.chip` 选中除 `.active` 外也认 `[aria-pressed=true]` / `[aria-selected=true]`（着色族）。
+- 迁移：`<span class="pill green">` 可不改，新代码写 `.pill.ok`。`<button class="filter-chip">全部 <b>42</b></button>` → `<button class="chip">全部<span class="count">42</span></button>`。
+
+### 进度条扩展（在 `.bar` 上）
+
+```html
+<div class="meter">
+  <div class="meter-head"><span class="meter-label">本月额度</span><span class="meter-value">86%</span></div>
+  <div class="bar warn"><div class="bar-fill" style="width: 86%"></div><span class="bar-mark" style="--at: 80%"></span></div>
+</div>
+<div class="bar stacked"><span class="bar-seg" style="--w: 34%"></span><span class="bar-seg ok" style="--w: 22%"></span></div>
+<div class="bar indeterminate" role="progressbar" aria-label="导入中"></div>
+```
+
+- 语义：`.bar.ok/.warn/.err/.info`（或写在 `.bar-fill` 上）→ 实色填充；缺省仍是 `--grad`，`.bar-fill.over` 不变。
+- 多段 `.bar.stacked > .bar-seg`：每段 `--w` 宽，段间 2px 细缝；缺省按 `--chart-1…6` 依次取色，`.ok/.warn/.err/.info/.idle` 或 `--c` 改色。
+- 限额刻度 `.bar-mark`：`--at` 处一条 2px `--text` 70% 竖线。不定进度 `.bar.indeterminate`：40% 的色块往复滑动（reduced-motion 下改为整条 45% 静止）。
+- `.meter`：上一行「标签 … 数值」（12、数值等宽数字、标签省略）+ 下方 `.bar`；相邻 `.meter` 间距 12。
+- 迁移：多段账户条 → `.bar.stacked`；自写「标签 + 数值」行 → `.meter-head`；限额刻度的自写伪元素 → `.bar-mark`。
+
+### 搜索框与筛选条 `.field-wrap.search` `.filter-bar`
+
+```html
+<div class="filter-bar">
+  <div class="field-wrap search"><input type="search" class="field small" placeholder="搜索"><button type="button" class="field-clear" aria-label="清除"></button></div>
+  <div class="chip-row scroll"><button class="chip" aria-pressed="true">全部<span class="count">128</span></button>…</div>
+  <span class="filter-meta">共 128 条</span>
+</div>
+```
+
+- `.search`：左侧 16px 放大镜（遮罩画、`pointer-events: none`，输入框左内距随之让位）；`.field[type=search]` 去掉浏览器原生清除键与圆角外观，清除用 `.field-clear`（值为空时 `hidden`）；`.small` 档同样成立。
+- `.filter-bar`：一行「搜索（吃剩余宽，基准 14rem）+ `.chip-row`（`.scroll` 不换行横滑、给焦点环留位）+ `.filter-meta`（靠右的计数 / 操作）」；≤640px 搜索独占一行、chip 行在下一行横滑。
+  筛选条里搜索用 `.field.small`，与 `.chip` 同为 36。chip 选中用着色族，计数用 `.count`。
+- 迁移：`.search-box` + 自写图标定位、`.filters` + `.filter-chip` → 上面的结构；自写的 `::-webkit-search-cancel-button` 隐藏删掉。
+
+### 登录卡外壳 `.auth-shell` `.auth-card`
+
+```html
+<div class="bg-layer"></div>
+<div class="app-frame">
+  <main class="app-main auth-shell">
+    <div class="glass auth-card">
+      <h1 class="app-title">站点名</h1><p class="auth-sub">用门户账号登录</p>
+      <form class="stack">
+        <div class="form-row"><label for="u">用户名</label><input id="u" class="field"></div>
+        …<button class="btn">登录</button>
+      </form>
+      <p class="auth-foot">没有账号？<a href="…">联系管理员</a></p>
+    </div>
+  </main>
+</div>
+```
+
+- `.auth-shell` 与 `.app-main` 叠在同一元素上：外框（`.app-frame:has(> .app-main)`）把剩余高度分给它，页头可以照常放在外面；单用时自己 `min-height: 100svh`。
+  桌面（宽 >640 且高 ≥560）垂直居中；手机靠上、上边距 `max(32px, 12svh)`——用 svh 不随键盘伸缩，输入框聚焦时卡片不跳。
+- `.auth-card` 配 `.glass`：宽 `min(400px, 100%)`、内距 24/16/16、圆角 16；里面的 `.app-title` / `.wordmark` 26px；`.auth-sub` 13 说明；
+  直接子级 `form` / `.stack` 的字段之间、字段与按钮之间统一 16（`.form-row` 的块底不叠加），按钮全宽；`.auth-foot` 12 居中小字（链接自动下划线）。错误用 `.field-msg.err` 或 `.callout.err`。
+- 迁移：各站自写的登录外壳 / 卡片宽度、居中与 padding 删掉，换成上面的结构。
+
+### 校验态补全
+
+- `.field[aria-invalid="true"]` / `.field.invalid` 在 `.field-wrap`（清除键）、`.search`（放大镜同时变红）、textarea、日期类输入里都是红描边 + 红焦点环。
+- Glide Select：原生 select 上的 `aria-invalid` / `.invalid` 由 glide-select.js 同步到触发器（MutationObserver 跟进），套 `.field` 的与紧凑触发器都变红。
+- `.form-row`：label 下 6px → 控件 → `.field-msg` / `.hint` 上 4px；textarea 改为顶对齐（`vertical-align: top`），下方说明与单行输入框同距（之前多出约 5px 行距）。
 
 ## 17. 出处与许可
 

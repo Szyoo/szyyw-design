@@ -305,6 +305,31 @@ enhanceTabs();   // 跟进之后插入的标签条与选中态变化；返回 { 
 
 修饰类 `.compact`（紧凑）、`.tabs.scroll`（横滚）；不要覆写它们的尺寸与底色，细则见 DESIGN.md §12.1，手测页 `demo/tabs.html`。
 
+### 通用组件（v0.29.0）
+
+列表行、折叠区块、二次确认、状态点与徽标、胶囊语义、进度条扩展、搜索与筛选条、登录卡外壳，细则见 DESIGN.md §16.3，手测页 `demo/components-v029.html`。
+
+```html
+<div class="list divided">
+  <a class="list-row" href="…"><span class="row-lead"><span class="avatar">AC</span></span>
+    <span class="row-main"><span class="row-title">名字</span><span class="row-sub">邮箱</span></span>
+    <span class="row-end"><span class="pill ok">admin</span><span class="row-chevron"></span></span></a>
+</div>
+<details class="disclosure"><summary>高级选项<span class="summary-meta">3 项</span></summary><div class="disclosure-body">…</div></details>
+<div class="filter-bar">
+  <div class="field-wrap search"><input type="search" class="field small" placeholder="搜索"></div>
+  <div class="chip-row scroll"><button class="chip" aria-pressed="true">全部<span class="count">12</span></button></div>
+</div>
+<span class="dot-label"><span class="dot ok pulse"></span>运行中</span>
+```
+
+```js
+import { armConfirm, confirm } from "@szyyw/design/confirm";
+armConfirm(deleteBtn, { onConfirm: () => remove(id) });          // 第一次点变红「再点一次确认」，再点执行
+if (await confirm({ title: "删除项目？", danger: true, confirmLabel: "删除" })) …
+const name = await confirm({ title: "重命名", input: { value: old, required: true } });   // string | null
+```
+
 ### 刻度与交互状态（v0.28.0）
 
 `tokens.css` 带一套明暗无关的刻度：字号 `--fs-*`、行高 `--lh-*`、圆角 `--r-*`、控件高度 `--h-sm/md/lg`（28 / 36 / 44）、间距 `--sp-1…6`、
@@ -358,6 +383,8 @@ enhanceTabs();   // 跟进之后插入的标签条与选中态变化；返回 { 
 | `./techtext` | `enhanceTechText`、`mountTechText`、`runningCount`、`DEFAULTS` |
 | `./overlay` | `mountOverlay`（遮罩点击 / Esc 关闭 + body 滚动锁引用计数） |
 | `./depth-carousel` | `mountDepthCarousel`、`DEFAULTS`、`resolveEase`、`cubicBezier`（纵深轮播 / 弹层看图，DESIGN.md §16） |
+| `./confirm` | `armConfirm`、`confirm`、`CONFIRM_TEXTS`（按钮二次确认 / 确认对话框，DESIGN.md §16.3） |
+| `./disclosure` | `mountDisclosure`、`enhanceDisclosures`（按钮式折叠区块，DESIGN.md §16.3） |
 | `./icons` | `icon`、`iconSvg`、`enhanceIcons`、`hasIcon`、`ICON_NAMES`、`LUCIDE_VERSION`（Lucide 线性图标，DESIGN.md §16.2） |
 | `./version` | `VERSION`、`REPO` |
 
