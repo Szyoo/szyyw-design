@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>v0.29.0 通用组件 · 手测</title>
+<!--
+  v0.29.0 通用组件的手测页（不进 package files），对应 DESIGN.md §16.3。
+  仓库根目录 `python3 -m http.server 8080`，打开 http://localhost:8080/demo/components-v029.html
+    ?scheme=light|dark|auto   明暗（缺省 dark）
+  看点：列表行三种容器与状态、窄屏省略；折叠区块两种写法；二次确认（按钮 / 对话框）；状态点与徽标；
+  胶囊语义 / 可点 / 计数；进度条扩展；搜索 + 筛选 + 列表 + 分页一屏；登录卡；校验态。
+-->
+<script>
+  (function () {
+    var s = new URLSearchParams(location.search).get("scheme");
+    document.documentElement.setAttribute("data-scheme", s === "light" || s === "auto" ? s : "dark");
+  })();
+</script>
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../components.css">
+<style>
+  .demo { padding-bottom: 64px; }
+  .demo > section { margin-bottom: var(--sp-4); }
+  .demo h2.panel-title { margin-bottom: var(--sp-1); }
+  .note { margin: 0 0 var(--sp-3); font-size: var(--fs-sm); color: var(--text-dim); }
+  .demo h3.section-name { margin-top: var(--sp-4); }
+  .demo code { font-size: var(--fs-sm); }
+  .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--sp-4); align-items: start; }
+  .flow { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2) var(--sp-3); }
+  .out { font-size: var(--fs-sm); color: var(--text-dim); font-variant-numeric: tabular-nums; }
+  /* 登录卡演示：本页里不铺满一屏 */
+  .auth-demo { border: 1px dashed var(--line-soft); border-radius: var(--r-md); }
+  .auth-demo .auth-shell { min-height: 0; padding-block: var(--sp-5); }
+</style>
+</head>
+<body>
+<div class="bg-layer" aria-hidden="true"></div>
+<div class="app-frame">
+  <header class="app-header">
+    <div class="app-brand">
+      <h1 class="app-title">通用组件</h1>
+      <span class="app-sub">components · v0.29.0</span>
+    </div>
+  </header>
+
+  <main class="app-main demo">
+
+    <!-- ========== 一屏组合：搜索 + 筛选 + 列表 + 分页 ========== -->
+    <section class="glass panel" id="combo">
+      <div class="section-head"><h2 class="panel-title">用户</h2><button class="btn btn-small" type="button"><i data-icon="plus"></i>新增</button></div>
+      <div class="filter-bar">
+        <div class="field-wrap search">
+          <input id="q" type="search" class="field small" placeholder="搜索名字或邮箱" aria-label="搜索" value="yang">
+          <button type="button" class="field-clear" aria-label="清除"></button>
+        </div>
+        <div class="chip-row scroll" role="group" aria-label="角色">
+          <button class="chip" type="button" aria-pressed="true">全部<span class="count">128</span></button>
+          <button class="chip" type="button" aria-pressed="false">管理员<span class="count">3</span></button>
+          <button class="chip" type="button" aria-pressed="false">用户<span class="count">117</span></button>
+          <button class="chip" type="button" aria-pressed="false">停用<span class="count">8</span></button>
+        </div>
+        <span class="filter-meta">共 128 人</span>
+      </div>
+      <div class="list divided bleed u-mt-4" id="users">
+        <div class="list-row">
+          <span class="row-lead"><span class="avatar">YS</span></span>
+          <span class="row-main"><span class="row-title">yang.shengzhe</span><span class="row-sub">yang@example.com · 上次登录 2 小时前</span></span>
+          <span class="row-end"><span class="pill info">admin</span><span class="dot ok" title="在线"></span>
+            <span class="menu-wrap"><button class="btn-icon" type="button" aria-label="更多操作" data-menu><i data-icon="ellipsis"></i></button>
+              <div class="menu" hidden><button class="menu-item" type="button"><i data-icon="pencil"></i>编辑</button><button class="menu-item" type="button"><i data-icon="lock"></i>重置密码</button><div class="menu-sep"></div><button class="menu-item danger" type="button" data-arm><i data-icon="trash-2"></i>删除用户</button></div></span></span>
+        </div>
+        <div class="list-row">
+          <span class="row-lead"><span class="avatar">林</span></span>
+          <span class="row-main"><span class="row-title">林小雨（一个很长很长很长的显示名，用来看省略号）</span><span class="row-sub">lin.xiaoyu.with.a.really.long.address@example.com</span></span>
+          <span class="row-end"><span class="pill">user</span><span class="dot warn" title="待验证"></span>
+            <span class="menu-wrap"><button class="btn-icon" type="button" aria-label="更多操作" data-menu><i data-icon="ellipsis"></i></button>
+              <div class="menu" hidden><button class="menu-item" type="button"><i data-icon="pencil"></i>编辑</button><button class="menu-item danger" type="button" data-arm><i data-icon="trash-2"></i>删除用户</button></div></span></span>
+        </div>
+        <div class="list-row">
+          <span class="row-lead"><span class="avatar"><img alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%239aaac2'/%3E%3Cstop offset='1' stop-color='%23b6a9d6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='36' height='36' fill='url(%23g)'/%3E%3C/svg%3E"></span></span>
+          <span class="row-main"><span class="row-title">Tanaka Ken</span><span class="row-sub">tanaka@example.com</span></span>
+          <span class="row-end"><span class="pill">user</span><span class="dot idle" title="离线"></span>
+            <span class="menu-wrap"><button class="btn-icon" type="button" aria-label="更多操作" data-menu><i data-icon="ellipsis"></i></button>
+              <div class="menu" hidden><button class="menu-item" type="button"><i data-icon="pencil"></i>编辑</button><button class="menu-item danger" type="button" data-arm><i data-icon="trash-2"></i>删除用户</button></div></span></span>
+        </div>
+        <div class="list-row" aria-disabled="true">
+          <span class="row-lead"><span class="avatar">OL</span></span>
+          <span class="row-main"><span class="row-title">old.account</span><span class="row-sub">已停用 · 2025-03-01</span></span>
+          <span class="row-end"><span class="pill neutral">停用</span></span>
+        </div>
+      </div>
+      <div id="pager" class="u-mt-4"></div>
+    </section>
+
+    <!-- ========== 列表行 ========== -->
+    <section class="glass panel">
+      <h2 class="panel-title">列表行 .list-row</h2>
+      <p class="note">缺省 52 高（--h-item），.compact 44；可点的行（a / button / role=option）悬停衬底、焦点环向内；选中用着色族；窄屏标题与次行省略，行尾不被挤没。</p>
+      <div class="cols">
+        <div>
+          <h3 class="section-name">.list（可点 · 选中 · 禁用）</h3>
+          <div class="list" role="listbox" aria-label="项目">
+            <div class="list-row" role="option" tabindex="0" aria-selected="true">
+              <span class="row-lead"><i data-icon="folder"></i></span>
+              <span class="row-main"><span class="row-title">szyyw-design</span><span class="row-sub">选中 · aria-selected</span></span>
+              <span class="row-end">12</span>
+            </div>
+            <div class="list-row" role="option" tabindex="0" aria-selected="false">
+              <span class="row-lead"><i data-icon="folder"></i></span>
+              <span class="row-main"><span class="row-title">jppost-tracker</span><span class="row-sub">悬停看衬底</span></span>
+              <span class="row-end">3</span>
+            </div>
+            <div class="list-row" role="option" aria-disabled="true">
+              <span class="row-lead"><i data-icon="folder"></i></span>
+              <span class="row-main"><span class="row-title">archived</span><span class="row-sub">aria-disabled</span></span>
+              <span class="row-end">0</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <h3 class="section-name">.list.divided（链接行 + chevron）</h3>
+          <nav class="list divided">
+            <a class="list-row" href="#a" aria-current="page"><span class="row-lead"><i data-icon="house"></i></span><span class="row-main"><span class="row-title">概览</span></span><span class="row-chevron"></span></a>
+            <a class="list-row" href="#b"><span class="row-lead"><i data-icon="calendar"></i></span><span class="row-main"><span class="row-title">账单</span><span class="row-sub">本月 23 笔</span></span><span class="row-end">¥ 12,480<span class="row-chevron"></span></span></a>
+            <a class="list-row" href="#c"><span class="row-lead"><i data-icon="settings"></i></span><span class="row-main"><span class="row-title">设置</span></span><span class="row-chevron"></span></a>
+          </nav>
+        </div>
+        <div>
+          <h3 class="section-name">.list.gap（卡内块，悬停描边）</h3>
+          <div class="list gap">
+            <button class="list-row" type="button"><span class="row-lead"><i data-icon="file-text"></i></span><span class="row-main"><span class="row-title">报告-2026-10.pdf</span><span class="row-sub">2.4 MB · 10 月 31 日</span></span><span class="row-end"><span class="pill ok">已同步</span></span></button>
+            <button class="list-row selected" type="button"><span class="row-lead"><i data-icon="image"></i></span><span class="row-main"><span class="row-title">cover.png</span><span class="row-sub">选中 · .selected</span></span><span class="row-end"><span class="pill warn">处理中</span></span></button>
+            <button class="list-row" type="button" disabled><span class="row-lead"><i data-icon="file"></i></span><span class="row-main"><span class="row-title">draft.txt</span><span class="row-sub">disabled</span></span><span class="row-end"><span class="pill err">失败</span></span></button>
+          </div>
+        </div>
+        <div>
+          <h3 class="section-name">.list.compact.divided</h3>
+          <div class="list divided compact">
+            <div class="list-row"><span class="row-lead"><span class="dot ok"></span></span><span class="row-main"><span class="row-title">api 健康检查</span></span><span class="row-end">32 ms</span></div>
+            <div class="list-row"><span class="row-lead"><span class="dot warn pulse"></span></span><span class="row-main"><span class="row-title">同步任务</span><span class="row-sub">重试中 · 第 2 次</span></span><span class="row-end">—</span></div>
+            <div class="list-row"><span class="row-lead"><span class="dot err"></span></span><span class="row-main"><span class="row-title">邮件推送</span></span><span class="row-end"><button class="btn-ghost btn-small" type="button">重试</button></span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 折叠 ========== -->
+    <section class="glass panel">
+      <h2 class="panel-title">折叠区块 .disclosure</h2>
+      <p class="note">原生 details 或 button[aria-expanded] + disclosure.js；chevron 随展开旋转（reduced-motion 下无过渡）；.flush 与卡片内容对齐。</p>
+      <div class="cols">
+        <div>
+          <h3 class="section-name">details · .flush</h3>
+          <details class="disclosure flush" id="disc-details">
+            <summary>高级选项<span class="summary-meta">3 项</span></summary>
+            <div class="disclosure-body"><p class="hint u-m0">展开后的内容：表单、说明或子列表。</p></div>
+          </details>
+          <details class="disclosure flush lead-chevron" open>
+            <summary>左侧 chevron（.lead-chevron，展开）</summary>
+            <div class="disclosure-body"><p class="hint u-m0">箭头向右，展开转 90°。</p></div>
+          </details>
+        </div>
+        <div>
+          <h3 class="section-name">button 写法（disclosure.js）</h3>
+          <div class="disclosure inner">
+            <button type="button" class="disclosure-summary" id="disc-btn" aria-expanded="false" aria-controls="disc-panel">同步日志<span class="summary-meta">12 条</span></button>
+            <div class="disclosure-body" id="disc-panel" hidden>
+              <div class="list divided compact">
+                <div class="list-row"><span class="row-main"><span class="row-title">10:02 拉取完成</span></span><span class="row-end">1.2 s</span></div>
+                <div class="list-row"><span class="row-main"><span class="row-title">10:03 构建完成</span></span><span class="row-end">48 s</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <h3 class="section-name">在 .list.divided 里</h3>
+          <div class="list divided">
+            <details class="disclosure"><summary>订单 #1024<span class="summary-meta">¥ 320</span></summary><div class="disclosure-body"><dl class="kv"><dt>状态</dt><dd>已发货</dd><dt>件数</dt><dd>3</dd></dl></div></details>
+            <details class="disclosure"><summary>订单 #1025<span class="summary-meta">¥ 88</span></summary><div class="disclosure-body"><p class="hint u-m0">—</p></div></details>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 二次确认 ========== -->
+    <section class="glass panel">
+      <h2 class="panel-title">二次确认 armConfirm / confirm()</h2>
+      <p class="note">按钮版：第一次点变红、文字换成「再点一次确认」，3 秒 / 失焦 / Esc 复原；对话框版：Esc / 点遮罩 / 取消 = false，焦点在取消键。</p>
+      <h3 class="section-name">按钮版（点一下试试）</h3>
+      <div class="flow">
+        <button class="btn" type="button" id="arm-btn">删除项目</button>
+        <button class="btn-ghost" type="button" id="arm-ghost">清空缓存</button>
+        <button class="btn-ghost btn-small" type="button" id="arm-small">撤销授权</button>
+        <button class="btn-icon" type="button" id="arm-icon" aria-label="删除"><i data-icon="trash-2"></i></button>
+        <span class="out" id="arm-out">已执行 0 次</span>
+      </div>
+      <h3 class="section-name">.armed 静态</h3>
+      <div class="flow">
+        <button class="btn armed" type="button">再点一次确认</button>
+        <button class="btn-ghost armed" type="button">再点一次确认</button>
+        <button class="btn-ghost btn-small armed" type="button">再点一次确认</button>
+        <button class="btn-icon armed" type="button" aria-label="再点一次确认"><i data-icon="trash-2"></i></button>
+      </div>
+      <h3 class="section-name">对话框版</h3>
+      <div class="flow">
+        <button class="btn-ghost" type="button" id="confirm-plain">普通确认</button>
+        <button class="btn-ghost danger" type="button" id="confirm-danger">危险确认</button>
+        <button class="btn-ghost" type="button" id="confirm-input">重命名（输入）</button>
+        <span class="out" id="confirm-out">结果：—</span>
+      </div>
+    </section>
+
+    <!-- ========== 状态点与徽标 / 胶囊 ========== -->
+    <section class="glass panel">
+      <h2 class="panel-title">状态点 · 徽标 · 胶囊</h2>
+      <div class="cols">
+        <div>
+          <h3 class="section-name">.dot</h3>
+          <div class="flow">
+            <span class="dot-label"><span class="dot ok"></span>正常</span>
+            <span class="dot-label"><span class="dot warn"></span>警告</span>
+            <span class="dot-label"><span class="dot err"></span>错误</span>
+            <span class="dot-label"><span class="dot info"></span>信息</span>
+            <span class="dot-label"><span class="dot idle"></span>空闲</span>
+            <span class="dot-label"><span class="dot ok pulse"></span>运行中</span>
+          </div>
+          <h3 class="section-name">.badge-dot / .badge</h3>
+          <div class="flow">
+            <button class="btn-icon" type="button" aria-label="通知（有未读）"><i data-icon="bell"></i><span class="badge-dot"></span></button>
+            <button class="btn-icon" type="button" aria-label="消息 3 条"><i data-icon="mail"></i><span class="badge float">3</span></button>
+            <button class="btn-icon" type="button" aria-label="消息 128 条"><i data-icon="mail"></i><span class="badge float">99+</span></button>
+            <span>待办 <span class="badge">5</span></span>
+            <span>草稿 <span class="badge neutral">12</span></span>
+          </div>
+          <div class="tabs u-mt-4" role="tablist">
+            <button class="tab active" role="tab" aria-selected="true">收件箱 <span class="badge">4</span></button>
+            <button class="tab" role="tab" aria-selected="false">提醒<span class="badge-dot"></span></button>
+          </div>
+        </div>
+        <div>
+          <h3 class="section-name">.pill 语义（新名 / 旧名别名）</h3>
+          <div class="flow">
+            <span class="pill">默认</span>
+            <span class="pill ok">ok</span><span class="pill green">green</span>
+            <span class="pill warn">warn</span><span class="pill amber">amber</span>
+            <span class="pill err">err</span><span class="pill red">red</span>
+            <span class="pill info">info</span>
+            <span class="pill neutral">neutral</span><span class="pill slate">slate</span>
+            <span class="pill cyan">cyan</span><span class="pill violet">violet</span><span class="pill pink">pink</span>
+          </div>
+          <h3 class="section-name">可点胶囊 · 计数</h3>
+          <div class="flow">
+            <button class="pill" type="button">可点</button>
+            <button class="pill ok" type="button">已完成<span class="count">8</span></button>
+            <a class="pill info" href="#p">链接胶囊</a>
+            <button class="pill warn" type="button" disabled>禁用</button>
+            <span class="pill">标签<span class="count">24</span></span>
+          </div>
+          <div class="chip-row u-mt-4">
+            <button class="chip active" type="button">全部<span class="count">42</span></button>
+            <button class="chip" type="button">进行中<span class="count">7</span></button>
+            <button class="chip" type="button"><i data-icon="star"></i>收藏<span class="count">3</span></button>
+            <button class="chip" type="button" disabled>归档<span class="count">0</span></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 进度条 ========== -->
+    <section class="glass panel">
+      <h2 class="panel-title">进度条扩展</h2>
+      <div class="cols">
+        <div>
+          <h3 class="section-name">.meter（标签 + 数值）</h3>
+          <div class="meter"><div class="meter-head"><span class="meter-label">存储</span><span class="meter-value">3.2 / 10 GB</span></div><div class="bar"><div class="bar-fill" style="width: 32%"></div></div></div>
+          <div class="meter"><div class="meter-head"><span class="meter-label">本月额度（刻度 = 限额 80%）</span><span class="meter-value">86%</span></div><div class="bar warn"><div class="bar-fill" style="width: 86%"></div><span class="bar-mark" style="--at: 80%"></span></div></div>
+          <div class="meter"><div class="meter-head"><span class="meter-label">失败率</span><span class="meter-value">12%</span></div><div class="bar err"><div class="bar-fill" style="width: 12%"></div></div></div>
+          <div class="meter"><div class="meter-head"><span class="meter-label">完成</span><span class="meter-value">100%</span></div><div class="bar ok"><div class="bar-fill" style="width: 100%"></div></div></div>
+        </div>
+        <div>
+          <h3 class="section-name">.bar.stacked · .indeterminate</h3>
+          <div class="meter"><div class="meter-head"><span class="meter-label">账户分布</span><span class="meter-value">5 段</span></div>
+            <div class="bar stacked"><span class="bar-seg" style="--w: 34%"></span><span class="bar-seg" style="--w: 22%"></span><span class="bar-seg" style="--w: 18%"></span><span class="bar-seg" style="--w: 14%"></span><span class="bar-seg idle" style="--w: 12%"></span></div></div>
+          <div class="meter"><div class="meter-head"><span class="meter-label">语义段</span><span class="meter-value">60 / 25 / 15</span></div>
+            <div class="bar stacked"><span class="bar-seg ok" style="--w: 60%"></span><span class="bar-seg warn" style="--w: 25%"></span><span class="bar-seg err" style="--w: 15%"></span></div></div>
+          <div class="meter"><div class="meter-head"><span class="meter-label">导入中…</span><span class="meter-value">—</span></div><div class="bar indeterminate" role="progressbar" aria-label="导入中"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 登录卡 ========== -->
+    <section class="glass panel">
+      <h2 class="panel-title">登录卡 .auth-shell > .glass.auth-card</h2>
+      <p class="note">实际页面里 .auth-shell 与 .app-main 叠用、铺满剩余高度；本页框住、不铺满。</p>
+      <div class="auth-demo">
+        <div class="auth-shell">
+          <div class="glass auth-card">
+            <h2 class="app-title">示例站点</h2>
+            <p class="auth-sub">用门户账号登录</p>
+            <form class="stack" onsubmit="return false">
+              <div class="form-row"><label for="u">用户名</label><input id="u" class="field" autocomplete="username"></div>
+              <div class="form-row"><label for="pw">密码</label><input id="pw" class="field" type="password" autocomplete="current-password" aria-invalid="true" aria-describedby="pw-msg"><p class="field-msg err" id="pw-msg">用户名或密码不对</p></div>
+              <button class="btn" type="submit"><i data-icon="log-in"></i>登录</button>
+            </form>
+            <p class="auth-foot">没有账号？<a href="#">联系管理员</a></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 校验态 ========== -->
+    <section class="glass panel">
+      <h2 class="panel-title">校验态补全</h2>
+      <p class="note">.field-wrap / .search / Glide Select（.field 与紧凑）/ textarea / date 在 aria-invalid 下都是红描边；label + 控件 + .field-msg 间距一致。</p>
+      <div class="form-grid">
+        <div class="form-row"><label for="v1">带清除键</label><div class="field-wrap"><input id="v1" class="field" value="abc" aria-invalid="true"><button type="button" class="field-clear" aria-label="清除"></button></div><p class="field-msg err">格式不对</p></div>
+        <div class="form-row"><label for="v2">搜索</label><div class="field-wrap search"><input id="v2" type="search" class="field" value="??" aria-invalid="true"></div><p class="field-msg err">含非法字符</p></div>
+        <div class="form-row"><label for="v3">Glide（.field）</label><select id="v3" class="field" data-glide aria-invalid="true"><option value="">请选择</option><option>A</option></select><p class="field-msg err">必选</p></div>
+        <div class="form-row"><label for="v4">日期</label><input id="v4" class="field" type="date" aria-invalid="true"><p class="field-msg err">不能早于今天</p></div>
+        <div class="form-row"><label for="v5">备注</label><textarea id="v5" class="field" rows="2" aria-invalid="true">x</textarea><p class="field-msg err">至少 5 个字</p></div>
+        <div class="form-row"><label for="v6">正常（对照）</label><input id="v6" class="field" value="ok"><p class="field-msg">中性说明</p></div>
+      </div>
+      <div class="flow">
+        <span class="out">紧凑 Glide：</span><select class="small" data-glide aria-invalid="true" aria-label="紧凑"><option>选项一</option><option>选项二</option></select>
+        <div class="field-wrap search" style="flex: 1 1 12rem"><input type="search" class="field small" placeholder="small 搜索" aria-label="small 搜索"></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script type="module">
+  import { enhanceIcons } from "../icons.js";
+  import { enhanceTabs } from "../tabs.js";
+  import { enhanceSelects } from "../glide-select.js";
+  import { attachMenu } from "../menu.js";
+  import { mountPager } from "../pager.js";
+  import { armConfirm, confirm } from "../confirm.js";
+  import { enhanceDisclosures } from "../disclosure.js";
+
+  enhanceIcons();
+  enhanceTabs();
+  enhanceSelects();
+  enhanceDisclosures();
+
+  // 行操作菜单：「删除用户」走二次确认（closeOnSelect: false，上膛那一下菜单不关）；
+  // 菜单打开时被搬到 body 下，所以行要在挂载时就记下来
+  for (const btn of document.querySelectorAll("[data-menu]")) {
+    const menu = btn.nextElementSibling;
+    const row = btn.closest(".list-row");
+    const m = attachMenu(btn, menu, { closeOnSelect: false });
+    for (const item of menu.querySelectorAll("[data-arm]")) {
+      armConfirm(item, { onConfirm: () => { m.close(); row.remove(); } });
+    }
+  }
+
+  mountPager(document.getElementById("pager"), { total: 128, pageSize: 20, pageSizes: [20, 50] });
+
+  // 筛选 chip：单选
+  const chips = document.querySelectorAll("#combo .chip-row .chip");
+  for (const c of chips) c.addEventListener("click", () => chips.forEach((x) => x.setAttribute("aria-pressed", String(x === c))));
+  // 搜索清除键：值为空时隐藏
+  const q = document.getElementById("q");
+  const clr = q.nextElementSibling;
+  const syncClr = () => { clr.hidden = !q.value; };
+  q.addEventListener("input", syncClr);
+  clr.addEventListener("click", () => { q.value = ""; syncClr(); q.focus(); });
+  syncClr();
+
+  // 二次确认（按钮）
+  let n = 0;
+  const out = document.getElementById("arm-out");
+  const bump = () => { n += 1; out.textContent = `已执行 ${n} 次`; };
+  for (const id of ["arm-btn", "arm-ghost", "arm-small", "arm-icon"]) armConfirm(document.getElementById(id), { onConfirm: bump });
+
+  // 对话框
+  const cOut = document.getElementById("confirm-out");
+  const show = (v) => { cOut.textContent = `结果：${JSON.stringify(v)}`; };
+  document.getElementById("confirm-plain").addEventListener("click", async () => {
+    show(await confirm({ title: "发布这条公告？", message: "发布后所有用户都能看到。", confirmLabel: "发布" }));
+  });
+  document.getElementById("confirm-danger").addEventListener("click", async () => {
+    show(await confirm({ title: "删除项目？", message: "项目里的 42 个文件会一起删除，不可撤销。", confirmLabel: "删除", danger: true }));
+  });
+  document.getElementById("confirm-input").addEventListener("click", async () => {
+    show(await confirm({ title: "重命名", input: { value: "旧名字", placeholder: "新名字", required: true, requiredMessage: "名字不能为空" }, confirmLabel: "保存" }));
+  });
+</script>
+</body>
+</html>
