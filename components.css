@@ -1010,14 +1010,57 @@ input[type="month"].field::-webkit-date-and-time-value {
   color: var(--text-dim);
 }
 
-.pill.cyan { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 50%, transparent); background: var(--tint-cyan-bg); }
-.pill.violet { color: var(--accent2); border-color: color-mix(in srgb, var(--accent2) 50%, transparent); background: var(--tint-violet-bg); }
-.pill.green { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 50%, transparent); background: var(--tint-green-bg); }
-.pill.red { color: var(--err); border-color: color-mix(in srgb, var(--err) 50%, transparent); background: var(--tint-red-bg); }
-.pill.amber { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 50%, transparent); background: var(--tint-amber-bg); }
-/* v0.14.0：slate = 中性「未知 / 未定」，pink = 补充色 */
-.pill.slate { color: var(--slate); border-color: color-mix(in srgb, var(--slate) 50%, transparent); background: var(--tint-slate-bg); }
-.pill.pink { color: var(--pink); border-color: color-mix(in srgb, var(--pink) 50%, transparent); background: var(--tint-pink-bg); }
+/* 语义色（v0.29.0）：.ok .warn .err .info .neutral。旧颜色名保留为别名：green = ok、amber = warn、red = err、slate = neutral；
+   cyan（跟 accent）/ violet（跟 accent2）/ pink 仍是颜色名。浓度与 .callout 一致：淡底 tint + 同色 45% 描边（v0.29.0 前 50%） */
+.pill:is(.ok, .green) { --pill-tone: var(--ok); --pill-bg: var(--tint-green-bg); }
+.pill:is(.warn, .amber) { --pill-tone: var(--warn); --pill-bg: var(--tint-amber-bg); }
+.pill:is(.err, .red) { --pill-tone: var(--err); --pill-bg: var(--tint-red-bg); }
+.pill.info { --pill-tone: var(--info); --pill-bg: var(--tint-info-bg); }
+.pill:is(.neutral, .slate) { --pill-tone: var(--slate); --pill-bg: var(--tint-slate-bg); }
+.pill.cyan { --pill-tone: var(--accent); --pill-bg: var(--tint-cyan-bg); }
+.pill.violet { --pill-tone: var(--accent2); --pill-bg: var(--tint-violet-bg); }
+.pill.pink { --pill-tone: var(--pink); --pill-bg: var(--tint-pink-bg); }
+.pill:is(.ok, .green, .warn, .amber, .err, .red, .info, .neutral, .slate, .cyan, .violet, .pink) {
+  color: var(--pill-tone);
+  border-color: color-mix(in srgb, var(--pill-tone) 45%, transparent);
+  background: var(--pill-bg);
+}
+
+/* 可点胶囊（v0.29.0）：button.pill / a.pill。字号显式写回——按钮的 font 简写会把 11px 盖成继承字号；
+   悬停：无色胶囊描边 --hover-border + 文字 --text，语义胶囊描边加深到本色；按下 .97；禁用 .45 */
+.pill:is(button, a) {
+  appearance: none;
+  font-family: inherit;
+  font-size: var(--fs-xs);
+  font-weight: inherit;
+  line-height: inherit;
+  background-color: transparent;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease), border-color var(--dur-base) var(--ease), transform var(--dur-fast) var(--ease);
+}
+.pill:is(button, a):hover:not(:disabled) { color: var(--pill-tone, var(--text)); border-color: var(--pill-tone, var(--hover-border)); }
+.pill:is(button, a):active:not(:disabled) { transform: scale(0.97); }
+.pill:is(button, a):focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-offset); }
+.pill:is(button, a):disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* 计数角标（v0.29.0）：.chip > .count / .pill > .count，小号、当前色淡底、等宽数字 */
+.chip > .count,
+.pill > .count {
+  display: inline-block;
+  min-width: 1.6em;
+  padding: 0 0.4em;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, currentColor 14%, transparent);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  line-height: 1.6;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+.chip > .count { margin-inline-start: var(--sp-2); }
+.pill > .count { margin-inline-start: var(--sp-1); font-size: inherit; line-height: inherit; padding: 0 0.45em; }
 
 /* 选择胶囊：md 档 36，字重 500；选中用着色族 --selected-* */
 .chip {
@@ -1044,7 +1087,9 @@ input[type="month"].field::-webkit-date-and-time-value {
 .chip:active:not(:disabled) { transform: scale(0.97); }
 .chip:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-offset); }
 
-.chip.active {
+.chip.active,
+.chip[aria-pressed="true"],
+.chip[aria-selected="true"] {
   color: var(--accent);
   border-color: var(--selected-border);
   background: var(--selected-bg);
@@ -1089,6 +1134,7 @@ input[type="month"].field::-webkit-date-and-time-value {
 /* ---------- 进度条 ---------- */
 
 .bar {
+  position: relative;
   height: 8px;
   border-radius: var(--r-pill);
   background: var(--inner-bg);
@@ -3371,4 +3417,527 @@ select.field.small { padding-right: 30px; }
   .depth-carousel__card { will-change: auto; }
   .depth-carousel__img, .depth-carousel__arrow, .depth-carousel__dot { transition: none; }
   .depth-carousel__card[data-state="loading"] .depth-carousel__msg::before { animation: none; }
+}
+
+/* ============================================================
+   v0.29.0 通用组件：列表行 / 折叠区块 / 二次确认 / 状态点与徽标 / 进度条扩展 /
+   搜索框与筛选条 / 登录卡外壳 / 校验态补全。全部是新类或既有类的修饰类，不改已有规则的外观
+   （例外见 CHANGELOG：.pill 语义描边 50% → 45%）。用法见 DESIGN.md §16.3，手测 demo/components-v029.html
+   ============================================================ */
+
+/* ---------- 列表 .list > .list-row ----------
+   <div class="list divided">
+     <a class="list-row" href="…">
+       <span class="row-lead"><span class="avatar">YZ</span></span>
+       <span class="row-main"><span class="row-title">名字</span><span class="row-sub">邮箱</span></span>
+       <span class="row-end"><span class="pill ok">admin</span><span class="row-chevron"></span></span>
+     </a>
+   </div>
+   容器三种：.list（行间 2px 细缝、圆角悬停，像菜单）/ .list.divided（行间分隔线）/ .list.gap（每行一块卡内块，行间 8px）。
+   .list.bleed 把行拉到卡片内边距外（悬停底铺满卡片宽，同 .inset-list），--inset 缺省 16。
+   可点：a / button / [role=option] / [tabindex] 的行；选中 .selected / [aria-selected=true] / [aria-current]；禁用 :disabled / [aria-disabled=true] */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+/* ul / ol 当容器时去掉列表默认样式（特异性 0，u-mt-* 等工具类照样能盖） */
+:where(ul.list, ol.list) { margin-block: 0; padding: 0; list-style: none; }
+.list.divided { gap: 0; }
+.list.divided > * + * { border-top: 1px solid var(--row-line); }
+.list.gap { gap: var(--sp-2); }
+.list.bleed { --inset: var(--sp-4); margin-inline: calc(var(--inset) * -1); }
+
+.list-row {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  min-width: 0;
+  min-height: var(--h-item);
+  margin: 0;
+  /* 高度由 min-height 定（内容垂直居中），上下内距只是内容超高时的底线——分隔线 / 边框不会把行撑高 */
+  padding: var(--sp-1) var(--sp-3);
+  border: 0;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-base);
+  line-height: var(--lh-snug);
+  text-align: left;
+  text-decoration: none;
+  transition: background var(--dur-fast) var(--ease), border-color var(--dur-base) var(--ease), box-shadow var(--dur-fast) var(--ease);
+}
+.list.divided > .list-row,
+.list.bleed > .list-row { border-radius: 0; }
+.list.bleed > .list-row { padding-inline: var(--inset); }
+.list.gap > .list-row {
+  background: var(--inner-bg);
+  border: 1px solid var(--glass-border);
+}
+.list-row.compact,
+.list.compact > .list-row { min-height: var(--h-lg); padding-block: 2px; gap: var(--sp-2); }
+
+/* 可点的行：无边框 → 悬停衬底；.list.gap 里有边框 → 悬停描边（§3.1）。按下叠一层衬底 */
+.list-row:is(a, button, [role="option"], [tabindex]) { cursor: pointer; }
+.list-row:is(a, button, [role="option"], [tabindex]):hover:not(:disabled, [aria-disabled="true"]) { background: var(--hover-tint); }
+.list.gap > .list-row:is(a, button, [role="option"], [tabindex]):hover:not(:disabled, [aria-disabled="true"]) { background: var(--inner-bg); border-color: var(--hover-border); }
+.list-row:is(a, button, [role="option"], [tabindex]):active:not(:disabled, [aria-disabled="true"]) { box-shadow: inset 0 0 0 100vmax var(--hover-tint); }
+.list-row:focus-visible { outline: var(--focus-ring); outline-offset: -2px; }
+
+/* 选中：着色族 */
+.list-row:is(.selected, [aria-selected="true"], [aria-current]:not([aria-current="false"])),
+.list-row:is(.selected, [aria-selected="true"], [aria-current]:not([aria-current="false"])):hover {
+  background: var(--selected-bg);
+  box-shadow: inset 0 0 0 1px var(--selected-border);
+}
+.list.gap > .list-row:is(.selected, [aria-selected="true"], [aria-current]:not([aria-current="false"])) { background: var(--selected-bg); border-color: var(--selected-border); box-shadow: none; }
+.list-row:is(:disabled, [aria-disabled="true"]) { opacity: 0.45; cursor: not-allowed; }
+
+/* 行内三段：lead（图标 / 缩略图 / 头像）· main（标题 + 次行，单行省略）· end（数值 / 操作 / chevron，不被挤没） */
+.row-lead {
+  flex: none;
+  display: grid;
+  place-items: center;
+  min-width: var(--h-md);
+  height: var(--h-md);
+  color: var(--text-dim);
+}
+.row-lead > .icon { width: 20px; height: 20px; }
+.row-lead > img { display: block; width: var(--h-md); height: var(--h-md); object-fit: cover; border-radius: var(--r-sm); }
+:is(.list-row.compact, .list.compact > .list-row) > .row-lead { min-width: var(--h-sm); height: var(--h-sm); }
+:is(.list-row.compact, .list.compact > .list-row) > .row-lead > img { width: var(--h-sm); height: var(--h-sm); }
+.row-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.row-title,
+.row-sub {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.row-title { font-size: var(--fs-base); font-weight: 500; color: var(--text); }
+/* 次行用 tight 行高：标题 14 × 1.4 + 2 + 次行 12 × 1.2 = 36，两行文字在紧凑档 44 里也放得下 */
+.row-sub { font-size: var(--fs-sm); line-height: var(--lh-tight); color: var(--text-dim); }
+.row-end {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  max-width: 60%;
+  color: var(--text-dim);
+  font-size: var(--fs-md);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+/* 行尾「进入」箭头：空 span 画 Lucide chevron-right */
+.row-chevron {
+  flex: none;
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  color: var(--text-dim);
+  background-color: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 18 6-6-6-6'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 18 6-6-6-6'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+/* 头像：首字母或图片，36（.sm 28） */
+.avatar {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: var(--h-md);
+  height: var(--h-md);
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--selected-bg);
+  color: var(--accent);
+  font-size: var(--fs-md);
+  font-weight: 600;
+  line-height: 1;
+  text-transform: uppercase;
+  user-select: none;
+}
+.avatar.sm { width: var(--h-sm); height: var(--h-sm); font-size: var(--fs-xs); }
+.avatar > img { width: 100%; height: 100%; object-fit: cover; }
+
+/* ---------- 折叠区块 .disclosure ----------
+   <details class="disclosure"><summary>标题<span class="summary-meta">3 项</span></summary><div class="disclosure-body">…</div></details>
+   非 details 写法（disclosure.js 管 aria 与高度动画）：
+   <div class="disclosure"><button class="disclosure-summary" aria-expanded="false" aria-controls="p1">标题</button><div class="disclosure-body" id="p1" hidden>…</div></div>
+   chevron 缺省在右（向下，展开转 180°）；.lead-chevron 在左（向右，展开转 90°）。.flush 让标题文字与卡片内容对齐（悬停底伸进卡片内边距） */
+.disclosure { display: block; min-width: 0; }
+.disclosure.flush { margin-inline: calc(var(--sp-3) * -1); }
+.disclosure > summary,
+.disclosure-summary {
+  appearance: none;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+  min-height: var(--h-lg);
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border: 0;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-base);
+  font-weight: 600;
+  line-height: var(--lh-snug);
+  text-align: left;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: background var(--dur-fast) var(--ease);
+}
+.disclosure > summary::-webkit-details-marker { display: none; }
+.disclosure > summary::marker { content: ""; }
+.disclosure > summary:hover,
+.disclosure-summary:hover { background: var(--hover-tint); }
+.disclosure > summary:focus-visible,
+.disclosure-summary:focus-visible { outline: var(--focus-ring); outline-offset: -2px; }
+.disclosure-summary:disabled { opacity: 0.45; cursor: not-allowed; }
+.list.divided > .disclosure > :is(summary, .disclosure-summary),
+.list.bleed > .disclosure > :is(summary, .disclosure-summary) { border-radius: 0; }
+.list.bleed > .disclosure > :is(summary, .disclosure-summary, .disclosure-body) { padding-inline: var(--inset); }
+.list.gap > .disclosure { background: var(--inner-bg); border: 1px solid var(--glass-border); border-radius: var(--r-md); }
+/* 右侧次要信息：靠右，chevron 紧随其后 */
+.summary-meta {
+  margin-left: auto;
+  flex: none;
+  font-size: var(--fs-md);
+  font-weight: 400;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+/* chevron：遮罩画 Lucide 图标，颜色跟随 --text-dim */
+.disclosure > summary::after,
+.disclosure-summary::after,
+.disclosure.lead-chevron > summary::before,
+.disclosure.lead-chevron > .disclosure-summary::before {
+  content: "";
+  flex: none;
+  width: 16px;
+  height: 16px;
+  background-color: var(--text-dim);
+  transition: transform var(--dur-base) var(--ease);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.disclosure > summary:not(:has(.summary-meta))::after,
+.disclosure-summary:not(:has(.summary-meta))::after { margin-left: auto; }
+.disclosure[open] > summary::after,
+.disclosure-summary[aria-expanded="true"]::after { transform: rotate(180deg); }
+.disclosure.lead-chevron > summary::after,
+.disclosure.lead-chevron > .disclosure-summary::after { content: none; }
+.disclosure.lead-chevron > summary::before,
+.disclosure.lead-chevron > .disclosure-summary::before { transform: rotate(-90deg); }
+.disclosure.lead-chevron[open] > summary::before,
+.disclosure.lead-chevron > .disclosure-summary[aria-expanded="true"]::before { transform: none; }
+.disclosure-body { padding: 0 var(--sp-3) var(--sp-3); min-width: 0; }
+.disclosure.lead-chevron .disclosure-body { padding-left: calc(var(--sp-3) + 16px + var(--sp-2)); }
+.disclosure.flush .disclosure-body { padding-bottom: var(--sp-2); }
+/* details 的展开高度动画：支持 interpolate-size 的浏览器（Chromium 129+）才有，其余直接展开 */
+@supports (interpolate-size: allow-keywords) {
+  details.disclosure { interpolate-size: allow-keywords; }
+  details.disclosure::details-content {
+    block-size: 0;
+    overflow: clip;
+    transition: block-size var(--dur-base) var(--ease), content-visibility var(--dur-base) allow-discrete;
+  }
+  details.disclosure[open]::details-content { block-size: auto; }
+}
+
+/* ---------- 二次确认 .armed（confirm.js 的 armConfirm 加）----------
+   第一次点后进入 .armed：实底按钮变 --danger 实底；描边 / 图标按钮与菜单项变红字 + 红描边 + 12% 红底 */
+.btn.armed:not(:disabled) { background: var(--danger); color: var(--on-err); }
+.btn.armed:hover:not(:disabled) { box-shadow: 0 6px 24px color-mix(in srgb, var(--danger) 45%, transparent); }
+.btn-ghost.armed,
+.btn-ghost.armed:hover:not(:disabled),
+.btn-icon.armed,
+.btn-icon.armed:hover:not(:disabled) {
+  color: var(--danger);
+  border-color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+}
+.menu-item.armed,
+.menu-item.armed:hover:not(:disabled) { color: var(--danger); background: color-mix(in srgb, var(--danger) 12%, transparent); }
+:is(.btn, .btn-ghost, .btn-icon, .menu-item).armed:focus-visible { outline-color: var(--danger); }
+
+/* ---------- 确认对话框 .sheet.confirm（confirm.js 的 confirm() 生成）----------
+   窄版弹层（桌面 420）；危险确认键不靠左隔离（它就是主操作） */
+.confirm-message { margin: 0; font-size: var(--fs-base); line-height: var(--lh-body); color: var(--text-dim); overflow-wrap: anywhere; }
+.sheet.confirm .sheet-body:first-child { padding-top: var(--sp-4); }
+.sheet.confirm .confirm-message + .field,
+.sheet.confirm .confirm-message + .field-wrap { margin-top: var(--sp-3); }
+@media (min-width: 900px) {
+  .sheet.confirm { max-width: 420px; }
+  .sheet.confirm .sheet-foot .danger { margin-right: 0; }
+}
+
+/* ---------- 状态点 .dot 与徽标 .badge-dot / .badge ----------
+   <span class="dot ok"></span>；配文字用 <span class="dot-label"><span class="dot ok"></span>在线</span>。
+   语义 .ok .warn .err .info .idle（idle = --text-dim），缺省 accent；.pulse 呼吸（reduced-motion 下静止）。
+   .badge-dot / .badge.float 贴在父元素右上角（父元素自动 position: relative） */
+.dot {
+  display: inline-block;
+  flex: none;
+  width: var(--dot);
+  height: var(--dot);
+  border-radius: 50%;
+  color: var(--accent);
+  background: currentColor;
+  vertical-align: middle;
+}
+.dot.ok { color: var(--ok); }
+.dot.warn { color: var(--warn); }
+.dot.err { color: var(--err); }
+.dot.info { color: var(--info); }
+.dot.idle { color: var(--text-dim); }
+.dot.pulse { animation: dot-pulse 1.8s var(--ease) infinite; }
+@keyframes dot-pulse {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 50%, transparent); }
+  70%, 100% { box-shadow: 0 0 0 var(--dot) transparent; }
+}
+.dot-label { display: inline-flex; align-items: center; gap: var(--sp-2); min-width: 0; }
+
+:where(:has(> .badge-dot), :has(> .badge.float)) { position: relative; }
+.badge-dot {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: var(--dot);
+  height: var(--dot);
+  border-radius: 50%;
+  background: var(--danger);
+  box-shadow: 0 0 0 2px var(--bg);
+  pointer-events: none;
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 var(--sp-1);
+  border-radius: var(--r-pill);
+  background: var(--danger);
+  color: var(--on-err);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.badge.neutral { background: var(--inner-bg); color: var(--text-dim); box-shadow: inset 0 0 0 1px var(--glass-border); }
+.badge.float { position: absolute; top: -6px; right: -6px; box-shadow: 0 0 0 2px var(--bg); pointer-events: none; }
+.badge.float.neutral { box-shadow: inset 0 0 0 1px var(--glass-border), 0 0 0 2px var(--bg); }
+
+/* ---------- 进度条扩展（在 .bar 上）----------
+   语义 .bar.ok/.warn/.err/.info（或 .bar-fill 上）；多段 .bar.stacked > .bar-seg（style="--w: 30%"，缺省按 --chart-1…6 依次取色，
+   .ok/.warn/.err/.info 或 --c 改色）；限额刻度 .bar-mark（style="--at: 80%"）；不定进度 .bar.indeterminate（空）；
+   .meter = 上方「标签 … 数值」+ 下方 .bar */
+.bar:is(.ok, .warn, .err, .info) > .bar-fill { background: var(--bar-tone); }
+.bar.ok, .bar-fill.ok { --bar-tone: var(--ok); }
+.bar.warn, .bar-fill.warn { --bar-tone: var(--warn); }
+.bar.err, .bar-fill.err { --bar-tone: var(--err); }
+.bar.info, .bar-fill.info { --bar-tone: var(--info); }
+.bar-fill:is(.ok, .warn, .err, .info) { background: var(--bar-tone); }
+
+.bar.stacked { display: flex; }
+.bar-seg {
+  flex: none;
+  width: var(--w, 0%);
+  height: 100%;
+  background: var(--c, var(--chart-1));
+  background-clip: padding-box;
+  border-right: 2px solid transparent;
+  transition: width 0.5s var(--ease);
+}
+.bar-seg:last-child { border-right: 0; }
+.bar-seg:nth-child(6n + 2) { --c: var(--chart-2); }
+.bar-seg:nth-child(6n + 3) { --c: var(--chart-3); }
+.bar-seg:nth-child(6n + 4) { --c: var(--chart-4); }
+.bar-seg:nth-child(6n + 5) { --c: var(--chart-5); }
+.bar-seg:nth-child(6n) { --c: var(--chart-6); }
+.bar-seg.ok { --c: var(--ok); }
+.bar-seg.warn { --c: var(--warn); }
+.bar-seg.err { --c: var(--err); }
+.bar-seg.info { --c: var(--info); }
+.bar-seg.idle { --c: color-mix(in srgb, var(--text-dim) 45%, transparent); }
+
+.bar-mark {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--at, 100%);
+  width: 2px;
+  margin-left: -1px;
+  background: var(--text);
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.bar.indeterminate::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 40%;
+  border-radius: var(--r-pill);
+  background: var(--bar-tone, var(--accent));
+  animation: bar-indeterminate 1.4s var(--ease) infinite;
+}
+@keyframes bar-indeterminate {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(250%); }
+}
+
+.meter { min-width: 0; }
+.meter-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-snug);
+}
+.meter-label { min-width: 0; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.meter-value { flex: none; color: var(--text); font-variant-numeric: tabular-nums; }
+.meter > .bar { margin: var(--sp-1) 0 0; }
+.meter + .meter { margin-top: var(--sp-3); }
+
+/* ---------- 搜索框 .field-wrap.search 与筛选条 .filter-bar ----------
+   <div class="field-wrap search"><input type="search" class="field small" placeholder="搜索"><button type="button" class="field-clear" aria-label="清除"></button></div>
+   左侧放大镜是遮罩画的（不占交互）；浏览器原生清除键去掉，清除用 .field-clear（值为空时应用 hidden 掉）。
+   <div class="filter-bar"><div class="field-wrap search">…</div><div class="chip-row scroll">…</div><span class="filter-meta">共 12 条</span></div> */
+.field[type="search"] { -webkit-appearance: none; appearance: none; }
+.field[type="search"]::-webkit-search-cancel-button,
+.field[type="search"]::-webkit-search-decoration { -webkit-appearance: none; appearance: none; display: none; }
+.field-wrap.search::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: var(--sp-3);
+  z-index: 1;
+  width: 16px;
+  height: 16px;
+  transform: translateY(-50%);
+  background-color: var(--text-dim);
+  pointer-events: none;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m21 21-4.34-4.34'/%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m21 21-4.34-4.34'/%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.field-wrap.search > .field { padding-left: calc(var(--sp-3) + 16px + var(--sp-2)); }
+.field-wrap.search:has(> .field:disabled)::before { opacity: 0.45; }
+
+.chip-row.scroll {
+  flex-wrap: nowrap;
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  /* 给焦点环与按下缩放留位，不被横滚裁掉 */
+  padding: var(--sp-1);
+  margin: calc(var(--sp-1) * -1);
+}
+.chip-row.scroll::-webkit-scrollbar { display: none; }
+.chip-row.scroll > * { flex: none; }
+
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+  min-width: 0;
+}
+.filter-bar > .search { flex: 1 1 14rem; }
+.filter-bar > .chip-row { flex: 0 1 auto; }
+.filter-bar > .chip-row.scroll { flex: 0 1 auto; max-width: 100%; }
+.filter-meta {
+  flex: none;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+@media (max-width: 640px) {
+  .filter-bar > .search { flex-basis: 100%; }
+  .filter-bar > .chip-row.scroll { flex: 1 1 0; margin-inline: 0; }
+}
+
+/* ---------- 登录卡外壳 .auth-shell > .glass.auth-card ----------
+   <div class="app-frame"><main class="app-main auth-shell"><div class="glass auth-card">
+     <h1 class="app-title">站点名</h1><p class="auth-sub">说明</p>
+     <form class="stack">…<button class="btn">登录</button></form>
+     <p class="auth-foot">…</p>
+   </div></main></div>
+   与 .app-main 叠用时由外框分到剩余高度；单用时自己至少一屏（svh，不随手机键盘伸缩）。
+   桌面垂直居中；手机靠上（固定上边距），键盘弹出时卡片不跳 */
+.auth-shell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-block: max(var(--sp-6), 12svh) var(--sp-6);
+}
+.auth-shell:not(.app-main) { min-height: 100svh; padding-inline: var(--sp-4); }
+@media (min-width: 641px) and (min-height: 560px) {
+  .auth-shell { justify-content: center; padding-block: var(--sp-6); }
+}
+.auth-card {
+  width: min(400px, 100%);
+  padding: var(--sp-5) var(--sp-4) var(--sp-4);
+}
+.auth-card > .app-title,
+.auth-card > .wordmark { font-size: var(--fs-2xl); line-height: var(--lh-tight); }
+.auth-sub { margin: var(--sp-1) 0 0; font-size: var(--fs-md); line-height: var(--lh-snug); color: var(--text-dim); }
+/* 表单：字段之间、字段与按钮之间统一 16（.form-row 的块底交给 gap，不叠加） */
+.auth-card > :is(form, .stack) { display: flex; flex-direction: column; gap: var(--sp-4); margin-top: var(--sp-5); }
+.auth-card > :is(form, .stack) > .form-row { margin-bottom: 0; }
+.auth-card > :is(form, .stack) > :is(.btn, .btn-ghost) { width: 100%; }
+.auth-foot {
+  margin: var(--sp-4) 0 0;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-snug);
+  color: var(--text-dim);
+  text-align: center;
+}
+
+/* ---------- 校验态补全（v0.29.0）----------
+   Glide Select 的触发器跟随原生 select 的 aria-invalid / .invalid（glide-select.js 同步）；非 .field 的紧凑触发器同样变红 */
+.glide-select__trigger:is([aria-invalid="true"], .invalid) { border-color: var(--err); }
+.glide-select__trigger:is([aria-invalid="true"], .invalid):focus-visible { border-color: var(--err); outline-color: var(--err); }
+.field-wrap.search:has(> .field:is([aria-invalid="true"], .invalid))::before { background-color: var(--err); }
+/* textarea 是行内块，落在基线上会在下方多出一截行距，下方 .field-msg / .hint 因此比单行输入框离得远；顶对齐去掉这截 */
+textarea.field { vertical-align: top; }
+
+/* v0.29.0 组件的减少动效 */
+@media (prefers-reduced-motion: reduce) {
+  .dot.pulse { animation: none; }
+  .bar.indeterminate::before { animation: none; width: 100%; opacity: 0.45; }
+  .disclosure > summary::after, .disclosure-summary::after,
+  .disclosure.lead-chevron > summary::before, .disclosure.lead-chevron > .disclosure-summary::before { transition: none; }
+  details.disclosure::details-content { transition: none; }
+  .list-row, .bar-seg { transition: none; }
 }

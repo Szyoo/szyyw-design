@@ -568,32 +568,93 @@ a.corner-tool { text-decoration: none; }
   color: var(--text-dim);
 }
 
+:where(.corner-tools, .corner-panel) .pill:is(.ok, .green) {
+ --pill-tone: var(--ok); --pill-bg: var(--tint-green-bg);
+}
+
+:where(.corner-tools, .corner-panel) .pill:is(.warn, .amber) {
+ --pill-tone: var(--warn); --pill-bg: var(--tint-amber-bg);
+}
+
+:where(.corner-tools, .corner-panel) .pill:is(.err, .red) {
+ --pill-tone: var(--err); --pill-bg: var(--tint-red-bg);
+}
+
+:where(.corner-tools, .corner-panel) .pill.info {
+ --pill-tone: var(--info); --pill-bg: var(--tint-info-bg);
+}
+
+:where(.corner-tools, .corner-panel) .pill:is(.neutral, .slate) {
+ --pill-tone: var(--slate); --pill-bg: var(--tint-slate-bg);
+}
+
 :where(.corner-tools, .corner-panel) .pill.cyan {
- color: var(--accent); border-color: color-mix(in srgb, var(--accent) 50%, transparent); background: var(--tint-cyan-bg);
+ --pill-tone: var(--accent); --pill-bg: var(--tint-cyan-bg);
 }
 
 :where(.corner-tools, .corner-panel) .pill.violet {
- color: var(--accent2); border-color: color-mix(in srgb, var(--accent2) 50%, transparent); background: var(--tint-violet-bg);
-}
-
-:where(.corner-tools, .corner-panel) .pill.green {
- color: var(--ok); border-color: color-mix(in srgb, var(--ok) 50%, transparent); background: var(--tint-green-bg);
-}
-
-:where(.corner-tools, .corner-panel) .pill.red {
- color: var(--err); border-color: color-mix(in srgb, var(--err) 50%, transparent); background: var(--tint-red-bg);
-}
-
-:where(.corner-tools, .corner-panel) .pill.amber {
- color: var(--warn); border-color: color-mix(in srgb, var(--warn) 50%, transparent); background: var(--tint-amber-bg);
-}
-
-:where(.corner-tools, .corner-panel) .pill.slate {
- color: var(--slate); border-color: color-mix(in srgb, var(--slate) 50%, transparent); background: var(--tint-slate-bg);
+ --pill-tone: var(--accent2); --pill-bg: var(--tint-violet-bg);
 }
 
 :where(.corner-tools, .corner-panel) .pill.pink {
- color: var(--pink); border-color: color-mix(in srgb, var(--pink) 50%, transparent); background: var(--tint-pink-bg);
+ --pill-tone: var(--pink); --pill-bg: var(--tint-pink-bg);
+}
+
+:where(.corner-tools, .corner-panel) .pill:is(.ok, .green, .warn, .amber, .err, .red, .info, .neutral, .slate, .cyan, .violet, .pink) {
+  color: var(--pill-tone);
+  border-color: color-mix(in srgb, var(--pill-tone) 45%, transparent);
+  background: var(--pill-bg);
+}
+
+:where(.corner-tools, .corner-panel) .pill:is(button, a) {
+  appearance: none;
+  font-family: inherit;
+  font-size: var(--fs-xs);
+  font-weight: inherit;
+  line-height: inherit;
+  background-color: transparent;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease), border-color var(--dur-base) var(--ease), transform var(--dur-fast) var(--ease);
+}
+
+:where(.corner-tools, .corner-panel) .pill:is(button, a):hover:not(:disabled) {
+ color: var(--pill-tone, var(--text)); border-color: var(--pill-tone, var(--hover-border));
+}
+
+:where(.corner-tools, .corner-panel) .pill:is(button, a):active:not(:disabled) {
+ transform: scale(0.97);
+}
+
+:where(.corner-tools, .corner-panel) .pill:is(button, a):focus-visible {
+ outline: var(--focus-ring); outline-offset: var(--focus-offset);
+}
+
+:where(.corner-tools, .corner-panel) .pill:is(button, a):disabled {
+ opacity: 0.45; cursor: not-allowed;
+}
+
+:where(.corner-tools, .corner-panel) .chip > .count,
+:where(.corner-tools, .corner-panel) .pill > .count {
+  display: inline-block;
+  min-width: 1.6em;
+  padding: 0 0.4em;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, currentColor 14%, transparent);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  line-height: 1.6;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+:where(.corner-tools, .corner-panel) .chip > .count {
+ margin-inline-start: var(--sp-2);
+}
+
+:where(.corner-tools, .corner-panel) .pill > .count {
+ margin-inline-start: var(--sp-1); font-size: inherit; line-height: inherit; padding: 0 0.45em;
 }
 
 :where(.corner-tools, .corner-panel) .chip {
@@ -628,7 +689,9 @@ a.corner-tool { text-decoration: none; }
  outline: var(--focus-ring); outline-offset: var(--focus-offset);
 }
 
-:where(.corner-tools, .corner-panel) .chip.active {
+:where(.corner-tools, .corner-panel) .chip.active,
+:where(.corner-tools, .corner-panel) .chip[aria-pressed="true"],
+:where(.corner-tools, .corner-panel) .chip[aria-selected="true"] {
   color: var(--accent);
   border-color: var(--selected-border);
   background: var(--selected-bg);
@@ -903,6 +966,33 @@ a.corner-tool { text-decoration: none; }
 /* 工具位弹层的减少动效（与文件中段的总表重复一条，好让 corner.css 自成一体） */
 @media (prefers-reduced-motion: reduce) {
   .corner-panel { animation: none; }
+}
+
+:where(.corner-tools, .corner-panel) .btn.armed:not(:disabled) {
+ background: var(--danger); color: var(--on-err);
+}
+
+:where(.corner-tools, .corner-panel) .btn.armed:hover:not(:disabled) {
+ box-shadow: 0 6px 24px color-mix(in srgb, var(--danger) 45%, transparent);
+}
+
+:where(.corner-tools, .corner-panel) .chip-row.scroll {
+  flex-wrap: nowrap;
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  /* 给焦点环与按下缩放留位，不被横滚裁掉 */
+  padding: var(--sp-1);
+  margin: calc(var(--sp-1) * -1);
+}
+
+:where(.corner-tools, .corner-panel) .chip-row.scroll::-webkit-scrollbar {
+ display: none;
+}
+
+:where(.corner-tools, .corner-panel) .chip-row.scroll > * {
+ flex: none;
 }
 
 /* ---------- 用到的动效 ---------- */

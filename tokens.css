@@ -194,6 +194,10 @@
   --h-md: 36px;
   --h-lg: 44px;
   --h-row: 36px;
+  /* 列表行 .list-row（两行文字 / 头像，v0.29.0）；.compact 用 --h-lg */
+  --h-item: 52px;
+  /* 状态点 .dot / .badge-dot 的直径（v0.29.0） */
+  --dot: 8px;
   /* 触屏（pointer: coarse）下 sm / md 档控件的最小点按高度 */
   --h-touch: 40px;
 
