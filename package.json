@@ -136,6 +136,14 @@
     "./icons": {
       "types": "./icons.d.ts",
       "default": "./icons.js"
+    },
+    "./confirm": {
+      "types": "./confirm.d.ts",
+      "default": "./confirm.js"
+    },
+    "./disclosure": {
+      "types": "./disclosure.d.ts",
+      "default": "./disclosure.js"
     }
   },
   "files": [
@@ -205,6 +213,10 @@
     "themes/",
     "icons.js",
     "icons.d.ts",
+    "confirm.js",
+    "confirm.d.ts",
+    "disclosure.js",
+    "disclosure.d.ts",
     "fonts/"
   ]
 }

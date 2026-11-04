@@ -13,7 +13,7 @@
    - 选中时写 select.selectedIndex，再依次派发原生 input / change（冒泡），React 受控组件、
      表单提交、required 校验、form.reset() 都照常；派发之后重新读原生值，所以受控组件把值改回去也能同步。
    - 外部改 select.value / selectedIndex 会自动同步（实例上挂了同名访问器，写入时不派发事件，不会回环）；
-     option 列表 / disabled / 文案 / data-tag 变化由 MutationObserver 同步；其余情况手动 refresh()。
+     option 列表 / disabled / 文案 / data-tag / aria-invalid（v0.29.0）变化由 MutationObserver 同步；其余情况手动 refresh()。
    - <label for> 点击会把焦点转给触发器。
    - 不支持 multiple / size>1 的 select（原样保留）。
 
@@ -231,6 +231,11 @@ export function enhanceSelect(select, options = {}) {
   }
 
   function paintDisabled() {
+    // 校验态（v0.29.0）：原生 select 的 aria-invalid / .invalid 照搬到触发器
+    const invalid = select.getAttribute("aria-invalid");
+    if (invalid === null) trigger.removeAttribute("aria-invalid");
+    else trigger.setAttribute("aria-invalid", invalid);
+    trigger.classList.toggle("invalid", select.classList.contains("invalid"));
     trigger.disabled = select.disabled;
     if (select.disabled) {
       root.dataset.disabled = "";
@@ -630,7 +635,7 @@ export function enhanceSelect(select, options = {}) {
       sync();
     });
   });
-  mo.observe(select, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["disabled", "label", "value", "data-tag", "hidden", "selected"] });
+  mo.observe(select, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["disabled", "label", "value", "data-tag", "hidden", "selected", "aria-invalid", "class"] });
 
   const onNativeChange = () => sync(); // 脚本直接对原生派发 change（或用户经表单控件改了）
   select.addEventListener("change", onNativeChange);
