@@ -64,7 +64,8 @@ const DEFAULTS = {
   rememberPosition: true,
   ariaLabel: undefined
 };
-const SIZES = { sm: { chip: 28, row: 28, font: 12 }, md: { chip: 32, row: 32, font: 13 }, lg: { chip: 44, row: 40, font: 14 } };
+// 与刻度对齐（v0.28.0）：触发器 sm 28 / md 36 / lg 44，md 选项行 36（--h-row）
+const SIZES = { sm: { chip: 28, row: 28, font: 12 }, md: { chip: 36, row: 36, font: 13 }, lg: { chip: 44, row: 40, font: 14 } };
 
 const proto = HTMLSelectElement?.prototype;
 const nativeValue = proto && Object.getOwnPropertyDescriptor(proto, "value");

@@ -172,6 +172,7 @@
   --fs-base: 14px;
   --fs-body: 15px; /* body 正文 */
   --fs-input: 16px; /* 输入框：小于 16px 时 iOS 聚焦会缩放页面 */
+  --fs-title: 16px; /* 卡片 / 弹层 / 抽屉标题（.panel-title .sheet-title .drawer-head h*） */
   --fs-lg: 18px;
   --fs-xl: 22px;
   --fs-2xl: 26px;

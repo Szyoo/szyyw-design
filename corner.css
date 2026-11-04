@@ -29,10 +29,10 @@
 .glass:where(.corner-panel) {
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
-  border-radius: 16px;
+  border-radius: var(--r-lg);
   box-shadow: var(--glass-inset);
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(var(--blur-md));
+  backdrop-filter: blur(var(--blur-md));
 }
 
 :where(.corner-tools, .corner-panel) .glass.lift:hover {
@@ -60,36 +60,39 @@
      别用同权重 CSS 覆盖整条规则。order 在两个方向下同样生效 */
   flex-direction: var(--corner-tools-dir, row);
   align-items: center;
-  gap: 8px;
+  gap: var(--sp-2);
 }
 
+/* 工具位按钮：md 档 36（v0.28.0 起，之前 34） */
 .corner-tool {
   position: relative;
-  width: 34px;
-  height: 34px;
+  width: var(--h-md);
+  height: var(--h-md);
   display: grid;
   place-items: center;
   padding: 0;
   appearance: none;
   font-size: 16px;
   line-height: 1;
-  border-radius: 11px;
+  border-radius: var(--r-sm);
   cursor: pointer;
   color: var(--text);
   background: var(--glass-bg);
   border: 1px solid var(--control-border);
   box-shadow: var(--glass-inset);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-  transition: transform 0.15s var(--ease), border-color 0.15s var(--ease), background 0.15s var(--ease);
+  -webkit-backdrop-filter: blur(var(--blur-md));
+  backdrop-filter: blur(var(--blur-md));
+  transition: transform var(--dur-fast) var(--ease), border-color var(--dur-base) var(--ease), background var(--dur-fast) var(--ease);
 }
 
-.corner-tool:hover {
-  transform: translateY(-1px);
-  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+.corner-tool:hover:not(:disabled) {
+  color: var(--text);
+  border-color: var(--hover-border);
 }
 
-.corner-tool:active { transform: scale(0.94); }
+.corner-tool:active:not(:disabled) { transform: scale(0.97); }
+.corner-tool:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-offset); }
+.corner-tool:disabled { opacity: 0.45; cursor: not-allowed; }
 
 /* auto 模式加一枚小角标，跟固定模式区分开 */
 .scheme-toggle[data-scheme="auto"]::after {
@@ -106,7 +109,7 @@
 /* 面板开着时调色板点亮，表明这枚按钮就是开关 */
 .settings-toggle[aria-expanded="true"] {
   color: var(--accent);
-  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  border-color: var(--hover-border);
 }
 
 /* 有新版时调色板加一枚 warn 色小角标（跟 scheme 的 auto 角标同一位置语言） */
@@ -134,15 +137,17 @@
    - z-index 高于工具位(45)、低于 sheet 弹层(50)；同一时刻只开一个（claimCornerPanel） */
 .corner-panel {
   position: fixed;
-  top: var(--corner-panel-top, calc(10px + 34px + 8px + env(safe-area-inset-top, 0px)));
+  top: var(--corner-panel-top, calc(10px + var(--h-md) + 8px + env(safe-area-inset-top, 0px)));
   right: var(--corner-panel-right, calc(12px + env(safe-area-inset-right, 0px)));
   z-index: 46;
   max-width: calc(100vw - var(--corner-panel-right, 12px) - 12px);
-  max-height: calc(100dvh - var(--corner-panel-top, 52px) - 12px);
+  max-height: calc(100dvh - var(--corner-panel-top, 54px) - 12px);
   overflow-y: auto;
   overscroll-behavior: contain;
+  border-radius: var(--r-lg);
   background: var(--sheet-bg);
-  animation: rise 0.3s var(--ease) both;
+  box-shadow: var(--pop-shadow);
+  animation: rise var(--dur-base) var(--ease) both;
 }
 .corner-panel[hidden] { display: none; }
 
@@ -156,9 +161,9 @@
   min-width: 16px;
   height: 16px;
   padding: 0 4px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   font-family: 'Inter', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', system-ui, sans-serif;
-  font-size: 10px;
+  font-size: var(--fs-xs);
   font-weight: 700;
   line-height: 16px;
   font-variant-numeric: tabular-nums;
@@ -187,16 +192,16 @@ a.corner-tool { text-decoration: none; }
    按钮显示语言短名（中 / 日 / EN），宽度随内容；其余沿用 .corner-tool */
 .corner-tool.locale-toggle {
   width: auto;
-  min-width: 34px;
-  padding: 0 9px;
+  min-width: var(--h-md);
+  padding: 0 var(--sp-2);
   font-family: 'Inter', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', system-ui, sans-serif;
-  font-size: 13px;
+  font-size: var(--fs-md);
   font-weight: 600;
   letter-spacing: 0.02em;
 }
 .corner-tool.locale-toggle[aria-expanded="true"] {
   color: var(--accent);
-  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  border-color: var(--hover-border);
 }
 
 /* ---------- 给工具位让位（.corner-clear，v0.13.0 公开）----------
@@ -217,7 +222,7 @@ a.corner-tool { text-decoration: none; }
   overflow: hidden;
 }
 
-.settings-panel .panel-body { gap: 14px; scrollbar-width: thin; }
+.settings-panel .panel-body { gap: var(--sp-3); scrollbar-width: thin; }
 
 /* 参数有十几项，单列约 900px 高，常见笔记本屏一打开就得在面板里滚。
    宽屏排成两列，高度减半，整块一眼看全；窄屏（手机）仍单列，超出视口才滚 */
@@ -226,7 +231,7 @@ a.corner-tool { text-decoration: none; }
   .settings-panel .panel-body {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 14px 24px;
+    gap: var(--sp-3) var(--sp-5);
     align-content: start;
   }
   /* 分隔线与版本行横跨两列 */
@@ -236,7 +241,7 @@ a.corner-tool { text-decoration: none; }
 
 .settings-panel .panel-head {
   margin-bottom: 0;
-  padding: 16px 18px 10px;
+  padding: var(--sp-4) var(--sp-4) var(--sp-2);
   flex-wrap: nowrap;
 }
 
@@ -246,16 +251,16 @@ a.corner-tool { text-decoration: none; }
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 6px 18px;
+  padding: var(--sp-1) var(--sp-4) var(--sp-4);
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: var(--sp-4);
 }
 
 .panel-foot {
   display: flex;
-  gap: 10px;
-  padding: 14px 18px 16px;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4) var(--sp-4);
 }
 
 .panel-foot .btn, .panel-foot .btn-ghost { flex: 1; }
@@ -264,7 +269,7 @@ a.corner-tool { text-decoration: none; }
   flex: 1;
   align-self: center;
   text-align: center;
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--text-dim);
 }
 
@@ -275,13 +280,13 @@ a.corner-tool { text-decoration: none; }
 .appearance-panel .panel-body > .appearance-advanced { grid-column: 1 / -1; }
 
 .appearance-advanced > summary { cursor: pointer; padding: 2px 0; }
-.appearance-advanced[open] > summary { margin-bottom: 14px; }
-.appearance-advanced-body { display: flex; flex-direction: column; gap: 14px; }
-.appearance-advanced-foot { display: flex; gap: 10px; margin-top: 16px; }
+.appearance-advanced[open] > summary { margin-bottom: var(--sp-3); }
+.appearance-advanced-body { display: flex; flex-direction: column; gap: var(--sp-3); }
+.appearance-advanced-foot { display: flex; gap: var(--sp-2); margin-top: var(--sp-4); }
 .appearance-advanced-foot .btn { flex: 1; }
 
 @media (min-width: 720px) {
-  .appearance-advanced-body { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 24px; }
+  .appearance-advanced-body { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-3) var(--sp-5); }
 }
 
 /* ---------- 参数控件 ---------- */
@@ -289,7 +294,7 @@ a.corner-tool { text-decoration: none; }
 .ctl {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--sp-2);
 }
 
 .ctl[hidden] { display: none; }
@@ -298,17 +303,17 @@ a.corner-tool { text-decoration: none; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: var(--sp-2);
 }
 
-.ctl-label { font-size: 13px; color: var(--text); }
-.ctl-hint { display: block; font-size: 11px; color: var(--text-dim); margin-top: 2px; }
-.ctl-value { font-size: 12px; color: var(--accent); }
+.ctl-label { font-size: var(--fs-md); color: var(--text); }
+.ctl-hint { display: block; font-size: var(--fs-xs); color: var(--text-dim); margin-top: 2px; }
+.ctl-value { font-size: var(--fs-sm); color: var(--accent); }
 
 /* 版本检测区：变更链接与动作按钮 */
 .update-link { color: var(--accent); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.22em; text-decoration-color: color-mix(in srgb, currentColor 45%, transparent); }
-.update-link:hover { text-decoration: underline; }
-.update-actions { display: flex; gap: 8px; }
+.update-link:hover { text-decoration-color: currentColor; }
+.update-actions { display: flex; gap: var(--sp-2); }
 .update-actions .btn { flex: 1; }
 
 .ctl-toggle {
@@ -336,7 +341,7 @@ a.corner-tool { text-decoration: none; }
   border-radius: 50%;
   background: var(--grad);
   cursor: pointer;
-  transition: transform 0.15s var(--ease);
+  transition: transform var(--dur-fast) var(--ease);
 }
 
 :where(.corner-tools, .corner-panel) input[type="range"]::-webkit-slider-thumb:hover {
@@ -359,7 +364,7 @@ a.corner-tool { text-decoration: none; }
   height: 24px;
   padding: 0;
   border: 1px solid var(--control-border);
-  border-radius: 6px;
+  border-radius: var(--r-xs);
   background: transparent;
   cursor: pointer;
 }
@@ -427,7 +432,7 @@ a.corner-tool { text-decoration: none; }
 }
 
 :where(.corner-tools, .corner-panel) .switch:focus-visible {
- outline: 2px solid color-mix(in srgb, var(--accent) 60%, transparent); outline-offset: 2px;
+ outline: var(--focus-ring); outline-offset: var(--focus-offset);
 }
 
 :where(.corner-tools, .corner-panel) .switch.is-dragging {
@@ -439,35 +444,53 @@ a.corner-tool { text-decoration: none; }
 }
 
 :where(.corner-tools, .corner-panel) .panel-title {
- margin: 0; font-size: 17px; font-weight: 600;
+ margin: 0; font-size: var(--fs-title); font-weight: 600; line-height: var(--lh-tight);
 }
 
 :where(.corner-tools, .corner-panel) .panel-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 14px;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
   flex-wrap: wrap;
 }
 
-:where(.corner-tools, .corner-panel) .btn {
+:where(.corner-tools, .corner-panel) .btn,
+:where(.corner-tools, .corner-panel) .btn-ghost {
   appearance: none;
-  border: none;
-  border-radius: 10px;
-  padding: 10px 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4em;
+  min-height: var(--h-lg);
+  padding: 0 var(--sp-5);
+  border-radius: var(--r-md);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--fs-base);
   font-weight: 600;
+  line-height: var(--lh-tight);
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+:where(.corner-tools, .corner-panel) .btn {
+  border: 1px solid transparent;
   color: var(--on-accent);
   background: var(--grad);
-  cursor: pointer;
-  transition: transform 0.15s var(--ease), box-shadow 0.2s var(--ease), opacity 0.2s var(--ease);
+  /* 渐变从边框外缘画起：透明边框下不露出平铺接缝 */
+  background-origin: border-box;
+  transition: transform var(--dur-fast) var(--ease), box-shadow var(--dur-base) var(--ease), opacity var(--dur-fast) var(--ease);
 }
 
 :where(.corner-tools, .corner-panel) .btn:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 6px 24px color-mix(in srgb, var(--accent) 35%, transparent);
+  box-shadow: 0 6px 24px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+:where(.corner-tools, .corner-panel) .btn:active:not(:disabled) {
+ transform: translateY(0) scale(0.98);
 }
 
 :where(.corner-tools, .corner-panel) .btn:disabled {
@@ -477,54 +500,69 @@ a.corner-tool { text-decoration: none; }
   box-shadow: inset 0 0 0 1px var(--glass-border);
 }
 
+:where(.corner-tools, .corner-panel) .btn.danger:not(:disabled) {
+ background: var(--danger); color: var(--on-err);
+}
+
+:where(.corner-tools, .corner-panel) .btn.danger:hover:not(:disabled) {
+ box-shadow: 0 6px 24px color-mix(in srgb, var(--danger) 45%, transparent);
+}
+
 :where(.corner-tools, .corner-panel) .btn-ghost {
-  appearance: none;
   background: transparent;
   border: 1px solid var(--control-border);
-  border-radius: 10px;
-  padding: 10px 20px;
-  font: inherit;
-  font-size: 14px;
-  font-weight: 500;
   color: var(--text-dim);
-  cursor: pointer;
-  transition: color 0.2s var(--ease), border-color 0.2s var(--ease), transform 0.15s var(--ease);
+  transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease), border-color var(--dur-base) var(--ease), transform var(--dur-fast) var(--ease);
 }
 
 :where(.corner-tools, .corner-panel) .btn-ghost:hover:not(:disabled) {
-  color: var(--accent);
-  border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+  color: var(--text);
+  border-color: var(--hover-border);
+}
+
+:where(.corner-tools, .corner-panel) .btn-ghost:active:not(:disabled) {
+ transform: scale(0.97);
+}
+
+:where(.corner-tools, .corner-panel) .btn-ghost.danger {
+ color: var(--danger);
 }
 
 :where(.corner-tools, .corner-panel) .btn-ghost.danger:hover:not(:disabled) {
-  color: var(--err);
-  border-color: color-mix(in srgb, var(--err) 50%, transparent);
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  border-color: color-mix(in srgb, var(--danger) 45%, transparent);
 }
 
 :where(.corner-tools, .corner-panel) .btn-ghost:disabled {
- opacity: 0.4; cursor: not-allowed;
+ opacity: 0.45; cursor: not-allowed;
+}
+
+:where(.corner-tools, .corner-panel) .btn:focus-visible,
+:where(.corner-tools, .corner-panel) .btn-ghost:focus-visible {
+ outline: var(--focus-ring); outline-offset: var(--focus-offset);
 }
 
 :where(.corner-tools, .corner-panel) .btn-small {
- padding: 7px 14px; font-size: 13px; border-radius: 8px;
+ min-height: var(--h-md); padding: 0 var(--sp-3); font-size: var(--fs-md); border-radius: var(--r-sm);
 }
 
 :where(.corner-tools, .corner-panel) label {
   display: block;
-  font-size: 13px;
+  font-size: var(--fs-md);
   color: var(--text-dim);
   margin-bottom: 6px;
 }
 
 :where(.corner-tools, .corner-panel) .err-text {
- color: var(--err); font-size: 13px;
+ color: var(--err); font-size: var(--fs-md);
 }
 
 :where(.corner-tools, .corner-panel) .pill {
   display: inline-block;
-  padding: 2px 10px;
-  border-radius: 999px;
-  font-size: 11px;
+  padding: 2px var(--sp-2);
+  border-radius: var(--r-pill);
+  font-size: var(--fs-xs);
   letter-spacing: 0.06em;
   border: 1px solid var(--glass-border);
   color: var(--text-dim);
@@ -560,54 +598,100 @@ a.corner-tool { text-decoration: none; }
 
 :where(.corner-tools, .corner-panel) .chip {
   appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--h-md);
   font: inherit;
-  font-size: 13px;
-  padding: 7px 14px;
-  border-radius: 999px;
+  font-size: var(--fs-md);
+  font-weight: 500;
+  line-height: var(--lh-tight);
+  padding: 0 var(--sp-3);
+  border-radius: var(--r-pill);
   border: 1px solid var(--control-border);
   background: var(--inner-bg);
   color: var(--text-dim);
   cursor: pointer;
-  transition: color 0.15s var(--ease), border-color 0.15s var(--ease), background 0.15s var(--ease);
+  transition: color var(--dur-fast) var(--ease), border-color var(--dur-base) var(--ease), background var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
   white-space: nowrap;
 }
 
-:where(.corner-tools, .corner-panel) .chip:hover {
- color: var(--text);
+:where(.corner-tools, .corner-panel) .chip:hover:not(:disabled) {
+ color: var(--text); border-color: var(--hover-border);
+}
+
+:where(.corner-tools, .corner-panel) .chip:active:not(:disabled) {
+ transform: scale(0.97);
+}
+
+:where(.corner-tools, .corner-panel) .chip:focus-visible {
+ outline: var(--focus-ring); outline-offset: var(--focus-offset);
 }
 
 :where(.corner-tools, .corner-panel) .chip.active {
   color: var(--accent);
-  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border-color: var(--selected-border);
+  background: var(--selected-bg);
+}
+
+:where(.corner-tools, .corner-panel) .chip:disabled {
+ opacity: 0.45; cursor: not-allowed;
 }
 
 :where(.corner-tools, .corner-panel) .chip-row {
   display: flex;
-  gap: 8px;
+  gap: var(--sp-2);
   flex-wrap: wrap;
 }
 
 :where(.corner-tools, .corner-panel) .close-x {
   appearance: none;
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
   background: transparent;
   border: none;
+  border-radius: var(--r-sm);
   color: var(--text-dim);
-  font-size: 20px;
+  font: inherit;
+  font-size: var(--fs-lg);
+  line-height: 1;
   cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 8px;
-  transition: color 0.15s var(--ease);
+  transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
 }
 
-:where(.corner-tools, .corner-panel) .close-x:hover {
- color: var(--text);
+:where(.corner-tools, .corner-panel) .close-x:hover:not(:disabled) {
+ color: var(--text); background: var(--hover-tint);
+}
+
+:where(.corner-tools, .corner-panel) .close-x:active:not(:disabled) {
+ transform: scale(0.97);
+}
+
+:where(.corner-tools, .corner-panel) .close-x:focus-visible {
+ outline: var(--focus-ring); outline-offset: var(--focus-offset);
+}
+
+:where(.corner-tools, .corner-panel) .close-x:disabled {
+ opacity: 0.45; cursor: not-allowed;
+}
+
+:where(.corner-tools, .corner-panel) .close-x:empty::before {
+  content: "";
+  width: 18px;
+  height: 18px;
+  background-color: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 6 6 18'/%3E%3Cpath d='m6 6 12 12'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 6 6 18'/%3E%3Cpath d='m6 6 12 12'/%3E%3C/svg%3E") center / contain no-repeat;
 }
 
 :where(.corner-tools, .corner-panel) .divider {
   height: 1px;
   background: var(--line-soft);
-  margin: 12px 0;
+  margin: var(--sp-3) 0;
   border: none;
 }
 
@@ -626,61 +710,65 @@ a.corner-tool { text-decoration: none; }
 /* ---------- 应用切换器（右上角九宫格，switcher.js）---------- */
 
 /* 位置、底色、开合见 .corner-panel */
+/* 工具位里的三种菜单（应用切换器 / 账户菜单 / 语言列表）与 .menu-item 同一套（v0.28.0）：
+   行最低 36、14px、圆角 8、左右 12；弹层内距 8，外圆角 16 = 8 + 8（同心） */
 .app-switcher {
   width: 280px;
   max-height: min(70vh, 520px);
-  padding: 6px;
+  padding: var(--sp-2);
 }
 
 .app-switcher-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 9px 10px;
-  border-radius: 10px;
+  gap: var(--sp-3);
+  min-height: var(--h-row);
+  padding: var(--sp-1) var(--sp-3);
+  border-radius: var(--r-sm);
   text-decoration: none;
   color: var(--text);
-  transition: background 0.15s var(--ease);
+  transition: background var(--dur-fast) var(--ease);
 }
 .app-switcher-item:hover { background: var(--hover-tint); }
-.app-switcher-item.is-current { background: var(--inner-bg); }
+.app-switcher-item.is-current { background: var(--selected-bg); }
+.app-switcher-item:focus-visible { outline: var(--focus-ring); outline-offset: -2px; }
 .app-switcher-portal .app-switcher-title { font-weight: 600; }
 
 .app-switcher-dot {
   flex: none;
   width: 28px;
   height: 28px;
-  border-radius: 8px;
+  border-radius: var(--r-sm);
   display: grid;
   place-items: center;
-  font-size: 13px;
+  font-size: var(--fs-md);
   font-weight: 700;
   color: var(--on-accent);
   background: var(--grad);
 }
 .app-switcher-text { display: flex; flex-direction: column; min-width: 0; }
-.app-switcher-title { font-size: 14px; line-height: 1.3; }
+.app-switcher-title { font-size: var(--fs-base); line-height: var(--lh-snug); }
 .app-switcher-host {
-  font-size: 11px;
+  font-size: var(--fs-xs);
   color: var(--text-dim);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.app-switcher-sep { height: 1px; background: var(--line-soft); margin: 6px 4px; }
-.app-switcher-msg { padding: 14px 10px; font-size: 13px; color: var(--text-dim); text-align: center; }
+.app-switcher-sep { height: 1px; background: var(--line-soft); margin: var(--sp-1) var(--sp-2); }
+.app-switcher-msg { padding: var(--sp-3); font-size: var(--fs-md); color: var(--text-dim); text-align: center; }
 
 /* ---------- 账户菜单（右上角登录 / 头像，account.js）---------- */
 
 /* 未登录：图标 + 文字，宽度随内容，其余沿用 .corner-tool */
 .corner-tool.account-login {
   width: auto;
-  padding: 0 11px 0 9px;
+  padding: 0 var(--sp-3) 0 var(--sp-2);
   display: inline-flex;
   align-items: center;
   gap: 6px;
   font: inherit;
-  font-size: 13px;
+  font-size: var(--fs-md);
   font-weight: 500;
 }
 
@@ -688,28 +776,28 @@ a.corner-tool { text-decoration: none; }
 .corner-tool.account-avatar {
   border-radius: 50%;
   font: inherit;
-  font-size: 14px;
+  font-size: var(--fs-base);
   font-weight: 700;
   color: var(--on-accent);
   background: var(--grad);
   border-color: transparent;
 }
 .corner-tool.account-avatar[aria-expanded="true"] {
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent);
+  box-shadow: 0 0 0 3px var(--selected-border);
 }
 
 /* 面板与切换器同位、同层（同一时刻只开一个，见 corner.js claimCornerPanel） */
 /* 位置、底色、开合见 .corner-panel */
 .account-menu {
   width: 260px;
-  padding: 6px;
+  padding: var(--sp-2);
 }
 
 .account-menu-head {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 9px 10px;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
   min-width: 0;
 }
 .account-menu-dot {
@@ -719,7 +807,7 @@ a.corner-tool { text-decoration: none; }
   border-radius: 50%;
   display: grid;
   place-items: center;
-  font-size: 13px;
+  font-size: var(--fs-md);
   font-weight: 700;
   color: var(--on-accent);
   background: var(--grad);
@@ -727,7 +815,7 @@ a.corner-tool { text-decoration: none; }
 .account-menu-name {
   flex: 1;
   min-width: 0;
-  font-size: 14px;
+  font-size: var(--fs-base);
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -736,23 +824,29 @@ a.corner-tool { text-decoration: none; }
 
 .account-menu-item {
   appearance: none;
-  display: block;
+  display: flex;
+  align-items: center;
   width: 100%;
-  padding: 9px 10px;
+  min-height: var(--h-row);
+  padding: 0 var(--sp-3);
   border: none;
-  border-radius: 10px;
+  border-radius: var(--r-sm);
   background: transparent;
   font: inherit;
-  font-size: 14px;
+  font-size: var(--fs-base);
+  line-height: var(--lh-snug);
   text-align: left;
   color: var(--text);
   cursor: pointer;
-  transition: background 0.15s var(--ease), color 0.15s var(--ease);
+  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 .account-menu-item:hover:not(:disabled) { background: var(--hover-tint); }
-.account-menu-item.danger:hover:not(:disabled) { color: var(--err); }
+.account-menu-item:focus-visible { outline: var(--focus-ring); outline-offset: -2px; }
+/* 破坏性项（退出登录）：与 .menu-item.danger 一致——常驻 --danger 字，悬停衬 12% 底 */
+.account-menu-item.danger { color: var(--danger); }
+.account-menu-item.danger:hover:not(:disabled) { background: color-mix(in srgb, var(--danger) 12%, transparent); }
 .account-menu-item:disabled { opacity: 0.45; cursor: not-allowed; }
-.account-menu-err { padding: 4px 10px 8px; }
+.account-menu-err { padding: var(--sp-1) var(--sp-3) var(--sp-2); }
 .account-menu-err[hidden] { display: none; }
 
 /* ---------- 语言列表（.locale-menu，locale-toggle.js）---------- */
@@ -760,37 +854,41 @@ a.corner-tool { text-decoration: none; }
 /* 位置、底色、开合见 .corner-panel */
 .locale-menu {
   width: 200px;
-  padding: 6px;
+  padding: var(--sp-2);
 }
 
 .locale-menu-item {
   appearance: none;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--sp-3);
   width: 100%;
-  padding: 8px 10px;
+  min-height: var(--h-row);
+  padding: 0 var(--sp-3);
   border: none;
-  border-radius: 10px;
+  border-radius: var(--r-sm);
   background: transparent;
   font: inherit;
-  font-size: 14px;
+  font-size: var(--fs-base);
+  line-height: var(--lh-snug);
   text-align: left;
   color: var(--text);
   cursor: pointer;
-  transition: background 0.15s var(--ease), color 0.15s var(--ease);
+  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 .locale-menu-item:hover { background: var(--hover-tint); }
-.locale-menu-item.active { color: var(--accent); background: var(--inner-bg); }
+.locale-menu-item:focus-visible { outline: var(--focus-ring); outline-offset: -2px; }
+.locale-menu-item.active { color: var(--accent); background: var(--selected-bg); }
 
+/* 行 36 里的短名方块 24（≤24 档圆角 6），上下各留 6 */
 .locale-menu-short {
   flex: none;
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   display: grid;
   place-items: center;
-  border-radius: 8px;
-  font-size: 12px;
+  border-radius: var(--r-xs);
+  font-size: var(--fs-xs);
   font-weight: 700;
   color: var(--text-dim);
   background: var(--inner-bg);
