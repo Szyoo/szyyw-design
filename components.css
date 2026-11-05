@@ -979,8 +979,13 @@ input[type="month"].field::-webkit-date-and-time-value {
   gap: var(--sp-2);
 }
 
-.field-row > .field { flex: 1 1 12rem; width: auto; }
+.field-row > :where(.field, .field-wrap) { flex: 1 1 12rem; width: auto; }
 .field-row > :where(.btn, .btn-ghost, button, .pill, .chip) { flex: none; }
+/* v0.28.1：有输入框的行里，.btn / .btn-ghost（含 .btn-small）拉到与输入框同高——输入框 16px 字号防 iOS 缩放，
+   触屏下 .field.small 也是 40，按钮靠自身高度总差一截。换到下一行的按钮只跟所在行等高。
+   .btn-icon / .pill / .chip 不拉（方形图标键、标签不该变高）。拉高后的 .btn-small 圆角跟输入框走 lg 档。 */
+.field-row:has(> :is(.field, .field-wrap)) > :is(.btn, .btn-ghost) { align-self: stretch; }
+.field-row:has(> .field:not(.small), > .field-wrap > .field:not(.small)) > .btn-small { border-radius: var(--r-md); }
 /* 行内标签：去掉全局 label 的块级 + 下边距，和控件居中对齐 */
 .field-row > label { margin: 0; }
 

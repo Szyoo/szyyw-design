@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.28.1 — 2026-11-05
+
+- 修：`.field-row` 里按钮比输入框矮（`.btn-small` 36 对 `.field` 44；输入框为防 iOS 聚焦缩放固定 16px 字号）。行里有 `.field` / `.field-wrap` 时，
+  `.btn` / `.btn-ghost`（含 `.btn-small`）`align-self: stretch` 与输入框同高；拉高的 `.btn-small` 圆角跟输入框走 12（`.field.small` 行仍 8）。
+  只有按钮的 `.field-row`、`.btn-icon` / `.pill` / `.chip` 不受影响；换到下一行的按钮只跟所在行等高。
+- `.field-row > .field-wrap` 与 `.field` 一样吃剩余宽度（之前按内容宽）。
+
 ## v0.28.0 — 2026-11-04
 
 **刻度 token + 全部现有组件按刻度统一**（DESIGN.md §3.1，手测页 `demo/foundations.html`）。类名、标记、JS API 不变，升级即生效；以下可见变化都是有意的。
