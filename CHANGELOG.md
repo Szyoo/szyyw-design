@@ -1,5 +1,38 @@
 # Changelog
 
+## v0.30.0 — （未发布）
+
+**通用组件第 3 批**（DESIGN.md §16.4，手测页 `demo/components-v030.html`）：各站还在手写的形态收进包里，全部按 §3.1 刻度、与 `.dot` / `.pill` 同一色族。纯新增，旧类保留。
+
+**新增**
+- 步骤条 `.steps > .step`（`.step-marker` `.step-body` > `.step-title` `.step-sub` `.step-desc`，`.step-end`）：状态 `.done` / `.current`（`[aria-current=step]`）/ `.err` / `.blocked`，
+  标记留空自动画序号 / 勾 / 叉；缺省横向、≤640px 自动纵向，`.vertical` / `.horizontal` / `.scroll` / `.compact`；`.step-body` 可写成 a / button。
+- 时间线 `.timeline > .timeline-item`（`.dot` + `.timeline-main` > `.timeline-head`（`.timeline-title` `.timeline-time`）`.timeline-desc`）：`.current` `.muted` `.err`，`.compact`。
+- 表格增强：排序按钮 `th[aria-sort] > button.th-sort`（图标随方向）+ 新模块 `./table` 的 `enhanceSortTable`；可点 / 选中行 `tr[tabindex]` / `tr[aria-selected]`；行状态 `tr.ok/.warn/.err/.info/.idle`（左侧色条）；
+  `.tbl.compact` `.tbl.numeric` `.tbl.reflow`（≤640px 卡片化，`td[data-label]`）`.col-sticky` `.col-actions` `tr.total` `tr.empty-row` `.table-wrap.bleed`。
+- 缩略图条 `.thumb-strip`（`.thumb-tile` 选中 / 加载 / 失败、`.thumb-more`、`.thumb-add`、`.thumb-remove`，`.sm` `.lg` `.wrap`）、可选缩略图网格 `.thumb-grid`（选中带勾）、带配图的选项卡 `.choice-card`（`.choice-group`）。
+- 统计数字 `.stat`（`.ok/.warn/.err/.info` 整块语义色、`.compact`）、`.stat-unit` `.stat-foot` `.stat-trend`（`.up/.down/.flat` + 色）；`.stat-grid` 新旋钮 `--stat-min`。
+- 键值列表 `dl.kv` 补 `.end`（值靠右）`.compact`、`<div>` 包 dt + dd 的写法；可复制值 `.copyable` + `[data-copy]`，新模块 `./copy`（`copyText` `mountCopy` `enhanceCopyButtons`）。
+- 底部操作条 `.action-bar`（`.action-bar-text` `.action-bar-actions`，`.sticky`）：fixed 贴底、安全区、层级 40；显示时自动抬高 toast、给 `.app-main` 末尾留白。
+- 列表行 `.list.multiline`（标题副标题换行、顶部对齐）、`.list.dense`（36 高，触屏可点行仍 40）、`.row-lead.lg`（52 大缩略图）；`.avatar.lg`（44）。
+- 可点胶囊选中态 `button.pill[aria-pressed=true]`（无色胶囊着色族，语义胶囊加深描边）。
+- 空状态补充：`.empty` 里的 `./icons` 图标、`.empty-title` `.empty-desc` `.empty-actions`、`.empty.compact`。
+- 终端窗「回到最新」浮钮 `.term-follow`。
+- `confirm({ ack })`：勾选确认，勾上前确认键禁用（`.confirm-ack`）；不给 `ack` 时行为不变。
+- 图标（lucide-static 1.68.0 重新生成，73 → 88 枚）：`arrow-down-right` `chevrons-up-down` `sparkles` `calculator` `package` `pointer`，
+  天气 `cloud` `cloud-sun` `cloud-moon` `cloud-rain` `cloud-drizzle` `cloud-snow` `cloud-lightning` `cloud-fog` `wind`。
+
+**可见变化**
+- 无。已有类的外观都不变；`.stat-grid` 的列宽下限改为读 `--stat-min`（缺省仍是 150px）。
+- 注意同名：`.tbl tr.empty-row > td`、`.stat-unit`、`.timeline-time` 与个别应用自写的同名类语义相同，包里的规则会叠上去（留白略有差别），迁移时删掉自写即可。
+
+**应用侧怎么迁**（逐条前后对照见 DESIGN.md §16.4）
+- 自写步骤（`.flow-step` `.guide-step`）→ `.steps`；借 `.msg-list` 画的物流节点、`.timeline-row` → `.timeline`。
+- 自写排序箭头 / 数字表 / 状态色条 / 空行 / 操作列 / 类表格网格 → `.th-sort` + `enhanceSortTable`、`.tbl.numeric`、`tr.err`、`tr.empty-row`、`.col-actions`、`.tbl.reflow`。
+- 照片格、附件盘、候选图、配图单选卡 → `.thumb-strip` / `.thumb-grid` / `.choice-card`；`.stat-card.alert` → `.stat.err`，`.stat-detail` → `.stat > .kv.end`。
+- 自写复制按钮 → `[data-copy]` + `enhanceCopyButtons`；`.ship-bar` / `.pol-bar` → `.action-bar`；`.pill.picked` → `aria-pressed="true"`；emoji 空状态 → `.empty` + 图标。
+- 新增运行时文件 `copy.js` `table.js`：用 `sync.sh` 同步的应用重新同步即可（已在清单里）。
+
 ## v0.29.0 — 2026-11-08
 
 **通用组件**（DESIGN.md §16.3，手测页 `demo/components-v029.html`）：多个站点各自手写的形态收进包里，全部按 §3.1 刻度。纯新增，旧类保留。

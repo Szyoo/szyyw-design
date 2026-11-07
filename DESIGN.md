@@ -130,7 +130,7 @@ z-index 1   .app-frame       内容层
 z-index 20  .section-head.sticky  吸顶小标题（v0.22.0，内容层里；被标题行盖过）
 z-index 21  .page-head.sticky     吸顶标题行（v0.22.0；低于应用自己的顶栏 30，不盖工具位 / 弹层 / sheet）
 z-index 30  侧栏 / 顶栏（sticky/fixed + backdrop-blur）
-z-index 40  底部导航
+z-index 40  底部导航 / .action-bar 底部操作条（v0.30.0，§16.4）
 z-index 45  .corner-tools    右上角工具位
 z-index 46  .corner-panel    工具位弹层（外观 / 背景参数、应用切换器、账户菜单、语言；无遮罩）
 z-index 50  .overlay         弹层遮罩（Portal 挂 body，避开 transform 包含块陷阱）
@@ -655,6 +655,15 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
   `.bar` 语义 `.ok/.warn/.err/.info` `.bar.stacked` `.bar-seg` `.bar-mark` `.bar.indeterminate` `.meter` `.meter-head` `.meter-label` `.meter-value`
   `.field-wrap.search` `.chip-row.scroll` `.filter-bar` `.filter-meta` `.auth-shell` `.auth-card` `.auth-sub` `.auth-foot`；token `--h-item` `--dot`；CSS 变量 `--w` `--c` `--at`；
   JS `./confirm`（`armConfirm` `confirm` `CONFIRM_TEXTS`）`./disclosure`（`mountDisclosure` `enhanceDisclosures`）
+- v0.30.0 新增（§16.4）：`.steps`（`.vertical` `.horizontal` `.scroll` `.compact`）`.step`（`.done` `.current` / `[aria-current=step]` `.err` `.blocked`）`.step-marker` `.step-body` `.step-title` `.step-sub` `.step-desc` `.step-end`
+  `.timeline`（`.compact`）`.timeline-item`（`.current` `.muted` `.err`）`.timeline-main` `.timeline-head` `.timeline-title` `.timeline-time` `.timeline-desc`
+  表格：`.th-sort` `tr[aria-selected]` `tr[tabindex]` `tr.ok/.warn/.err/.info/.idle` `tr.total` `tr.empty-row` `.tbl.compact` `.tbl.numeric` `.tbl.reflow`（`td[data-label]`）`.col-sticky` `.col-actions` `.table-wrap.bleed`
+  `.thumb-strip`（`.sm` `.lg` `.wrap`）`.thumb-grid` `.thumb-tile`（`.selected` `.loading` `.error`）`.thumb-more` `.thumb-add` `.thumb-remove` `.choice-group` `.choice-card` `.choice-body` `.choice-title` `.choice-sub` `.choice-img`
+  `.stat`（`.ok` `.warn` `.err` `.info` `.compact`）`.stat-unit` `.stat-foot` `.stat-trend`（`.up` `.down` `.flat` + 色）`.kv.end` `.kv.compact` `.copyable` `[data-copy]` `[data-copied]`
+  `.action-bar`（`.sticky`）`.action-bar-text` `.action-bar-actions` `.list.multiline` / `.list-row.multiline` `.list.dense` / `.list-row.dense` `.row-lead.lg` `.avatar.lg`
+  可点胶囊选中 `button.pill[aria-pressed=true]` `.empty-title` `.empty-desc` `.empty-actions` `.empty.compact` `.term-follow` `.confirm-ack`；
+  CSS 变量 `--stat-min` `--thumb` `--thumb-min` `--thumb-ratio` `--action-bar-offset` `--action-bar-w`（应用设）与 `--action-bar-space`（包写，可读）；
+  JS `./copy`（`copyText` `mountCopy` `enhanceCopyButtons` `COPY_TEXTS`）`./table`（`enhanceSortTable`）、`confirm({ ack })`；`--mask-*` 是内部变量，别引用
 - v0.24.0 新增（§16）：`.depth-carousel` 及其 `__*` 子类与状态类、CSS 变量 `--dc-height` `--dc-min-height` `--dc-tint` `--dc-fit`；JS `./depth-carousel`（`mountDepthCarousel`）
 - v0.15.0 新增（§14）：JS `./techtext`（`mountTechText` `enhanceTechText` `DEFAULTS`）、`mountChrome({ techText })` 与 `handle.techText`；
   类 `.tech-text`（JS 加在被增强的元素上，可用来写选中色等外观）。`.tech-text-canvas` 是内部实现，别套用
@@ -1064,12 +1073,13 @@ cell.innerHTML = iconSvg("copy");                    // 字符串：模板拼接
   `.btn` `.btn-ghost` `.chip` `.tab` `.seg > *` 里为 1.15em，并与文字间隔 0.4em（含图标时这些元素改为 `inline-flex`）；`.link` 里跟文字同行。正文里 1em、对齐基线。
 - 名字是编译期穷举的（`IconName`），运行时未知名字直接抛错，不画占位；`hasIcon(name)` 给外部输入做判断。
   另认 Lucide 改名前的常用旧名：`alert-triangle` `alert-circle` `help-circle` `check-circle` `x-circle` `more-horizontal` `more-vertical` `home`。
-- 收录（73 枚，`ICON_NAMES`；手测页 `demo/icons.html` 全列）：
-  增减 `x` `plus` `minus` `check`；方向 `chevron-left/right/up/down` `chevrons-left/right` `arrow-left/right/up/down` `arrow-up-right` `arrow-left-right`；
+- 收录（88 枚，`ICON_NAMES`；手测页 `demo/icons.html` 全列）：
+  增减 `x` `plus` `minus` `check`；方向 `chevron-left/right/up/down` `chevrons-left/right` `arrow-left/right/up/down` `arrow-up-right` `arrow-left-right` `arrow-down-right` `chevrons-up-down`（v0.30.0）；
   操作 `copy` `clipboard` `external-link` `link` `refresh-cw` `rotate-ccw` `search` `filter` `trash-2` `pencil` `save` `download` `upload` `share-2` `send`；
   视图 `zoom-in` `zoom-out` `maximize` `minimize` `maximize-2` `minimize-2` `scan`（1:1 原尺寸）`eye` `eye-off` `menu` `ellipsis` `ellipsis-vertical` `grip-vertical` `settings` `sliders-horizontal`；
   状态 `info` `circle-help` `circle-alert` `triangle-alert` `circle-check` `circle-x` `loader` `loader-circle`（配 `spin`）；
-  对象 `user` `users` `lock` `log-in` `log-out` `house` `calendar` `clock` `mail` `mic` `bell` `image` `file` `file-text` `folder` `star` `sun` `moon` `monitor`。
+  对象 `user` `users` `lock` `log-in` `log-out` `house` `calendar` `clock` `mail` `mic` `bell` `image` `file` `file-text` `folder` `star` `sun` `moon` `monitor`；
+  v0.30.0 补 `sparkles`（助手入口，替代 ✦）`calculator` `package`（替代 📦）`pointer`（点按提示，替代 👆），天气 `cloud` `cloud-sun` `cloud-moon` `cloud-rain` `cloud-drizzle` `cloud-snow` `cloud-lightning` `cloud-fog` `wind`（配 `sun` / `moon`）。
 - 要加图标：在 `scripts/build-icons.mjs` 的 `NAMES` 里加 Lucide 名字，按脚本头的说明从 `lucide-static` 重新生成，发版。不在应用里手抄 SVG。
 - 包内已改用：外观弹层关闭键、Swipe Toast 的语气图标与关闭键、分页器翻页键、Glide Select 的箭头与勾、Depth Carousel 的左右键与加载失败图标。
   右上角工具位的三枚图标（切换器 / 账户 / 外观）与 Branched Menu、Status Mark、Lattice Loader 的图形按各自设计保留。
@@ -1225,6 +1235,175 @@ cell.innerHTML = iconSvg("copy");                    // 字符串：模板拼接
 - `.field[aria-invalid="true"]` / `.field.invalid` 在 `.field-wrap`（清除键）、`.search`（放大镜同时变红）、textarea、日期类输入里都是红描边 + 红焦点环。
 - Glide Select：原生 select 上的 `aria-invalid` / `.invalid` 由 glide-select.js 同步到触发器（MutationObserver 跟进），套 `.field` 的与紧凑触发器都变红。
 - `.form-row`：label 下 6px → 控件 → `.field-msg` / `.hint` 上 4px；textarea 改为顶对齐（`vertical-align: top`），下方说明与单行输入框同距（之前多出约 5px 行距）。
+
+## 16.4 通用组件（v0.30.0，第 3 批）
+
+各站还在手写、包里没有的形态：步骤条、时间线、表格增强、缩略图条 / 网格与选项卡、统计数字、键值列表补充、底部操作条，以及迁移中补的列表行多行 / 密集 / 大缩略图、
+可点胶囊选中态、空状态、终端「回到最新」浮钮、确认框勾选项。全部按 §3.1 刻度，颜色只从 token；状态色与 `.dot` / `.pill` / `.callout` 同一色族（淡底 tint + 45% 描边），
+选中一律着色族 `--selected-*`。纯新增，旧类不删（`.stat-grid` 多了 `--stat-min` 旋钮，缺省值不变）。手测页 `demo/components-v030.html`（`?scheme=light`，`?bar=0` 不显示操作条）。
+
+### 步骤条 `.steps > .step`
+
+```html
+<ol class="steps">
+  <li class="step done"><span class="step-marker"></span><span class="step-body"><span class="step-title">提交</span><span class="step-sub">11-02</span></span></li>
+  <li class="step current" aria-current="step"><span class="step-marker"></span><span class="step-body"><span class="step-title">打包</span></span></li>
+  <li class="step"><span class="step-marker"></span><span class="step-body"><span class="step-title">送达</span></span></li>
+</ol>
+```
+
+- 标记 `.step-marker` 28（`--h-sm`）圆：待办 `--inner-bg` + 细边、序号（CSS 计数器，标记留空时自动）；`.done` 绿淡底 + 勾；`.current` / `[aria-current=step]` 实心 accent + 4px `--selected-bg` 光圈；
+  `.err` 红淡底 + 叉、标题标红；`.blocked`（前置未完成）标记虚线、标题淡出。标记里也可以放 `./icons` 图标或自定文字。
+- 连接线 2px `--line-soft`，完成段变绿 45%。有当前步时后面的待办标题淡一档；没有当前步（纯说明手顺）时标题照常。
+- 正文：`.step-title` 14/500（当前 600）、`.step-sub` 12、`.step-desc` 13 段落（正文行高）；`.step-end` 行尾（状态 / 按钮）：纵向时靠右，窄屏换到正文下方。
+- 排布：缺省横向、**≤640px 自动转纵向**；`.vertical` 一直纵向；`.horizontal` 一直横向（短标签）；`.scroll` 横向不换、每步至少 128、放不下横滚。`.compact`：标记 16、不画序号。
+- 可点（向导回到某步）：`.step-body` 写成 `a` / `button`，悬停衬底向外扩 4 / 8（画在伪元素上，不挤布局）、焦点环、禁用 .45。
+- 迁移：月末流程 `.flow-step`（`is-done` / `is-next` / `is-blocked` + `.flow-state`）→ `.step.done` / `.current` / `.blocked` + `.step-end`；
+  门户页 01–04 的 `.guide-step` → `.steps.vertical` + `.step-desc`（渐变序号字删掉）。
+
+### 时间线 `.timeline > .timeline-item`
+
+```html
+<ol class="timeline">
+  <li class="timeline-item current">
+    <span class="dot info pulse"></span>
+    <div class="timeline-main">
+      <div class="timeline-head"><span class="timeline-title">到达投递局</span><time class="timeline-time">11-08 14:20</time></div>
+      <p class="timeline-desc">中央邮局</p>
+    </div>
+  </li>
+</ol>
+```
+
+- 状态点直接用 `.dot`（`.ok .warn .err .info .idle .pulse`），竖线 2px `--line-soft` 连到下一条圆点、两头各留 4px；圆点对齐标题第一行中线。
+- 头行「标题（吃剩余宽）… 时间（等宽数字、不换行）」，放不下时时间换到标题下一行；`.timeline-desc` 13 次要说明。
+- 条目：`.current` 标题加粗（最新一条）、`.muted` 标题淡出 + 点淡化、`.err` 标题与说明标红。`.compact` 字号与行距小一档。
+- 直接放卡片里，不需要负外边距对齐（之前借 `.msg-list` 要 `margin: 0 -10px`）。
+- 迁移：订单卡物流节点 `.msg-list.track-steps > .msg-item`（借通知面板的类、关掉悬停）→ `.timeline`；任务时间线 `.timeline-list > .timeline-row`
+  （时间 | 胶囊 | 状态 + 详情三列）→ `.timeline-item`，胶囊放进 `.timeline-head`，`is-fail` → `.err`。
+
+### 表格增强（都是 `.tbl` / `.table-wrap` 的修饰，不加就和以前一样）
+
+```html
+<div class="table-wrap bleed">
+  <table class="tbl hover">
+    <thead><tr><th aria-sort="none" class="col-sticky"><button type="button" class="th-sort">名称</button></th>
+      <th aria-sort="descending" class="col-num"><button type="button" class="th-sort">金额</button></th><th class="col-actions" aria-label="操作"></th></tr></thead>
+    <tbody>
+      <tr tabindex="0" aria-selected="true" class="err"><td class="col-sticky">…</td><td class="col-num" data-sort="12480">¥12,480</td><td class="col-actions">…</td></tr>
+      <tr class="empty-row"><td colspan="3">暂无记录</td></tr>
+    </tbody>
+    <tfoot><tr class="total">…</tr></tfoot>
+  </table>
+</div>
+```
+
+| 件 | 用法 |
+|---|---|
+| `th[aria-sort] > button.th-sort` | 整格按钮；图标随 aria-sort：none 淡色上下箭头、ascending / descending accent 箭头（`./icons` 同源）；`.col-num` 列图标在文字左边。有按钮时旧的 `th::after` 字符箭头自动去掉 |
+| `./table` `enhanceSortTable(table, { sort?, firstDirection?, onSort? })` | 点按升 / 降序切换并同步各列 aria-sort；缺省按 `data-sort` 或文字重排 tbody（数字感知、空值垫底、稳定；`tr.empty-row` / `tr.total` 不动）。React / Vue 管理的行或服务端排序传 `sort: false`，只用 `onSort` → `{ sortBy(i, dir), state, destroy() }` |
+| `tr[tabindex]` / `tr[aria-selected]` | 可点行：指针、悬停衬底、焦点环向内收；`aria-selected="true"` 选中着色族（格子底 + 1px 外圈）。**不认 `.selected`**（已有应用拿它写自己的选中样式） |
+| `tr.ok/.warn/.err/.info/.idle` | 首格左侧 3px 色条（同 `.dot` 色族），`.err` 再加淡红底 |
+| `.tbl.compact` | 格子内距 4 / 8、12px |
+| `.tbl.numeric` | 除首列外全部右对齐 + 等宽数字，`tfoot` 为合计行（600 + 上边线） |
+| `tr.total` | 任意位置的合计行 |
+| `tr.empty-row > td[colspan]` | 空状态行：居中、`--text-dim`、上下 32 |
+| `.col-sticky` | 冻结首列（不透明底 + 右侧细线），与 `.tbl.sticky` 吸顶表头叠用时角格在最上层 |
+| `.col-actions` | 操作列：收到内容宽、靠右、不换行 |
+| `.table-wrap.bleed` | 横滚区拉到卡片内边距外（`--inset` 16），首尾列文字仍与卡片内容对齐 |
+| `.tbl.reflow` | ≤640px 每行塌成一块卡片：表头隐藏，`td[data-label]` 前面显示标签、值靠右；没有 `data-label` 的首格当卡片标题；行状态 / 选中改画在整块上 |
+
+吸顶表头沿用 `.tbl.sticky`（v0.13.0，纯 CSS）；`./sticky-heads` 是页面 / 分区标题用的，不用于表格。
+迁移：`.tbl-sort th[aria-sort]::after` 自写箭头 → `.th-sort`；`.tbl.figures`（首列左、其余右、tfoot 加粗）→ `.tbl.numeric`；`tr.degraded/.failed` + 自写色条 → `tr.err/.warn`；
+`.empty-row td` → `tr.empty-row`；`td.acts { width: 1% }` → `.col-actions`；首页总览的类表格网格 `.overview-head` / `.overview-row`（左侧状态色条、窄屏塌成卡片）→ `.tbl.reflow` + `tr.err/.warn/.ok`。
+
+### 缩略图条 `.thumb-strip` · 网格 `.thumb-grid` · 选项卡 `.choice-card`
+
+```html
+<ul class="thumb-strip">
+  <li><button class="thumb-tile" aria-pressed="true"><img src="…" alt="…"></button><button class="thumb-remove" aria-label="删除"></button></li>
+  <li><button class="thumb-tile"><img …><span class="thumb-more">+5</span></button></li>
+  <li><button class="thumb-add" aria-label="添加图片"></button></li>
+</ul>
+<div class="thumb-grid" role="group" aria-label="候选图"><button class="thumb-tile" aria-pressed="true"><img …></button>…</div>
+<div class="choice-group">
+  <label class="choice-card"><input type="radio" name="plan" checked><span class="choice-body"><span class="choice-title">标准</span><span class="choice-sub">每月 5 次</span><img class="choice-img" src="…" alt=""></span></label>
+</div>
+```
+
+- `.thumb-tile`：方块（`--thumb`，缺省 64；`.sm` 48、`.lg` 96），圆角 12（`.sm` 8），图片 cover；描边画在图片之上（1px `--glass-border`）。可点（a / button）时悬停 2px `--hover-border`、按下 .97、焦点环、禁用 .45；
+  选中 `.selected` / `[aria-pressed|aria-selected=true]` / `[aria-current]`：2px accent 内环 + 一圈底色细线（叠在任意图片上都分得出）；`.loading` 转圈、`.error` 红环；`.thumb-more` 是「+N」遮罩。
+- `.thumb-add`：同尺寸虚线框（`--control-border`），空按钮自动画加号，有文字时显示文字。`.thumb-remove`：20 圆、反色（`--text` 底 `--bg` 字）+ 2px 底色描边，悬停变 `--danger`；
+  它是磁贴的**兄弟**（按钮里不能套按钮），贴在右上角，触屏点按区扩到 36。
+- `.thumb-strip`：横向滚动、吸附、给角标与焦点环留 8 的内距（外边距抵消，左缘仍与内容对齐）；`.wrap` 改为换行。
+  `.thumb-grid`：自适应网格（列宽下限 `--thumb-min` 120px，格子按 `--thumb-ratio` 4 / 3 定高），同一块 `.thumb-tile`；选中格左上角多一枚勾（多选一眼可见）。
+- `.choice-card`：带配图的单选 / 多选卡，整块是 `label`；选中跟随里面的 `input:checked`（也认 `.selected` / `[aria-checked=true]`），着色族；悬停描边、键盘焦点整卡画环、input 禁用整卡 .45。
+  `.choice-group` 是自适应网格（最小 14rem）。
+- 与 Depth Carousel 的关系：缩略图条 / 网格负责**挑选与编辑**（选中、添加、删除、上传状态），点开大图仍交给 `mountDepthCarousel`（§16，放 `.overlay` + `.sheet.wide`）；
+  两者并排时用 Depth Carousel 的 `onChange` 同步缩略图的 `aria-current`，点缩略图调 `goTo(i)`。
+- 迁移：照片格 `.thumbs > .thumb-btn > img.thumb` + `.thumb-more` / `.thumb-empty`、聊天附件盘 `.bridge-att` + `.bridge-att-x` → `.thumb-strip`；
+  候选图多选 `.cand-grid > .cand-thumb.picked` → `.thumb-grid`；配图单选卡 `.opt.picked` → `.choice-card`。
+
+### 统计数字 `.stat`（在 `.stat-grid` / `.stat-label` / `.stat-value` / `.stat-sub` 上补）
+
+```html
+<div class="stat-grid">
+  <div class="glass stat err">
+    <div class="stat-label">失败任务</div>
+    <div class="stat-value">3<span class="stat-unit">件</span></div>
+    <div class="stat-foot"><span class="stat-trend up err">+2</span><span class="stat-sub">较昨日</span></div>
+  </div>
+</div>
+```
+
+- `.stat` 是一个统计块：配 `.glass`（内距 16）或 `.inner`（12）时自带内距；裸用无内距（一张卡里排几组数）。数字等宽。
+- 语义 `.ok .warn .err .info`：数字着色；配 `.glass` / `.inner` 时整块淡底 + 45% 描边（同 `.pill` / `.callout`）。
+- `.stat-unit` 单位（12/500、`--text-dim`，跟在数字后）；`.stat-foot` 一行放 `.stat-trend` + `.stat-sub`；`.stat-trend` 变化量（12/600、等宽），`.up` / `.down` / `.flat` 画方向箭头，
+  颜色另加 `.ok/.warn/.err/.info`——涨不一定是好事（支出涨用 `.up.err`）。`.compact`：内距 12、数字 18。
+- 卡里的明细：`.stat > dl.kv.end`（上方细线隔开，值 600）。`.stat-grid` 新旋钮 `--stat-min`（列宽下限，缺省 150px）。
+- 与旧类：`.stat-card`（v0.13.0）保留，等价于 `.glass.stat` 的内距；两者可以叠用（`.glass.stat-card.stat.err`）。
+- 迁移：`.stat-card.alert`（自写红底红字）→ `.stat.err`；`.stat-detail`（dl 明细）→ `.stat > .kv.end`，`.stat-unit` 名字相同可直接删自写；`.dv-stats .stat-card` 的小内距 → `.stat.compact`。
+
+### 键值列表补充（在 `dl.kv` 上）
+
+- `.kv.end`：值列靠右、等宽数字（明细 / 金额），窄屏也保持左右两列；`.kv.compact`：行距小一档。`<div>` 包住 `dt + dd` 的写法同样成立（div 不参与网格）。
+- 值可复制：`<dd class="copyable"><span>ABC-123</span><button type="button" class="btn-icon xs" data-copy aria-label="复制"></button></dd>`；
+  精确指针下悬停 / 聚焦才显示按钮，触屏常显；空按钮自动画 copy 图标，复制成功换成绿勾（`data-copied`）。`.copyable` 也可以用在表格格子等任何地方。
+- **JS `./copy`**：`copyText(text) → Promise<boolean>`（剪贴板不可用时退回 execCommand）；`mountCopy(button, { text?, timeout = 1500, locale?, labels?, onCopy? }) → { copy(), destroy() }`；
+  `enhanceCopyButtons(root?, options?) → () => void` 处理所有 `[data-copy]`。复制的文字依次取 `text` → `data-copy` 的值 → `data-copy-target` 选择器 → 前一个兄弟元素 → 父元素文字；读屏播报「已复制」（zh / ja / en）。
+- 迁移：各处自写的 `navigator.clipboard.writeText` + textarea 兜底 + 1.5s 换勾 → `mountCopy` / `[data-copy]`。
+
+### 底部操作条 `.action-bar`
+
+```html
+<div class="action-bar" role="region" aria-label="已选操作">
+  <div class="action-bar-text">已选 <b>3</b> 项 · 2.40 kg</div>
+  <div class="action-bar-actions"><button class="btn-ghost">清空</button><button class="btn">寄出</button></div>
+</div>
+```
+
+- 缺省 `position: fixed` 贴底居中：宽 `min(--action-bar-w 720px, 100% − 32)`，底距 `--action-bar-offset`（16）+ `env(safe-area-inset-bottom)`；`--sheet-bg` 玻璃 + `--pop-shadow`、圆角 16、入场 `rise`。
+- 层级 40（同底部导航）：低于 `.overlay` / `.sheet` 50、`.menu` 55、toast 60，弹层打开时盖住它。页面有底部导航时设 `--action-bar-offset: calc(var(--nav-h) + 12px)`。
+- 显示时（没有 `hidden`）自动：`--toast-offset` 抬到操作条上方；`.app-main` 末尾补一段同高留白（`::after`，高 `--action-bar-space`），最后一行内容滚得出来。不用 `.app-main` 的页面自己用 `padding-bottom: var(--action-bar-space)`。
+- ≤640px：左右各留 8、按钮换到下一行等分撑满。`.sticky`：改为 `position: sticky` 留在文档流（贴所在滚动容器底部，比如长表单页尾），不触发上面的全局调整。
+- 弹层里的按钮行用 `.sheet-foot`，不要放 `.action-bar`。
+- 迁移：寄出条 `.ship-bar`（fixed + 自写居中 / 安全区）、手机端底部状态条 `.pol-bar` + 手调 `--toast-offset` → `.action-bar`。
+
+### 列表行补充（在 `.list-row` 上）
+
+- **多行** `.list.multiline` / `.list-row.multiline`：`.row-title` / `.row-sub` 不再单行省略，长域名、路线说明整段换行；行改为顶部对齐，头像与 `.row-end` 停在第一行 36 高的带子里（单行的行看起来仍居中）。
+- **密集** `.list.dense` / `.list-row.dense`：36（`--h-row`，同菜单项）、标题 13、行首图标 16 / 头像图 28，给纯展示的长列表（设备、日志摘要）；副标题会把行撑高。可点的行在触屏下仍抬到 `--h-touch` 40。
+- **大缩略图** `.row-lead.lg`：52（`--h-item`，≤520px 44）的图片 / `.thumb-tile`，圆角 8，行高随之变为 60；里面的 `.avatar` 用 44。
+- `.avatar.lg`：44（`--h-lg`）。头像叠放组调研里没有用处，未做。
+- 迁移：应用里对 `.row-title` / `.row-sub` 取消省略的局部覆写 → `.multiline`；设备列表一类的纯展示长列表 → `.list.dense`；商品行 `.prow-img`（行首自写 52 / 44）→ `.row-lead.lg > img`。
+
+### 其他补充
+
+- **可点胶囊选中**：`button.pill` / `a.pill` 加 `[aria-pressed=true]` / `[aria-selected=true]` / `.selected`。无色胶囊用着色族（同 `.chip` 选中）；语义 / 颜色胶囊不换配色（颜色在表意），描边加深到本色并补 1px 内环。迁移：`.pill.picked` → `aria-pressed="true"`。
+- **空状态**（在 `.empty` 上）：直接子级的 `./icons` 图标 40（`--text-dim`）+ `.empty-title`（16/600）+ `.empty-desc`（13，最宽 32em）+ `.empty-actions`（居中按钮行）；`.empty.compact` 留白与图标小一档。
+  旧的 `.empty-icon`（emoji 34px）照常，新代码用图标：🎁 → `package` / `star`，📋 → `file-text`，✅ → `circle-check`。
+- **终端「回到最新」** `.term-follow`：放在 `.term` 里（`.term-body` 之后），贴右下角、终端配色、`./icons` 的 `arrow-down` 可放在文字前；何时显示（用户往上翻了）由应用决定，用 `hidden` 开关。
+- **勾选确认** `confirm({ ack: "我明白…" })`：说明下方加复选框（`.confirm-ack`），勾上之前确认键禁用；不给 `ack` 时与之前完全相同。
 
 ## 17. 出处与许可
 

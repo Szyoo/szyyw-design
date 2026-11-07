@@ -330,6 +330,27 @@ if (await confirm({ title: "删除项目？", danger: true, confirmLabel: "删�
 const name = await confirm({ title: "重命名", input: { value: old, required: true } });   // string | null
 ```
 
+### 通用组件（v0.30.0）
+
+步骤条、时间线、表格增强（排序 / 选中 / 状态行 / 冻结首列 / 窄屏卡片化）、缩略图条与网格、选项卡、统计数字、键值列表复制、底部操作条、空状态，细则见 DESIGN.md §16.4，手测页 `demo/components-v030.html`。
+
+```html
+<ol class="steps"><li class="step done"><span class="step-marker"></span><span class="step-body"><span class="step-title">提交</span></span></li>
+  <li class="step current" aria-current="step"><span class="step-marker"></span><span class="step-body"><span class="step-title">审核</span></span></li></ol>
+<ol class="timeline"><li class="timeline-item"><span class="dot ok"></span><div class="timeline-main">
+  <div class="timeline-head"><span class="timeline-title">已投递</span><time class="timeline-time">11-08 14:20</time></div></div></li></ol>
+<div class="glass stat err"><div class="stat-label">失败</div><div class="stat-value">3<span class="stat-unit">件</span></div></div>
+<dd class="copyable"><span>ABC-123</span><button class="btn-icon xs" data-copy aria-label="复制"></button></dd>
+<div class="action-bar"><div class="action-bar-text">已选 <b>3</b> 项</div><div class="action-bar-actions"><button class="btn">提交</button></div></div>
+```
+
+```js
+import { enhanceSortTable } from "@szyyw/design/table";
+import { enhanceCopyButtons } from "@szyyw/design/copy";
+enhanceSortTable(table, { onSort: ({ index, direction }) => … });   // th[aria-sort] > button.th-sort
+enhanceCopyButtons();                                                // [data-copy] 按钮
+```
+
 ### 刻度与交互状态（v0.28.0）
 
 `tokens.css` 带一套明暗无关的刻度：字号 `--fs-*`、行高 `--lh-*`、圆角 `--r-*`、控件高度 `--h-sm/md/lg`（28 / 36 / 44）、间距 `--sp-1…6`、
@@ -383,8 +404,10 @@ const name = await confirm({ title: "重命名", input: { value: old, required: 
 | `./techtext` | `enhanceTechText`、`mountTechText`、`runningCount`、`DEFAULTS` |
 | `./overlay` | `mountOverlay`（遮罩点击 / Esc 关闭 + body 滚动锁引用计数） |
 | `./depth-carousel` | `mountDepthCarousel`、`DEFAULTS`、`resolveEase`、`cubicBezier`（纵深轮播 / 弹层看图，DESIGN.md §16） |
-| `./confirm` | `armConfirm`、`confirm`、`CONFIRM_TEXTS`（按钮二次确认 / 确认对话框，DESIGN.md §16.3） |
+| `./confirm` | `armConfirm`、`confirm`、`CONFIRM_TEXTS`（按钮二次确认 / 确认对话框，v0.30.0 起 `confirm({ ack })` 勾选确认，DESIGN.md §16.3–§16.4） |
 | `./disclosure` | `mountDisclosure`、`enhanceDisclosures`（按钮式折叠区块，DESIGN.md §16.3） |
+| `./copy` | `copyText`、`mountCopy`、`enhanceCopyButtons`、`COPY_TEXTS`（一键复制，DESIGN.md §16.4） |
+| `./table` | `enhanceSortTable`（可排序表头，DESIGN.md §16.4） |
 | `./icons` | `icon`、`iconSvg`、`enhanceIcons`、`hasIcon`、`ICON_NAMES`、`LUCIDE_VERSION`（Lucide 线性图标，DESIGN.md §16.2） |
 | `./version` | `VERSION`、`REPO` |
 
