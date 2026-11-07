@@ -22,7 +22,7 @@ const NAMES = [
   "x", "plus", "minus", "check",
   // 方向
   "chevron-left", "chevron-right", "chevron-up", "chevron-down", "chevrons-left", "chevrons-right",
-  "arrow-left", "arrow-right", "arrow-up", "arrow-down", "arrow-up-right", "arrow-left-right",
+  "arrow-left", "arrow-right", "arrow-up", "arrow-down", "arrow-up-right", "arrow-left-right", "arrow-down-right", "chevrons-up-down",
   // 操作
   "copy", "clipboard", "external-link", "link", "refresh-cw", "rotate-ccw", "search", "filter",
   "trash-2", "pencil", "save", "download", "upload", "share-2", "send",
@@ -33,7 +33,11 @@ const NAMES = [
   "info", "circle-help", "circle-alert", "triangle-alert", "circle-check", "circle-x", "loader", "loader-circle",
   // 对象
   "user", "users", "lock", "log-in", "log-out", "house", "calendar", "clock", "mail", "mic", "bell",
-  "image", "file", "file-text", "folder", "star", "sun", "moon", "monitor"
+  "image", "file", "file-text", "folder", "star", "sun", "moon", "monitor",
+  // v0.30.0：助手入口 / 计算 / 包裹 / 点按提示
+  "sparkles", "calculator", "package", "pointer",
+  // v0.30.0：天气（sun / moon 见上）
+  "cloud", "cloud-sun", "cloud-moon", "cloud-rain", "cloud-drizzle", "cloud-snow", "cloud-lightning", "cloud-fog", "wind"
 ];
 
 /** Lucide 旧名 → 现名（Lucide 改过名的常用图标，两种写法都认） */
