@@ -15,6 +15,7 @@
      import { confirm } from "@szyyw/design/confirm";
      if (await confirm({ title: "删除项目？", message: "不可撤销", confirmLabel: "删除", danger: true })) …
      const name = await confirm({ title: "重命名", input: { value: old, placeholder: "新名字" } });  // string | null
+     await confirm({ title: "重置节点？", danger: true, ack: "我明白这会断开所有连接" });       // v0.30.0：勾选后确认键才可用
 
    文案 zh / ja / en（locale，缺省 "zh"），labels 覆盖任意一条。
    ============================================================ */
@@ -223,6 +224,18 @@ export function confirm(options = {}) {
       body.append(msg);
       field.setAttribute("aria-describedby", msg.id);
     }
+    // 勾选确认（v0.30.0）：勾上之前确认键禁用
+    let ackBox = null;
+    if (options.ack != null && options.ack !== false) {
+      const label = document.createElement("label");
+      label.className = "confirm-ack";
+      ackBox = document.createElement("input");
+      ackBox.type = "checkbox";
+      const span = document.createElement("span");
+      setContent(span, options.ack);
+      label.append(ackBox, span);
+      body.append(label);
+    }
     if (body.childNodes.length) sheet.append(body);
 
     const foot = document.createElement("div");
@@ -235,6 +248,7 @@ export function confirm(options = {}) {
     okBtn.type = "button";
     okBtn.className = "btn" + (danger ? " danger" : "");
     okBtn.textContent = options.confirmLabel ?? t.confirm;
+    if (ackBox) okBtn.disabled = true;
     foot.append(cancelBtn, okBtn);
     sheet.append(foot);
     overlay.append(sheet);
@@ -245,6 +259,10 @@ export function confirm(options = {}) {
 
     function finish(ok) {
       if (done) return;
+      if (ok && ackBox && !ackBox.checked) {
+        ackBox.focus();
+        return;
+      }
       let result;
       if (field) {
         if (ok) {
@@ -291,6 +309,7 @@ export function confirm(options = {}) {
     sheet.addEventListener("keydown", onKeydown);
     cancelBtn.addEventListener("click", () => finish(false));
     okBtn.addEventListener("click", () => finish(true));
+    ackBox?.addEventListener("change", () => { okBtn.disabled = !ackBox.checked; });
     field?.addEventListener("input", () => {
       if (field.getAttribute("aria-invalid") === "true") {
         field.removeAttribute("aria-invalid");

@@ -79,6 +79,11 @@ export interface ConfirmBaseOptions {
   labels?: Partial<ConfirmLabels>;
   /** 追加到 .sheet 上的类名 */
   className?: string;
+  /**
+   * v0.30.0：勾选确认。给出文案时在说明下方加一个复选框（.confirm-ack），勾上之前确认键禁用；
+   * 不给（缺省）时行为与之前完全相同
+   */
+  ack?: string | Node;
   /** 中止时按「取消」处理 */
   signal?: AbortSignal;
 }

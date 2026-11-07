@@ -144,6 +144,14 @@
     "./disclosure": {
       "types": "./disclosure.d.ts",
       "default": "./disclosure.js"
+    },
+    "./copy": {
+      "types": "./copy.d.ts",
+      "default": "./copy.js"
+    },
+    "./table": {
+      "types": "./table.d.ts",
+      "default": "./table.js"
     }
   },
   "files": [
@@ -217,6 +225,10 @@
     "confirm.d.ts",
     "disclosure.js",
     "disclosure.d.ts",
+    "copy.js",
+    "copy.d.ts",
+    "table.js",
+    "table.d.ts",
     "fonts/"
   ]
 }
