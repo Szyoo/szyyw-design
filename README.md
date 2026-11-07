@@ -24,17 +24,17 @@ npm（钉精确 tag）：
 ```jsonc
 // package.json
 "dependencies": {
-  "@szyyw/design": "github:Szyoo/szyyw-design#v0.28.1"
+  "@szyyw/design": "github:Szyoo/szyyw-design#v0.29.0"
 }
 ```
 
 CDN（无构建步骤的项目，免 vendoring）：每个 `vX.Y.Z` tag 发布到 `https://design.szyyw.xyz/vX.Y.Z/`，内容即该 tag 的 `git archive`，发布后不再改写（`Cache-Control: immutable`，CORS `*`）。
 
 ```html
-<link rel="stylesheet" href="https://design.szyyw.xyz/v0.28.1/tokens.css">
-<link rel="stylesheet" href="https://design.szyyw.xyz/v0.28.1/components.css">
+<link rel="stylesheet" href="https://design.szyyw.xyz/v0.29.0/tokens.css">
+<link rel="stylesheet" href="https://design.szyyw.xyz/v0.29.0/components.css">
 <script type="module">
-  import { mountChrome } from "https://design.szyyw.xyz/v0.28.1/chrome.js";
+  import { mountChrome } from "https://design.szyyw.xyz/v0.29.0/chrome.js";
   mountChrome({ /* … */ });
 </script>
 ```
@@ -46,7 +46,7 @@ CDN（无构建步骤的项目，免 vendoring）：每个 `vX.Y.Z` tag 发布�
 vendoring（复制到项目目录）：只用上游 `sync.sh`，从目标 tag 取脚本，文件清单与该版本一致：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Szyoo/szyyw-design/v0.28.1/sync.sh \
+curl -fsSL https://raw.githubusercontent.com/Szyoo/szyyw-design/v0.29.0/sync.sh \
   | sh -s -- ./static/vendor/szyyw-design v0.28.0
 ```
 
