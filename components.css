@@ -2090,9 +2090,10 @@ select.field.small { padding-right: 30px; }
   display: grid;
   grid-template-columns: minmax(5.5rem, max-content) 1fr;
   gap: var(--sp-2) var(--sp-3);
-  margin: 0;
   align-items: start;
 }
+/* 去掉 dl 默认外边距；包在 :where() 里特异性为 0，.u-mt-* 等工具类能盖过它 */
+:where(.kv) { margin: 0; }
 .kv > dt { font-size: var(--fs-sm); color: var(--text-dim); }
 .kv > dd { margin: 0; font-size: var(--fs-md); min-width: 0; overflow-wrap: anywhere; }
 @media (max-width: 520px) {
@@ -4797,19 +4798,30 @@ textarea.field { vertical-align: top; }
 .thumb-grid > * { position: relative; min-width: 0; }
 .thumb-grid .thumb-tile,
 .thumb-grid .thumb-add { width: 100%; height: auto; aspect-ratio: var(--thumb-ratio, 4 / 3); }
-.thumb-grid .thumb-tile:is(.selected, [aria-pressed="true"], [aria-selected="true"], [aria-current]:not([aria-current="false"])):not(.loading)::before {
+/* 选中标记：accent 实心圆（::before，外圈一道底色隔开图片）+ on-accent 勾（::after）。
+   选中描边改由 outline 画（::after 让给勾）；聚焦时让位给焦点环。 */
+.thumb-grid .thumb-tile:is(.selected, [aria-pressed="true"], [aria-selected="true"], [aria-current]:not([aria-current="false"])):not(.loading):not(:focus-visible) { outline: 2px solid var(--accent); outline-offset: -2px; }
+.thumb-grid .thumb-tile:is(.selected, [aria-pressed="true"], [aria-selected="true"], [aria-current]:not([aria-current="false"])):not(.loading)::before,
+.thumb-grid .thumb-tile:is(.selected, [aria-pressed="true"], [aria-selected="true"], [aria-current]:not([aria-current="false"])):not(.loading)::after {
   content: "";
   position: absolute;
   z-index: 1;
   top: var(--sp-1);
   left: var(--sp-1);
+  right: auto;
+  bottom: auto;
   width: calc(var(--h-sm) - var(--sp-1));
   height: calc(var(--h-sm) - var(--sp-1));
-  background: var(--accent);
-  /* 实心圆里挖出一个勾 */
-  -webkit-mask: var(--mask-check) center / 60% no-repeat, radial-gradient(circle, #000 69%, transparent 71%);
-  -webkit-mask-composite: xor;
-  mask: var(--mask-check) center / 60% no-repeat exclude, radial-gradient(circle, #000 69%, transparent 71%);
+  border-radius: 50%;
+}
+.thumb-grid .thumb-tile:is(.selected, [aria-pressed="true"], [aria-selected="true"], [aria-current]:not([aria-current="false"])):not(.loading)::before { background: var(--accent); box-shadow: 0 0 0 2px var(--bg); }
+.thumb-grid .thumb-tile:is(.selected, [aria-pressed="true"], [aria-selected="true"], [aria-current]:not([aria-current="false"])):not(.loading)::after,
+.thumb-grid .thumb-tile:is(.selected, [aria-pressed="true"], [aria-selected="true"], [aria-current]:not([aria-current="false"])):not(.loading):hover::after {
+  z-index: 2;
+  box-shadow: none;
+  background: var(--on-accent);
+  -webkit-mask: var(--mask-check) center / 60% no-repeat;
+  mask: var(--mask-check) center / 60% no-repeat;
 }
 
 /* ---------- 选项卡 .choice-card（带配图的单选 / 多选）----------

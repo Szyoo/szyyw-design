@@ -26,6 +26,9 @@
 - 无。已有类的外观都不变；`.stat-grid` 的列宽下限改为读 `--stat-min`（缺省仍是 150px）。
 - 注意同名：`.tbl tr.empty-row > td`、`.stat-unit`、`.timeline-time` 与个别应用自写的同名类语义相同，包里的规则会叠上去（留白略有差别），迁移时删掉自写即可。
 
+**修复**
+- `.kv` 的 `margin: 0` 改为零特异性（`:where(.kv)`），`.u-mt-*` 等工具类不再被盖掉。
+
 **应用侧怎么迁**（逐条前后对照见 DESIGN.md §16.4）
 - 自写步骤（`.flow-step` `.guide-step`）→ `.steps`；借 `.msg-list` 画的物流节点、`.timeline-row` → `.timeline`。
 - 自写排序箭头 / 数字表 / 状态色条 / 空行 / 操作列 / 类表格网格 → `.th-sort` + `enhanceSortTable`、`.tbl.numeric`、`tr.err`、`tr.empty-row`、`.col-actions`、`.tbl.reflow`。
