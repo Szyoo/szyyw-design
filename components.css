@@ -1112,7 +1112,7 @@ input[type="month"].field::-webkit-date-and-time-value {
 
 .stat-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(var(--stat-min, 150px), 1fr));
   gap: var(--sp-3);
 }
 
@@ -3683,6 +3683,27 @@ select.field.small { padding-right: 30px; }
 .sheet.confirm .sheet-body:first-child { padding-top: var(--sp-4); }
 .sheet.confirm .confirm-message + .field,
 .sheet.confirm .confirm-message + .field-wrap { margin-top: var(--sp-3); }
+/* 勾选确认（v0.30.0，confirm({ ack })）：复选框 + 文案，勾上前确认键禁用 */
+.confirm-ack {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  margin: var(--sp-3) 0 0;
+  font-size: var(--fs-base);
+  line-height: var(--lh-snug);
+  color: var(--text);
+  cursor: pointer;
+}
+.confirm-ack:first-child { margin-top: 0; }
+.confirm-ack > input {
+  flex: none;
+  width: var(--sp-4);
+  height: var(--sp-4);
+  margin: calc((var(--fs-base) * var(--lh-snug) - var(--sp-4)) / 2) 0 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.confirm-ack > input:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-offset); }
 @media (min-width: 900px) {
   .sheet.confirm { max-width: 420px; }
   .sheet.confirm .sheet-foot .danger { margin-right: 0; }
@@ -3940,4 +3961,954 @@ textarea.field { vertical-align: top; }
   .disclosure.lead-chevron > summary::before, .disclosure.lead-chevron > .disclosure-summary::before { transition: none; }
   details.disclosure::details-content { transition: none; }
   .list-row, .bar-seg { transition: none; }
+}
+
+/* ============================================================
+   v0.30.0 通用组件（第 3 批）：步骤条 / 时间线 / 表格增强 / 缩略图条 / 统计数字 / 键值列表补充 / 底部操作条 / 头像档。
+   全部是新类或既有类的修饰类，不改已有规则的外观（.stat-grid 只多了 --stat-min 旋钮，缺省值不变）。
+   用法见 DESIGN.md §16.4，手测 demo/components-v030.html
+   ============================================================ */
+
+/* 本段用到的 Lucide 图标遮罩（内部变量，别在应用里引用；路径与 ./icons 同源） */
+:root {
+  --mask-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");
+  --mask-x: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 6 6 18'/%3E%3Cpath d='m6 6 12 12'/%3E%3C/svg%3E");
+  --mask-plus: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h14'/%3E%3Cpath d='M12 5v14'/%3E%3C/svg%3E");
+  --mask-minus: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h14'/%3E%3C/svg%3E");
+  --mask-arrow-up: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12 7-7 7 7'/%3E%3Cpath d='M12 19V5'/%3E%3C/svg%3E");
+  --mask-arrow-down: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 5v14'/%3E%3Cpath d='m19 12-7 7-7-7'/%3E%3C/svg%3E");
+  --mask-sort: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m7 15 5 5 5-5'/%3E%3Cpath d='m7 9 5-5 5 5'/%3E%3C/svg%3E");
+  --mask-trend-up: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 7h10v10'/%3E%3Cpath d='M7 17 17 7'/%3E%3C/svg%3E");
+  --mask-trend-down: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m7 7 10 10'/%3E%3Cpath d='M17 7v10H7'/%3E%3C/svg%3E");
+  --mask-copy: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='14' height='14' x='8' y='8' rx='2' ry='2'/%3E%3Cpath d='M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2'/%3E%3C/svg%3E");
+}
+
+/* ---------- 步骤条 .steps > .step ----------
+   <ol class="steps">
+     <li class="step done"><span class="step-marker"></span><span class="step-body"><span class="step-title">提交</span><span class="step-sub">11-02</span></span></li>
+     <li class="step current" aria-current="step">…</li>
+     <li class="step">…</li>
+   </ol>
+   状态：.done（勾）/ .current 或 [aria-current=step]（实心 accent + 光圈）/ .err（叉）/ 缺省待办（序号）。
+   排布：缺省横向、≤640px 自动转纵向；.vertical 一直纵向；.horizontal 一直横向；.scroll 横向不换、放不下横滚。
+   标记空着时自动画序号 / 勾 / 叉；里面也可以放 ./icons 图标或自定文字 */
+.steps {
+  --step-m: var(--h-sm);
+  --step-line: 2px;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+.step {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  counter-increment: step;
+}
+.step:last-child { flex: 0 0 auto; max-width: 40%; }
+/* 连接线：从本步标记右侧到本步右缘（再隔一个 gap 就是下一步的标记） */
+.step:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: calc((var(--step-m) - var(--step-line)) / 2);
+  left: calc(var(--step-m) + var(--sp-2));
+  right: 0;
+  height: var(--step-line);
+  border-radius: var(--r-pill);
+  background: var(--line-soft);
+  transition: background var(--dur-base) var(--ease);
+}
+.step.done:not(:last-child)::after { background: color-mix(in srgb, var(--ok) 45%, transparent); }
+
+.step-marker {
+  flex: none;
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: var(--step-m);
+  height: var(--step-m);
+  border-radius: 50%;
+  background: var(--inner-bg);
+  box-shadow: inset 0 0 0 1px var(--glass-border);
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  transition: background var(--dur-base) var(--ease), color var(--dur-fast) var(--ease), box-shadow var(--dur-base) var(--ease);
+}
+.step-marker:empty::before { content: counter(step); }
+.step-marker > .icon { width: 55%; height: 55%; }
+.step.done > .step-marker {
+  background: var(--tint-green-bg);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ok) 45%, transparent);
+  color: var(--ok);
+}
+.step.err > .step-marker {
+  background: var(--tint-red-bg);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--err) 45%, transparent);
+  color: var(--err);
+}
+.step:is(.done, .err) > .step-marker:empty::before {
+  content: "";
+  width: 55%;
+  height: 55%;
+  background-color: currentColor;
+  -webkit-mask: var(--mask-check) center / contain no-repeat;
+  mask: var(--mask-check) center / contain no-repeat;
+}
+.step.err > .step-marker:empty::before { -webkit-mask-image: var(--mask-x); mask-image: var(--mask-x); }
+.step:is(.current, [aria-current="step"]) > .step-marker {
+  background: var(--accent);
+  color: var(--on-accent);
+  box-shadow: 0 0 0 var(--sp-1) var(--selected-bg);
+}
+
+.step-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  max-width: 100%;
+}
+.step-title {
+  font-size: var(--fs-base);
+  font-weight: 500;
+  line-height: var(--lh-snug);
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.step-sub {
+  font-size: var(--fs-sm);
+  line-height: var(--lh-snug);
+  color: var(--text-dim);
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+/* 说明段落（纵向的「操作手顺」一类）：13、正文行高 */
+.step-desc { margin: 0; font-size: var(--fs-md); line-height: var(--lh-body); color: var(--text-dim); overflow-wrap: anywhere; }
+/* 有当前步时，后面的待办步标题淡一档；没有当前步（纯说明手顺）时标题照常 */
+.steps:has(> .step:is(.current, [aria-current="step"])) > .step:not(.done, .err, .current, [aria-current="step"]) .step-title { color: var(--text-dim); }
+.step:is(.current, [aria-current="step"]) .step-title { font-weight: 600; }
+.step.err .step-title { color: var(--err); }
+/* 暂不可做（前置未完成 / 等待外部）：标记虚线、标题淡出 */
+.step.blocked > .step-marker { background: transparent; box-shadow: none; outline: 1px dashed var(--control-border); outline-offset: -1px; }
+.step.blocked .step-title { color: var(--text-dim); }
+
+/* 行尾（纵向时靠右：状态文字 / 按钮；横向时排在正文下方） */
+.step-end { flex: none; min-width: 0; font-size: var(--fs-sm); line-height: var(--lh-snug); color: var(--text-dim); font-variant-numeric: tabular-nums; }
+
+/* 可点的步骤（向导里回到某步）：整块 body 是 a / button。悬停底画在 ::before 上、向外扩 4 / 8，
+   不用负外边距（负外边距会让横向末项按内容收缩时把文字挤成竖排） */
+.step-body:is(a, button) {
+  appearance: none;
+  position: relative;
+  z-index: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease);
+}
+.step-body:is(a, button)::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: calc(var(--sp-1) * -1) calc(var(--sp-2) * -1);
+  border-radius: var(--r-sm);
+  transition: background var(--dur-fast) var(--ease);
+}
+.step-body:is(a, button):hover:not(:disabled, [aria-disabled="true"])::before { background: var(--hover-tint); }
+.step-body:is(a, button):active:not(:disabled, [aria-disabled="true"]) { transform: scale(0.97); }
+.step-body:is(a, button):focus-visible { outline: none; }
+.step-body:is(a, button):focus-visible::before { outline: var(--focus-ring); outline-offset: -2px; }
+.step-body:is(a, button):is(:disabled, [aria-disabled="true"]) { opacity: 0.45; cursor: not-allowed; }
+
+/* 紧凑档：标记 16、只画勾 / 叉不画序号 */
+.steps.compact { --step-m: calc(var(--dot) * 2); }
+.steps.compact .step-marker:empty::before { content: none; }
+.steps.compact .step:is(.done, .err) > .step-marker:empty::before { content: ""; }
+.steps.compact .step:is(.current, [aria-current="step"]) > .step-marker { box-shadow: 0 0 0 3px var(--selected-bg); }
+.steps.compact .step-title { font-size: var(--fs-md); }
+
+/* 横滚：每步至少 128 宽，给标记光圈与焦点环留位 */
+.steps.scroll {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  padding: var(--sp-1);
+  margin: calc(var(--sp-1) * -1);
+}
+.steps.scroll > .step { flex: 1 0 calc(var(--sp-6) * 4); }
+.steps.scroll > .step:last-child { flex: 1 0 calc(var(--sp-6) * 4); max-width: none; }
+
+/* 纵向：标记在左、正文在右，连接线竖着走 */
+.steps.vertical { flex-direction: column; gap: 0; }
+.steps.vertical > .step,
+.steps.vertical > .step:last-child { flex: none; width: 100%; max-width: none; flex-direction: row; gap: var(--sp-3); padding-bottom: var(--sp-4); }
+.steps.vertical > .step:last-child { padding-bottom: 0; }
+.steps.vertical > .step { flex-wrap: wrap; }
+.steps.vertical > .step > .step-end { margin-left: auto; max-width: 50%; padding-top: calc((var(--step-m) - var(--fs-sm) * var(--lh-snug)) / 2); text-align: right; }
+.steps.vertical > .step > .step-body { flex: 1 1 0; padding-top: calc((var(--step-m) - var(--fs-base) * var(--lh-snug)) / 2); }
+.steps.vertical > .step:not(:last-child)::after {
+  top: calc(var(--step-m) + var(--sp-1));
+  bottom: var(--sp-1);
+  left: calc((var(--step-m) - var(--step-line)) / 2);
+  right: auto;
+  width: var(--step-line);
+  height: auto;
+}
+@media (max-width: 640px) {
+  .steps:not(.horizontal, .scroll) { flex-direction: column; gap: 0; }
+  .steps:not(.horizontal, .scroll) > .step,
+  .steps:not(.horizontal, .scroll) > .step:last-child { flex: none; width: 100%; max-width: none; flex-direction: row; gap: var(--sp-3); padding-bottom: var(--sp-4); }
+  .steps:not(.horizontal, .scroll) > .step:last-child { padding-bottom: 0; }
+  .steps:not(.horizontal, .scroll) > .step { flex-wrap: wrap; }
+  /* 窄屏行尾换到正文下方，与正文左对齐 */
+  .steps:is(.vertical, :not(.horizontal, .scroll)) > .step > .step-end { flex: 1 1 100%; max-width: none; margin-left: 0; padding: 0 0 0 calc(var(--step-m) + var(--sp-3)); text-align: left; }
+  .steps:not(.horizontal, .scroll) > .step > .step-body { flex: 1 1 0; padding-top: calc((var(--step-m) - var(--fs-base) * var(--lh-snug)) / 2); }
+  .steps:not(.horizontal, .scroll) > .step:not(:last-child)::after {
+    top: calc(var(--step-m) + var(--sp-1));
+    bottom: var(--sp-1);
+    left: calc((var(--step-m) - var(--step-line)) / 2);
+    right: auto;
+    width: var(--step-line);
+    height: auto;
+  }
+}
+
+/* ---------- 时间线 .timeline > .timeline-item ----------
+   <ol class="timeline">
+     <li class="timeline-item current">
+       <span class="dot ok"></span>
+       <div class="timeline-main">
+         <div class="timeline-head"><span class="timeline-title">已投递</span><time class="timeline-time">11-08 14:20</time></div>
+         <p class="timeline-desc">东京中央局</p>
+       </div>
+     </li>
+   </ol>
+   状态点就是 .dot（同一色族，.pulse 表示进行中）；.current 标题加粗（最新一条）；.muted 标题淡出；.err 标题与说明标红。
+   .compact 行距与字号小一档。窄屏里时间放不下就换到标题下一行 */
+.timeline {
+  --tl-fs: var(--fs-base);
+  --tl-gap: var(--sp-4);
+  --tl-dot-top: calc((var(--tl-fs) * var(--lh-snug) - var(--dot)) / 2);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.timeline.compact { --tl-fs: var(--fs-md); --tl-gap: var(--sp-3); }
+.timeline-item {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  min-width: 0;
+  padding-bottom: var(--tl-gap);
+}
+.timeline-item:last-child { padding-bottom: 0; }
+.timeline-item > .dot { margin-top: var(--tl-dot-top); }
+/* 竖线：本条圆点下方到下一条圆点上方，两头各留 4px */
+.timeline-item:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  left: calc((var(--dot) - 2px) / 2);
+  top: calc(var(--tl-dot-top) + var(--dot) + var(--sp-1));
+  bottom: calc(var(--sp-1) - var(--tl-dot-top));
+  width: 2px;
+  border-radius: var(--r-pill);
+  background: var(--line-soft);
+}
+.timeline-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.timeline-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 var(--sp-3); min-width: 0; }
+.timeline-title {
+  flex: 1 1 12em;
+  min-width: 0;
+  font-size: var(--tl-fs);
+  font-weight: 500;
+  line-height: var(--lh-snug);
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.timeline-time {
+  flex: none;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-snug);
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.timeline-head > .timeline-time { margin-left: auto; }
+.timeline-desc { margin: 0; font-size: var(--fs-md); line-height: var(--lh-snug); color: var(--text-dim); overflow-wrap: anywhere; }
+.timeline-item.current .timeline-title { font-weight: 600; }
+.timeline-item.muted .timeline-title { color: var(--text-dim); font-weight: 400; }
+.timeline-item.muted > .dot { opacity: 0.45; }
+.timeline-item.err :is(.timeline-title, .timeline-desc) { color: var(--err); }
+
+/* ---------- 表格增强（v0.30.0，都是 .tbl / .table-wrap 的修饰，不加就和以前一样）----------
+   排序按钮 th[aria-sort] > button.th-sort（图标随 aria-sort 变；可配 ./table 的 enhanceSortTable）；
+   选中行 tr[aria-selected=true]（着色族；不认 .selected——已有应用拿它写自己的选中样式）；可点行 tr[tabindex]；行状态 tr.ok/.warn/.err/.info/.idle（左侧色条，.err 加淡红底）；
+   紧凑 .tbl.compact；冻结首列 .col-sticky；操作列 .col-actions；合计行 tr.total；空状态行 tr.empty-row > td[colspan]；
+   窄屏卡片化 .tbl.reflow（≤640px，td[data-label]）；贴边横滚 .table-wrap.bleed */
+.tbl th[aria-sort]:has(> .th-sort) { cursor: default; }
+.tbl th[aria-sort]:has(> .th-sort)::after { content: none; }
+.tbl .th-sort {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  width: calc(100% + var(--sp-3) * 2);
+  margin: calc(var(--sp-2) * -1) calc(var(--sp-3) * -1);
+  padding: var(--sp-2) var(--sp-3);
+  border: 0;
+  border-radius: var(--r-xs);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+}
+.tbl .th-sort::after {
+  content: "";
+  flex: none;
+  width: 1.15em;
+  height: 1.15em;
+  background-color: currentColor;
+  opacity: 0.45;
+  -webkit-mask: var(--mask-sort) center / contain no-repeat;
+  mask: var(--mask-sort) center / contain no-repeat;
+}
+.tbl .th-sort:hover { color: var(--text); background: var(--hover-tint); }
+.tbl .th-sort:focus-visible { outline: var(--focus-ring); outline-offset: -2px; }
+.tbl .th-sort:disabled { opacity: 0.45; cursor: not-allowed; }
+.tbl th:is([aria-sort="ascending"], [aria-sort="descending"]) > .th-sort { color: var(--text); }
+.tbl th:is([aria-sort="ascending"], [aria-sort="descending"]) > .th-sort::after { opacity: 1; background-color: var(--accent); }
+.tbl th[aria-sort="ascending"] > .th-sort::after { -webkit-mask-image: var(--mask-arrow-up); mask-image: var(--mask-arrow-up); }
+.tbl th[aria-sort="descending"] > .th-sort::after { -webkit-mask-image: var(--mask-arrow-down); mask-image: var(--mask-arrow-down); }
+/* 数字列：按钮靠右、图标放在文字左边（数字对齐的那条边不被图标打乱） */
+.tbl th.col-num > .th-sort { justify-content: flex-start; flex-direction: row-reverse; }
+
+/* 可点 / 选中的行 */
+.tbl tbody tr:is([tabindex], [aria-selected]) { cursor: pointer; transition: background var(--dur-fast) var(--ease); }
+.tbl tbody tr:is([tabindex], [aria-selected]):hover { background: var(--hover-tint); }
+.tbl tbody tr:focus-visible { outline: var(--focus-ring); outline-offset: -2px; }
+.tbl tbody tr[aria-selected="true"] > :is(td, th) {
+  background: var(--selected-bg);
+  box-shadow: inset 0 1px 0 var(--selected-border), inset 0 -1px 0 var(--selected-border);
+}
+.tbl tbody tr[aria-selected="true"] > :is(td, th):first-child { box-shadow: inset 1px 0 0 var(--selected-border), inset 0 1px 0 var(--selected-border), inset 0 -1px 0 var(--selected-border); }
+.tbl tbody tr[aria-selected="true"] > :is(td, th):last-child { box-shadow: inset -1px 0 0 var(--selected-border), inset 0 1px 0 var(--selected-border), inset 0 -1px 0 var(--selected-border); }
+.tbl tbody tr:is(:disabled, [aria-disabled="true"]) { opacity: 0.45; cursor: not-allowed; }
+
+/* 行状态：首格左侧 3px 色条（同 .dot 色族）；.err 再加淡红底 */
+.tbl tbody tr:is(.ok, .warn, .err, .info, .idle) > :first-child { box-shadow: inset 3px 0 0 var(--row-tone); }
+.tbl tbody tr.ok { --row-tone: var(--ok); }
+.tbl tbody tr.warn { --row-tone: var(--warn); }
+.tbl tbody tr.err { --row-tone: var(--err); }
+.tbl tbody tr.info { --row-tone: var(--info); }
+.tbl tbody tr.idle { --row-tone: color-mix(in srgb, var(--text-dim) 45%, transparent); }
+.tbl tbody tr.err > :is(td, th) { background: var(--tint-red-bg); }
+
+/* 紧凑密度 */
+.tbl.compact { font-size: var(--fs-sm); }
+.tbl.compact :is(th, td) { padding: var(--sp-1) var(--sp-2); }
+.tbl.compact .th-sort { width: calc(100% + var(--sp-2) * 2); margin: calc(var(--sp-1) * -1) calc(var(--sp-2) * -1); padding: var(--sp-1) var(--sp-2); }
+
+/* 数字表：除首列外全部右对齐 + 等宽数字；tfoot 是合计行 */
+.tbl.numeric { font-variant-numeric: tabular-nums; }
+.tbl.numeric :is(th, td):not(:first-child) { text-align: right; }
+.tbl.numeric th:not(:first-child) > .th-sort { justify-content: flex-start; flex-direction: row-reverse; }
+.tbl.numeric tfoot :is(td, th) { font-weight: 600; color: var(--text); border-top: 1px solid var(--glass-border); border-bottom: 0; }
+
+/* 操作列：收到内容宽、靠右 */
+.tbl .col-actions { width: 1%; text-align: right; white-space: nowrap; }
+.tbl td.col-actions > * + * { margin-left: var(--sp-1); }
+
+/* 冻结首列（宽表横滚时名字列不走）：必须不透明，同 .tbl.sticky 表头 */
+.tbl :is(th, td).col-sticky {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: linear-gradient(var(--glass-bg), var(--glass-bg)), var(--bg);
+  box-shadow: inset -1px 0 0 var(--glass-border);
+}
+.tbl.sticky thead th.col-sticky { z-index: 2; box-shadow: inset -1px 0 0 var(--glass-border), inset 0 -1px 0 var(--glass-border); }
+.tbl tbody tr[aria-selected="true"] > .col-sticky { background: linear-gradient(var(--selected-bg), var(--selected-bg)), linear-gradient(var(--glass-bg), var(--glass-bg)), var(--bg); }
+
+/* 合计行 */
+.tbl tr.total > :is(td, th) { font-weight: 600; color: var(--text); border-top: 1px solid var(--glass-border); border-bottom: 0; }
+
+/* 空状态行：<tr class="empty-row"><td colspan="5">暂无记录</td></tr> */
+.tbl tr.empty-row > td {
+  padding: var(--sp-6) var(--sp-4);
+  text-align: center;
+  color: var(--text-dim);
+  font-size: var(--fs-base);
+  white-space: normal;
+}
+.tbl.compact tr.empty-row > td { padding: var(--sp-5) var(--sp-3); }
+.tbl.hover tbody tr.empty-row:hover { background: none; }
+
+/* 贴边横滚：窄卡片里的宽表拉到卡片内边距外，首尾列文字仍与卡片内容对齐 */
+.table-wrap.bleed { --inset: var(--sp-4); margin-inline: calc(var(--inset) * -1); border-radius: 0; }
+.table-wrap.bleed > .tbl :is(th, td):first-child { padding-left: var(--inset); }
+.table-wrap.bleed > .tbl :is(th, td):last-child { padding-right: var(--inset); }
+
+/* 窄屏卡片化：每行塌成一块，单元格前面显示 data-label */
+@media (max-width: 640px) {
+  .tbl.reflow, .tbl.reflow tbody, .tbl.reflow tfoot { display: block; }
+  .tbl.reflow thead { display: none; }
+  .tbl.reflow tr {
+    display: grid;
+    gap: var(--sp-1);
+    padding: var(--sp-3) 0;
+    border-bottom: 1px solid var(--row-line);
+  }
+  .tbl.reflow tr:last-child { border-bottom: 0; }
+  .tbl.reflow :is(td, th) {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    padding: 0 var(--sp-3);
+    border: 0;
+    white-space: normal;
+    text-align: right;
+    overflow-wrap: anywhere;
+  }
+  .tbl.reflow :is(td, th)[data-label]::before {
+    content: attr(data-label);
+    flex: none;
+    max-width: 45%;
+    font-size: var(--fs-sm);
+    color: var(--text-dim);
+    text-align: left;
+  }
+  /* 首格当卡片标题：不带标签、左对齐、加粗 */
+  .tbl.reflow :is(td, th):first-child:not([data-label]) { justify-content: flex-start; text-align: left; font-weight: 600; color: var(--text); }
+  .tbl.reflow .col-actions { width: auto; justify-content: flex-end; }
+  .tbl.reflow tr.empty-row { display: block; }
+  .tbl.reflow tr.empty-row > td { display: block; text-align: center; padding: var(--sp-5) var(--sp-3); }
+  .tbl.reflow tbody tr:is(.ok, .warn, .err, .info, .idle) { box-shadow: inset 3px 0 0 var(--row-tone); }
+  .tbl.reflow tbody tr:is(.ok, .warn, .err, .info, .idle) > :first-child { box-shadow: none; }
+  .tbl.reflow tbody tr[aria-selected="true"] { background: var(--selected-bg); box-shadow: inset 0 0 0 1px var(--selected-border); }
+  .tbl.reflow tbody tr[aria-selected="true"] > :is(td, th) { background: none; box-shadow: none; }
+  .tbl.reflow tbody tr.err > :is(td, th) { background: none; }
+  .tbl.reflow tbody tr.err { background: var(--tint-red-bg); }
+  .tbl.reflow .col-sticky { position: static; background: none; box-shadow: none; }
+}
+
+/* ---------- 缩略图条 .thumb-strip ----------
+   <ul class="thumb-strip">
+     <li><button class="thumb-tile" aria-pressed="true"><img src="…" alt="…"></button><button class="thumb-remove" aria-label="删除"></button></li>
+     <li><button class="thumb-tile"><img …><span class="thumb-more">+5</span></button></li>
+     <li><button class="thumb-add" aria-label="添加图片"></button></li>
+   </ul>
+   缺省 64 方块（.sm 48 / .lg 96，或写 --thumb），横向滚动；.wrap 改为换行网格。
+   选中 .selected / [aria-pressed|aria-selected=true] / [aria-current]：2px accent 内描边；.loading 转圈；.error 红描边。
+   .thumb-remove 是磁贴的兄弟（按钮里不能套按钮），贴在右上角 */
+.thumb-strip {
+  --thumb: calc(var(--sp-6) * 2);
+  display: flex;
+  gap: var(--sp-2);
+  min-width: 0;
+  margin: 0 calc(var(--sp-2) * -1);
+  padding: var(--sp-2);
+  list-style: none;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scroll-padding-inline: var(--sp-2);
+  scrollbar-width: thin;
+}
+.thumb-strip.sm { --thumb: calc(var(--sp-5) * 2); }
+.thumb-strip.lg { --thumb: calc(var(--sp-6) * 3); }
+.thumb-strip.wrap { flex-wrap: wrap; overflow: visible; }
+.thumb-strip > * { position: relative; flex: none; scroll-snap-align: start; }
+
+.thumb-tile {
+  appearance: none;
+  position: relative;
+  display: block;
+  width: var(--thumb);
+  height: var(--thumb);
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--r-md);
+  background: var(--inner-bg);
+  color: var(--text-dim);
+  font: inherit;
+  transition: transform var(--dur-fast) var(--ease);
+}
+.thumb-strip.sm :is(.thumb-tile, .thumb-add) { border-radius: var(--r-sm); }
+.thumb-tile > :is(img, video) { display: block; width: 100%; height: 100%; object-fit: cover; transition: opacity var(--dur-fast) var(--ease); }
+.thumb-tile > .icon { position: absolute; inset: 0; margin: auto; width: 40%; height: 40%; }
+/* 描边画在图片上面（内阴影会被图片盖住） */
+.thumb-tile::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px var(--glass-border);
+  pointer-events: none;
+  transition: box-shadow var(--dur-base) var(--ease);
+}
+.thumb-tile:is(a, button) { cursor: pointer; }
+.thumb-tile:is(a, button):hover:not(:disabled)::after { box-shadow: inset 0 0 0 2px var(--hover-border); }
+.thumb-tile:is(a, button):active:not(:disabled) { transform: scale(0.97); }
+.thumb-tile:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-offset); }
+.thumb-tile:disabled { opacity: 0.45; cursor: not-allowed; }
+.thumb-tile:is(.selected, [aria-pressed="true"], [aria-selected="true"], [aria-current]:not([aria-current="false"]))::after,
+.thumb-tile:is(.selected, [aria-pressed="true"], [aria-selected="true"], [aria-current]:not([aria-current="false"])):hover::after {
+  box-shadow: inset 0 0 0 2px var(--accent), inset 0 0 0 4px color-mix(in srgb, var(--bg) 60%, transparent);
+}
+.thumb-tile.loading > :is(img, video) { opacity: 0.5; }
+.thumb-tile.loading::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 50%;
+  width: var(--sp-4);
+  height: var(--sp-4);
+  margin: calc(var(--sp-2) * -1) 0 0 calc(var(--sp-2) * -1);
+  border: 2px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+.thumb-tile.error > :is(img, video) { opacity: 0.5; }
+.thumb-tile.error::after { box-shadow: inset 0 0 0 2px var(--err); }
+/* 「+N」遮罩：最后一格表示还有几张 */
+.thumb-tile > .thumb-more {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
+  color: var(--text);
+  font-size: var(--fs-base);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 添加位：虚线框 + 加号（空按钮自动画；有文字时显示文字） */
+.thumb-add {
+  appearance: none;
+  display: grid;
+  place-items: center;
+  width: var(--thumb);
+  height: var(--thumb);
+  margin: 0;
+  padding: var(--sp-1);
+  border: 1px dashed var(--control-border);
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-tight);
+  text-align: center;
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease), border-color var(--dur-base) var(--ease), transform var(--dur-fast) var(--ease);
+}
+.thumb-add:empty::before {
+  content: "";
+  width: 36%;
+  height: 36%;
+  background-color: currentColor;
+  -webkit-mask: var(--mask-plus) center / contain no-repeat;
+  mask: var(--mask-plus) center / contain no-repeat;
+}
+.thumb-add > .icon { width: 36%; height: 36%; }
+.thumb-add:hover:not(:disabled) { color: var(--text); border-color: var(--hover-border); }
+.thumb-add:active:not(:disabled) { transform: scale(0.97); }
+.thumb-add:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-offset); }
+.thumb-add:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* 删除角标：20 圆、反色（叠在任意图片上都清楚），2px 底色描边同 .badge.float */
+.thumb-remove {
+  appearance: none;
+  position: absolute;
+  z-index: 1;
+  top: calc(var(--sp-1) * -1.5);
+  right: calc(var(--sp-1) * -1.5);
+  display: grid;
+  place-items: center;
+  width: calc(var(--sp-5) - var(--sp-1));
+  height: calc(var(--sp-5) - var(--sp-1));
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--text);
+  color: var(--bg);
+  box-shadow: 0 0 0 2px var(--bg);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+}
+.thumb-remove:empty::before {
+  content: "";
+  width: 60%;
+  height: 60%;
+  background-color: currentColor;
+  -webkit-mask: var(--mask-x) center / contain no-repeat;
+  mask: var(--mask-x) center / contain no-repeat;
+}
+.thumb-remove > .icon { width: 60%; height: 60%; }
+.thumb-remove:hover:not(:disabled) { background: var(--danger); color: var(--on-err); }
+.thumb-remove:active:not(:disabled) { transform: scale(0.97); }
+.thumb-remove:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-offset); }
+.thumb-remove:disabled { opacity: 0.45; cursor: not-allowed; }
+@media (pointer: coarse) {
+  .thumb-remove::after { content: ""; position: absolute; inset: calc(var(--sp-2) * -1); }
+}
+
+/* ---------- 统计数字 .stat（在 .stat-grid / .stat-label / .stat-value / .stat-sub 上补）----------
+   <div class="stat-grid">
+     <div class="glass stat err">
+       <div class="stat-label">失败任务</div>
+       <div class="stat-value">3<span class="stat-unit">件</span></div>
+       <div class="stat-foot"><span class="stat-trend up err">+2</span><span class="stat-sub">较昨日</span></div>
+     </div>
+   </div>
+   .stat 是一个统计块：配 .glass / .inner 时自带内距（= .stat-card），裸用时无内距（一张卡里排几组数）。
+   语义 .ok .warn .err .info：数字着色；配 .glass / .inner 时整块淡底 + 45% 描边（同 .pill / .callout）。
+   .stat-trend：变化量，.up / .down / .flat 画方向箭头，颜色另用 .ok / .warn / .err（涨不一定是好事）。
+   .compact：内距 12、数字 18。旧的 .stat-card 不变，可与 .stat 叠用 */
+.stat { min-width: 0; display: flex; flex-direction: column; }
+.stat:is(.glass, .inner) { padding: var(--sp-4); }
+.stat.inner { padding: var(--sp-3); }
+.stat .stat-value { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.stat-unit { margin-left: var(--sp-1); font-size: var(--fs-sm); font-weight: 500; letter-spacing: 0; color: var(--text-dim); }
+.stat-foot { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--sp-1) var(--sp-2); margin-top: var(--sp-1); }
+.stat-foot > :is(.stat-sub, .stat-trend) { margin-top: 0; }
+.stat-trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-top: var(--sp-1);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  line-height: var(--lh-snug);
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.stat-trend:is(.up, .down, .flat)::before {
+  content: "";
+  flex: none;
+  width: 1.1em;
+  height: 1.1em;
+  background-color: currentColor;
+  -webkit-mask: var(--mask-trend-up) center / contain no-repeat;
+  mask: var(--mask-trend-up) center / contain no-repeat;
+}
+.stat-trend.down::before { -webkit-mask-image: var(--mask-trend-down); mask-image: var(--mask-trend-down); }
+.stat-trend.flat::before { -webkit-mask-image: var(--mask-minus); mask-image: var(--mask-minus); }
+.stat-trend.ok { color: var(--ok); }
+.stat-trend.warn { color: var(--warn); }
+.stat-trend.err { color: var(--err); }
+.stat-trend.info { color: var(--info); }
+
+.stat.ok { --stat-tone: var(--ok); --stat-tint: var(--tint-green-bg); }
+.stat.warn { --stat-tone: var(--warn); --stat-tint: var(--tint-amber-bg); }
+.stat.err { --stat-tone: var(--err); --stat-tint: var(--tint-red-bg); }
+.stat.info { --stat-tone: var(--info); --stat-tint: var(--tint-info-bg); }
+.stat:is(.ok, .warn, .err, .info) .stat-value { color: var(--stat-tone); }
+.stat.glass:is(.ok, .warn, .err, .info) {
+  border-color: color-mix(in srgb, var(--stat-tone) 45%, transparent);
+  background: linear-gradient(var(--stat-tint), var(--stat-tint)) var(--glass-bg);
+}
+.stat.inner:is(.ok, .warn, .err, .info) {
+  border-color: color-mix(in srgb, var(--stat-tone) 45%, transparent);
+  background: linear-gradient(var(--stat-tint), var(--stat-tint)) var(--inner-bg);
+}
+.stat.compact:is(.glass, .inner) { padding: var(--sp-3); }
+.stat.compact .stat-value { font-size: var(--fs-lg); }
+/* 卡里的明细（dl.kv.end）：上方细线隔开 */
+.stat > .kv { margin-top: var(--sp-3); padding-top: var(--sp-2); border-top: 1px solid var(--line-soft); }
+.stat > .kv.end > dd { font-weight: 600; color: var(--text); }
+
+/* ---------- 键值列表补充（在 dl.kv 上）----------
+   .kv.end：值列靠右、等宽数字（明细 / 金额），窄屏也保持左右两列；.kv.compact：行距小一档；
+   <div> 包住 dt + dd 的写法同样成立（div 不参与网格）。
+   值可复制：<dd class="copyable"><span>ABC-123</span><button class="btn-icon xs" data-copy aria-label="复制"></button></dd>
+   （配 ./copy 的 enhanceCopyButtons；精确指针下悬停才显示按钮，触屏常显） */
+:where(.kv > div) { display: contents; }
+.kv.compact { gap: var(--sp-1) var(--sp-3); }
+.kv.end { grid-template-columns: minmax(0, 1fr) auto; gap: var(--sp-1) var(--sp-3); align-items: baseline; }
+.kv.end > dd { margin-bottom: 0; text-align: right; font-variant-numeric: tabular-nums; }
+
+.copyable { display: flex; align-items: center; gap: var(--sp-1); min-width: 0; }
+.copyable > :first-child:not([data-copy]) { min-width: 0; overflow-wrap: anywhere; }
+.copyable > [data-copy] { flex: none; transition: opacity var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease), border-color var(--dur-base) var(--ease); }
+.kv.end > dd.copyable { justify-content: flex-end; }
+@media (hover: hover) and (pointer: fine) {
+  .copyable > [data-copy] { opacity: 0; }
+  .copyable:hover > [data-copy], .copyable > [data-copy]:focus-visible, .copyable > [data-copy][data-copied] { opacity: 1; }
+}
+/* 复制按钮：空着时自动画 copy 图标，复制成功（copy.js 加 data-copied）换成勾 */
+.btn-icon[data-copy]:empty::before {
+  content: "";
+  width: 16px;
+  height: 16px;
+  background-color: currentColor;
+  -webkit-mask: var(--mask-copy) center / contain no-repeat;
+  mask: var(--mask-copy) center / contain no-repeat;
+}
+.btn-icon.xs[data-copy]:empty::before { width: 14px; height: 14px; }
+.btn-icon[data-copy][data-copied] { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 45%, transparent); }
+.btn-icon[data-copy][data-copied]:empty::before { -webkit-mask-image: var(--mask-check); mask-image: var(--mask-check); }
+
+/* ---------- 底部操作条 .action-bar ----------
+   <div class="action-bar" role="region" aria-label="已选操作">
+     <div class="action-bar-text">已选 <b>3</b> 项 · 2.40 kg</div>
+     <div class="action-bar-actions"><button class="btn-ghost">清空</button><button class="btn">寄出</button></div>
+   </div>
+   缺省 fixed 贴底居中（宽 min(--action-bar-w 720px, 100% − 32)，底距 --action-bar-offset 16 + 安全区），弹层玻璃底 + 浮层阴影；
+   z-index 40（同底部导航，低于 .overlay / .sheet 50、toast 60）。有底部导航时把 --action-bar-offset 设到导航之上。
+   显示时自动：toast 抬到操作条上方（--toast-offset），.app-main 末尾补一段同高的留白（::after），最后一行内容不被挡。
+   .sticky：改为 position: sticky 留在文档流里（贴所在滚动容器底部，不算全局层级）。≤640px 按钮换到下一行撑满 */
+.action-bar {
+  position: fixed;
+  z-index: 40;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--action-bar-offset, var(--sp-4)) + env(safe-area-inset-bottom, 0px));
+  width: min(var(--action-bar-w, 720px), calc(100% - var(--sp-4) * 2));
+  margin-inline: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+  min-height: calc(var(--h-lg) + var(--sp-2) * 2 + 2px);
+  padding: var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-4);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-lg);
+  background: var(--sheet-bg);
+  -webkit-backdrop-filter: blur(var(--blur-md));
+  backdrop-filter: blur(var(--blur-md));
+  box-shadow: var(--pop-shadow);
+  color: var(--text);
+  font-size: var(--fs-md);
+  line-height: var(--lh-snug);
+  animation: rise var(--dur-base) var(--ease) both;
+}
+.action-bar.sticky { position: sticky; z-index: 20; left: auto; right: auto; width: auto; margin-inline: 0; bottom: calc(var(--sp-3) + env(safe-area-inset-bottom, 0px)); animation: none; }
+.action-bar-text { flex: 1 1 auto; min-width: 0; color: var(--text-dim); overflow-wrap: anywhere; }
+.action-bar-text :is(b, strong) { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+.action-bar-actions { flex: none; display: flex; align-items: center; gap: var(--sp-2); }
+:root:has(.action-bar:not([hidden], .sticky)) {
+  --action-bar-space: calc(var(--action-bar-offset, var(--sp-4)) + var(--h-lg) + var(--sp-2) * 2 + 2px + var(--sp-3));
+  --toast-offset: var(--action-bar-space);
+}
+:root:has(.action-bar:not([hidden], .sticky)) .app-main::after { content: ""; display: block; height: var(--action-bar-space); }
+@media (max-width: 640px) {
+  .action-bar:not(.sticky) { width: calc(100% - var(--sp-2) * 2); bottom: calc(var(--action-bar-offset, var(--sp-2)) + env(safe-area-inset-bottom, 0px)); }
+  .action-bar { flex-wrap: wrap; padding: var(--sp-3); }
+  .action-bar-actions { flex: 1 1 100%; }
+  .action-bar-actions > :is(.btn, .btn-ghost) { flex: 1 1 0; }
+  :root:has(.action-bar:not([hidden], .sticky)) {
+    --action-bar-space: calc(var(--action-bar-offset, var(--sp-2)) + var(--h-lg) + var(--sp-3) * 3 + var(--sp-2) + var(--fs-md) * var(--lh-snug) + 2px);
+  }
+}
+
+/* ---------- 列表行多行（.list.multiline / .list-row.multiline）----------
+   标题与副标题不再单行省略、长文字（域名、说明）整段换行；行改为顶部对齐，
+   头像 / 行尾停在第一行那条 36 高的带子里（单行的行看起来和缺省一样居中） */
+:is(.list.multiline > .list-row, .list-row.multiline) { align-items: flex-start; padding-block: var(--sp-2); }
+:is(.list.multiline > .list-row, .list-row.multiline) > .row-main { min-height: var(--h-md); justify-content: center; }
+:is(.list.multiline > .list-row, .list-row.multiline) :is(.row-title, .row-sub) { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
+:is(.list.multiline > .list-row, .list-row.multiline) .row-sub { line-height: var(--lh-snug); }
+:is(.list.multiline > .list-row, .list-row.multiline) > .row-end { align-self: flex-start; min-height: var(--h-md); }
+:is(.list.multiline.compact > .list-row, .list-row.multiline.compact) > :is(.row-main, .row-end) { min-height: var(--h-sm); }
+
+/* ---------- 密集列表行（.list.dense / .list-row.dense）----------
+   36 高（--h-row，同菜单项），给纯展示的长列表（设备、日志摘要）用：单行标题 + 行尾，副标题会把行撑高；
+   头部图标 / 头像收到 28。可点的行在触屏下仍抬到 --h-touch 40 */
+:is(.list.dense > .list-row, .list-row.dense) { min-height: var(--h-row); padding-block: 0; gap: var(--sp-2); }
+:is(.list.dense > .list-row, .list-row.dense) > .row-lead { min-width: var(--h-sm); height: var(--h-sm); }
+:is(.list.dense > .list-row, .list-row.dense) > .row-lead > img { width: var(--h-sm); height: var(--h-sm); }
+:is(.list.dense > .list-row, .list-row.dense) > .row-lead > .icon { width: 16px; height: 16px; }
+:is(.list.dense > .list-row, .list-row.dense) .row-title { font-size: var(--fs-md); }
+:is(.list.dense > .list-row, .list-row.dense) > .row-end { font-size: var(--fs-sm); }
+@media (pointer: coarse) {
+  :is(.list.dense > .list-row, .list-row.dense):is(a, button, [role="option"], [tabindex]) { min-height: var(--h-touch); }
+}
+
+/* ---------- 可点胶囊的选中态（button.pill / a.pill）----------
+   [aria-pressed=true] / [aria-selected=true] / .selected。无色胶囊用着色族（同 .chip 选中）；
+   语义 / 颜色胶囊不换配色（颜色本身在表意），描边加深到本色并补一圈 1px 内环 */
+.pill:is(button, a):is([aria-pressed="true"], [aria-selected="true"], .selected) {
+  color: var(--pill-tone, var(--text));
+  background-color: var(--pill-bg, var(--selected-bg));
+  border-color: var(--pill-tone, var(--selected-border));
+  box-shadow: inset 0 0 0 1px var(--pill-tone, var(--selected-border));
+}
+
+/* ---------- 列表行的大缩略图（.row-lead.lg）----------
+   商品 / 封面这类图要看得清：52（--h-item，≤520px 44）圆角 8；行高随之变为 52 + 上下 4 */
+.row-lead.lg { min-width: var(--h-item); height: var(--h-item); }
+.row-lead.lg > :is(img, .thumb-tile) { width: var(--h-item); height: var(--h-item); border-radius: var(--r-sm); }
+.row-lead.lg > img { border: 1px solid var(--glass-border); background: var(--inner-bg); }
+.row-lead.lg > .avatar { width: var(--h-lg); height: var(--h-lg); font-size: var(--fs-base); }
+@media (max-width: 520px) {
+  .row-lead.lg { min-width: var(--h-lg); height: var(--h-lg); }
+  .row-lead.lg > :is(img, .thumb-tile) { width: var(--h-lg); height: var(--h-lg); }
+}
+
+/* ---------- 可选缩略图网格 .thumb-grid ----------
+   <div class="thumb-grid" role="group" aria-label="候选图">
+     <button class="thumb-tile" aria-pressed="true"><img …></button> …
+   </div>
+   与 .thumb-strip 同一块 .thumb-tile（描边、选中环、加载 / 失败）；网格里格子撑满列宽、按 --thumb-ratio（缺省 4 / 3）定高，
+   列宽下限 --thumb-min（缺省 120px）。选中的格子左上角多一枚勾（多选时一眼看出选了哪些） */
+.thumb-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(var(--thumb-min, 120px), 100%), 1fr));
+  gap: var(--sp-2);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.thumb-grid > * { position: relative; min-width: 0; }
+.thumb-grid .thumb-tile,
+.thumb-grid .thumb-add { width: 100%; height: auto; aspect-ratio: var(--thumb-ratio, 4 / 3); }
+.thumb-grid .thumb-tile:is(.selected, [aria-pressed="true"], [aria-selected="true"], [aria-current]:not([aria-current="false"])):not(.loading)::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  top: var(--sp-1);
+  left: var(--sp-1);
+  width: calc(var(--h-sm) - var(--sp-1));
+  height: calc(var(--h-sm) - var(--sp-1));
+  background: var(--accent);
+  /* 实心圆里挖出一个勾 */
+  -webkit-mask: var(--mask-check) center / 60% no-repeat, radial-gradient(circle, #000 69%, transparent 71%);
+  -webkit-mask-composite: xor;
+  mask: var(--mask-check) center / 60% no-repeat exclude, radial-gradient(circle, #000 69%, transparent 71%);
+}
+
+/* ---------- 选项卡 .choice-card（带配图的单选 / 多选）----------
+   <div class="choice-group">
+     <label class="choice-card"><input type="radio" name="plan">
+       <span class="choice-body"><span class="choice-title">标准</span><span class="choice-sub">每月 5 次</span><img class="choice-img" src="…" alt=""></span>
+     </label>
+   </div>
+   整块可点；选中跟随里面的 input:checked（也认 .selected / [aria-checked=true]），着色族同 .list.gap 的选中行；
+   悬停描边 --hover-border；键盘焦点在 input 上时整卡画焦点环；input 禁用时整卡 .45 */
+.choice-group { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(14rem, 100%), 1fr)); gap: var(--sp-2); min-width: 0; }
+.choice-card {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  min-width: 0;
+  margin: 0;
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-md);
+  background: var(--inner-bg);
+  color: var(--text);
+  font-size: var(--fs-base);
+  line-height: var(--lh-snug);
+  cursor: pointer;
+  transition: border-color var(--dur-base) var(--ease), background var(--dur-fast) var(--ease);
+}
+.choice-card > input {
+  flex: none;
+  width: var(--sp-4);
+  height: var(--sp-4);
+  margin: calc((var(--fs-base) * var(--lh-snug) - var(--sp-4)) / 2) 0 0;
+  accent-color: var(--accent);
+  cursor: inherit;
+}
+.choice-card > input:focus-visible { outline: none; }
+.choice-card:hover:not(:has(> input:disabled), [aria-disabled="true"]) { border-color: var(--hover-border); }
+.choice-card:is(:has(> input:checked), .selected, [aria-checked="true"]) { border-color: var(--selected-border); background: var(--selected-bg); }
+.choice-card:has(> input:focus-visible),
+.choice-card:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-offset); }
+.choice-card:is(:has(> input:disabled), [aria-disabled="true"]) { opacity: 0.45; cursor: not-allowed; }
+.choice-body { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.choice-title { font-weight: 500; overflow-wrap: anywhere; }
+.choice-sub { font-size: var(--fs-sm); color: var(--text-dim); overflow-wrap: anywhere; }
+.choice-img { display: block; max-width: 100%; height: auto; margin-top: var(--sp-2); border: 1px solid var(--glass-border); border-radius: var(--r-sm); background: var(--inner-bg); }
+
+/* ---------- 空状态补充（在 .empty 上）----------
+   <div class="empty"><i data-icon="package"></i><p class="empty-title">还没有奖品</p><p class="empty-desc">抽到的奖品会出现在这里</p>
+     <div class="empty-actions"><button class="btn btn-small">去抽奖</button></div></div>
+   直接子级的 ./icons 图标 40（--text-dim）；旧的 .empty-icon（emoji，34px）照常，里面也可以放图标。.compact 留白与图标小一档 */
+.empty > .icon { display: block; width: 40px; height: 40px; margin: 0 auto var(--sp-3); color: var(--text-dim); opacity: 0.8; }
+.empty .empty-icon > .icon { display: block; margin: 0 auto; }
+.empty-title { margin: 0; font-size: var(--fs-title); font-weight: 600; line-height: var(--lh-tight); color: var(--text); }
+.empty-desc { margin: var(--sp-1) auto 0; max-width: 32em; font-size: var(--fs-md); line-height: var(--lh-body); color: var(--text-dim); }
+.empty-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--sp-2); margin-top: var(--sp-4); }
+.empty.compact { padding: var(--sp-5) var(--sp-3); }
+.empty.compact > .icon { width: var(--h-sm); height: var(--h-sm); margin-bottom: var(--sp-2); }
+.empty.compact .empty-title { font-size: var(--fs-base); }
+
+/* ---------- 终端窗「回到最新」浮钮 .term-follow ----------
+   <div class="term">…<div class="term-body">…</div><button class="term-follow" hidden>回到最新 ↓</button></div>
+   贴在终端窗右下角（.term 自动 position: relative），终端配色；何时显示（用户往上翻了）由应用决定 */
+:where(.term:has(> .term-follow)) { position: relative; }
+.term-follow {
+  appearance: none;
+  position: absolute;
+  z-index: 1;
+  right: var(--sp-3);
+  bottom: var(--sp-2);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px solid color-mix(in srgb, var(--term-text) 35%, transparent);
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--term-bg) 85%, transparent);
+  -webkit-backdrop-filter: blur(var(--blur-sm));
+  backdrop-filter: blur(var(--blur-sm));
+  color: var(--term-text);
+  font: inherit;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-snug);
+  cursor: pointer;
+  transition: border-color var(--dur-base) var(--ease), transform var(--dur-fast) var(--ease);
+}
+.term-follow > .icon { width: 1.2em; height: 1.2em; }
+.term-follow:hover { border-color: var(--term-accent); }
+.term-follow:active { transform: scale(0.97); }
+.term-follow:focus-visible { outline: 2px solid var(--term-accent); outline-offset: 2px; }
+
+/* ---------- 头像档补充 ---------- */
+.avatar.lg { width: var(--h-lg); height: var(--h-lg); font-size: var(--fs-base); }
+
+/* v0.30.0 组件的减少动效 */
+@media (prefers-reduced-motion: reduce) {
+  .action-bar { animation: none; }
+  .thumb-tile.loading::before { animation: none; }
+  .step-marker, .step::after, .thumb-tile, .thumb-tile::after, .thumb-tile > img, .thumb-add, .thumb-remove,
+  .tbl .th-sort, .tbl tbody tr, .copyable > [data-copy], .step-body:is(a, button)::before, .choice-card, .term-follow { transition: none; }
+  .term-follow:active { transform: none; }
+  .step-body:is(a, button):active, .thumb-tile:active, .thumb-add:active, .thumb-remove:active { transform: none; }
 }

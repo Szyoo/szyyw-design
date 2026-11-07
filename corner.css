@@ -995,6 +995,13 @@ a.corner-tool { text-decoration: none; }
  flex: none;
 }
 
+:where(.corner-tools, .corner-panel) .pill:is(button, a):is([aria-pressed="true"], [aria-selected="true"], .selected) {
+  color: var(--pill-tone, var(--text));
+  background-color: var(--pill-bg, var(--selected-bg));
+  border-color: var(--pill-tone, var(--selected-border));
+  box-shadow: inset 0 0 0 1px var(--pill-tone, var(--selected-border));
+}
+
 /* ---------- 用到的动效 ---------- */
 
 @keyframes rise {
