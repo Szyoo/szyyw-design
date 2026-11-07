@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>v0.30.0 通用组件 · 手测</title>
+<!--
+  v0.30.0 通用组件（第 3 批）的手测页（不进 package files），对应 DESIGN.md §16.4。
+  仓库根目录 `python3 -m http.server 8080`，打开 http://localhost:8080/demo/components-v030.html
+    ?scheme=light|dark|auto   明暗（缺省 dark）
+    ?bar=0                    不显示底部操作条
+  看点：统计数字；步骤条（横向 / 纵向 / 紧凑 / 横滚，375 宽自动转纵向）；时间线（卡片里替代 .msg-list 的物流节点）；
+  表格增强（排序按钮、选中行、行状态、冻结首列、合计、空状态、数字表、窄屏卡片化）；缩略图条；统计数字与键值列表（复制）；
+  列表行多行；勾选确认；底部操作条（toast 自动抬高）。
+-->
+<script>
+  (function () {
+    var s = new URLSearchParams(location.search).get("scheme");
+    document.documentElement.setAttribute("data-scheme", s === "light" || s === "auto" ? s : "dark");
+  })();
+</script>
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../components.css">
+<style>
+  .demo { padding-bottom: var(--sp-6); }
+  .demo > section { margin-bottom: var(--sp-4); }
+  .demo h2.panel-title { margin-bottom: var(--sp-1); }
+  .note { margin: 0 0 var(--sp-3); font-size: var(--fs-sm); color: var(--text-dim); }
+  .demo h3.section-name { margin-top: var(--sp-5); }
+  .demo h3.section-name:first-of-type { margin-top: var(--sp-4); }
+  .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--sp-4); align-items: start; }
+  .flow { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2) var(--sp-3); }
+  .out { font-size: var(--fs-sm); color: var(--text-dim); font-variant-numeric: tabular-nums; }
+  .sw { width: 100%; height: 100%; }
+</style>
+</head>
+<body>
+<div class="bg-layer" aria-hidden="true"></div>
+<div class="app-frame">
+  <header class="app-header">
+    <div class="app-brand">
+      <h1 class="app-title">通用组件</h1>
+      <span class="app-sub">components · v0.30.0</span>
+    </div>
+  </header>
+
+  <main class="app-main demo">
+
+    <!-- ========== 统计数字 ========== -->
+    <section>
+      <div class="stat-grid">
+        <div class="glass stat">
+          <div class="stat-label">本月支出</div>
+          <div class="stat-value">128,400<span class="stat-unit">円</span></div>
+          <div class="stat-foot"><span class="stat-trend up err">+8.2%</span><span class="stat-sub">较上月</span></div>
+        </div>
+        <div class="glass stat ok">
+          <div class="stat-label">已完成</div>
+          <div class="stat-value">42<span class="stat-unit">件</span></div>
+          <div class="stat-foot"><span class="stat-trend up ok">+6</span><span class="stat-sub">今日</span></div>
+        </div>
+        <div class="glass stat err">
+          <div class="stat-label">失败任务</div>
+          <div class="stat-value">3</div>
+          <div class="stat-foot"><span class="stat-trend down ok">−2</span><span class="stat-sub">较昨日</span></div>
+        </div>
+        <div class="glass stat">
+          <div class="stat-label">本月工时</div>
+          <div class="stat-value">152.5<span class="stat-unit">h</span></div>
+          <dl class="kv end compact">
+            <div><dt>平日</dt><dd>136.0 h</dd></div>
+            <div><dt>加班</dt><dd>16.5 h</dd></div>
+          </dl>
+        </div>
+      </div>
+      <div class="stat-grid u-mt-3" style="--stat-min: 120px">
+        <div class="inner stat compact"><div class="stat-label">在线</div><div class="stat-value">18</div></div>
+        <div class="inner stat compact warn"><div class="stat-label">待验证</div><div class="stat-value">4</div></div>
+        <div class="inner stat compact info"><div class="stat-label">新增</div><div class="stat-value">7</div><div class="stat-trend flat">0%</div></div>
+        <div class="inner stat compact"><div class="stat-label">停用</div><div class="stat-value">2</div></div>
+      </div>
+    </section>
+
+    <!-- ========== 步骤条 ========== -->
+    <section class="glass panel">
+      <h2 class="panel-title">步骤条 .steps</h2>
+      <p class="note">横向：完成 / 当前 / 待办 / 出错；375 宽自动转纵向（.horizontal 保持横向，.scroll 横滚）。</p>
+      <ol class="steps">
+        <li class="step done"><span class="step-marker"></span><span class="step-body"><span class="step-title">提交申请</span><span class="step-sub">11-02 09:14</span></span></li>
+        <li class="step done"><span class="step-marker"></span><span class="step-body"><span class="step-title">审核通过</span><span class="step-sub">11-03 16:40</span></span></li>
+        <li class="step current" aria-current="step"><span class="step-marker"></span><span class="step-body"><span class="step-title">打包出库</span><span class="step-sub">预计今天</span></span></li>
+        <li class="step"><span class="step-marker"></span><span class="step-body"><span class="step-title">送达</span></span></li>
+      </ol>
+
+      <h3 class="section-name">出错 · 可点 · 紧凑</h3>
+      <ol class="steps horizontal">
+        <li class="step done"><span class="step-marker"></span><button type="button" class="step-body"><span class="step-title">账号</span></button></li>
+        <li class="step err"><span class="step-marker"></span><button type="button" class="step-body"><span class="step-title">付款失败</span><span class="step-sub">卡片被拒</span></button></li>
+        <li class="step"><span class="step-marker"></span><button type="button" class="step-body" disabled><span class="step-title">确认</span></button></li>
+      </ol>
+      <ol class="steps compact horizontal u-mt-4">
+        <li class="step done"><span class="step-marker"></span><span class="step-body"><span class="step-title">下单</span></span></li>
+        <li class="step done"><span class="step-marker"></span><span class="step-body"><span class="step-title">发货</span></span></li>
+        <li class="step current" aria-current="step"><span class="step-marker"></span><span class="step-body"><span class="step-title">运输中</span></span></li>
+        <li class="step"><span class="step-marker"></span><span class="step-body"><span class="step-title">签收</span></span></li>
+      </ol>
+
+      <h3 class="section-name">横滚 .scroll</h3>
+      <ol class="steps scroll">
+        <li class="step done"><span class="step-marker"></span><span class="step-body"><span class="step-title">采集</span><span class="step-sub">00:12</span></span></li>
+        <li class="step done"><span class="step-marker"></span><span class="step-body"><span class="step-title">清洗</span><span class="step-sub">00:40</span></span></li>
+        <li class="step current" aria-current="step"><span class="step-marker"></span><span class="step-body"><span class="step-title">建模</span><span class="step-sub">运行中</span></span></li>
+        <li class="step"><span class="step-marker"></span><span class="step-body"><span class="step-title">评估</span></span></li>
+        <li class="step"><span class="step-marker"></span><span class="step-body"><span class="step-title">发布</span></span></li>
+        <li class="step"><span class="step-marker"></span><span class="step-body"><span class="step-title">归档</span></span></li>
+      </ol>
+    </section>
+
+    <div class="cols">
+      <!-- 纵向：月末流程（行尾状态 + 暂不可做） -->
+      <section class="glass panel">
+        <h2 class="panel-title">纵向 · 行尾状态</h2>
+        <p class="note">.steps.vertical；.step-end 放状态 / 按钮，窄屏换到正文下方；.blocked 暂不可做。</p>
+        <ol class="steps vertical">
+          <li class="step done"><span class="step-marker"></span><span class="step-body"><span class="step-title">导出考勤</span><span class="step-sub">从考勤系统拉取本月记录</span></span><span class="step-end"><span class="ok-text">完成 · 11-01 09:02</span></span></li>
+          <li class="step current" aria-current="step"><span class="step-marker"></span><span class="step-body"><span class="step-title">核对差异</span><span class="step-sub">逐日比对排班与打卡</span></span><span class="step-end"><button class="btn btn-small" type="button">开始</button></span></li>
+          <li class="step blocked"><span class="step-marker"></span><span class="step-body"><span class="step-title">生成报表</span><span class="step-sub">需先完成核对</span></span><span class="step-end">等待中</span></li>
+          <li class="step"><span class="step-marker"></span><span class="step-body"><span class="step-title">提交审批</span></span></li>
+        </ol>
+      </section>
+
+      <!-- 纵向：操作手顺（无当前步，标题照常） -->
+      <section class="glass panel">
+        <h2 class="panel-title">纵向 · 操作手顺</h2>
+        <p class="note">没有当前步时标题不淡出；.step-desc 放说明段落。</p>
+        <ol class="steps vertical">
+          <li class="step"><span class="step-marker"></span><span class="step-body"><span class="step-title">安装客户端</span><p class="step-desc">在手机上安装推送客户端，把服务器地址设为 <code>https://push.example.com</code>。</p></span></li>
+          <li class="step"><span class="step-marker"></span><span class="step-body"><span class="step-title">复制推送 key</span><p class="step-desc">打开客户端后复制测试推送地址，整条粘贴进下面的输入框即可。</p></span></li>
+          <li class="step"><span class="step-marker"></span><span class="step-body"><span class="step-title">保存并测试</span><p class="step-desc">点「发送测试」预览实际效果。</p></span></li>
+        </ol>
+      </section>
+    </div>
+
+    <div class="cols u-mt-4">
+      <!-- ========== 时间线（卡片里的物流节点） ========== -->
+      <section class="glass panel">
+        <div class="section-head"><h2 class="panel-title">订单 #A-1024</h2><span class="pill info">运输中</span></div>
+        <dl class="kv u-mb-3">
+          <dt>运单号</dt><dd class="copyable"><span class="mono">EJ123456789JP</span><button type="button" class="btn-icon xs" data-copy aria-label="复制运单号"></button></dd>
+          <dt>收件人</dt><dd>Alex Chen</dd>
+        </dl>
+        <h3 class="section-name">物流节点</h3>
+        <ol class="timeline">
+          <li class="timeline-item current">
+            <span class="dot info pulse"></span>
+            <div class="timeline-main">
+              <div class="timeline-head"><span class="timeline-title">到达投递局</span><time class="timeline-time">11-08 14:20</time></div>
+              <p class="timeline-desc">中央邮局 · 预计明天上午投递</p>
+            </div>
+          </li>
+          <li class="timeline-item">
+            <span class="dot ok"></span>
+            <div class="timeline-main">
+              <div class="timeline-head"><span class="timeline-title">通关完成</span><time class="timeline-time">11-07 22:05</time></div>
+            </div>
+          </li>
+          <li class="timeline-item err">
+            <span class="dot err"></span>
+            <div class="timeline-main">
+              <div class="timeline-head"><span class="timeline-title">推送通知失败</span><time class="timeline-time">11-07 21:58</time></div>
+              <p class="timeline-desc">连接超时（已自动重试）</p>
+            </div>
+          </li>
+          <li class="timeline-item muted">
+            <span class="dot idle"></span>
+            <div class="timeline-main">
+              <div class="timeline-head"><span class="timeline-title">从始发地发出，这是一条比较长的节点名称用来看换行</span><time class="timeline-time">11-06 08:30</time></div>
+            </div>
+          </li>
+        </ol>
+      </section>
+
+      <!-- ========== 键值列表 + 列表多行 ========== -->
+      <section class="glass panel">
+        <h2 class="panel-title">键值列表 · 列表多行</h2>
+        <p class="note">dl.kv 的值可复制（悬停显示按钮，触屏常显）；.kv.end 值靠右。</p>
+        <dl class="kv">
+          <dt>接口地址</dt><dd class="copyable"><span class="mono">https://api.example.com/v1/hooks/8f2c</span><button type="button" class="btn-icon xs" data-copy aria-label="复制"></button></dd>
+          <dt>令牌前缀</dt><dd class="copyable"><span class="mono">tok_example_7f3a…</span><button type="button" class="btn-icon xs" data-copy="tok_example_7f3a9c0d2e1b" aria-label="复制完整令牌"></button></dd>
+          <dt>更新时间</dt><dd>2026-11-08 14:20</dd>
+        </dl>
+        <div class="u-mt-4"><dl class="kv end compact">
+          <dt>小计</dt><dd>¥12,480</dd>
+          <dt>运费</dt><dd>¥1,200</dd>
+          <dt>合计</dt><dd><b>¥13,680</b></dd>
+        </dl></div>
+        <h3 class="section-name">.list.multiline</h3>
+        <div class="list divided multiline">
+          <div class="list-row">
+            <span class="row-lead"><span class="avatar">AC</span></span>
+            <span class="row-main"><span class="row-title">relay-01.region-a.example.com</span><span class="row-sub">经由 203.0.113.10 转发，上游 3 个出口，最近一次健康检查在两分钟前通过</span></span>
+            <span class="row-end"><span class="dot ok"></span><button class="btn-icon" type="button" aria-label="更多"><i data-icon="ellipsis"></i></button></span>
+          </div>
+          <div class="list-row">
+            <span class="row-lead"><span class="avatar lg">林</span></span>
+            <span class="row-main"><span class="row-title">短标题</span></span>
+            <span class="row-end"><span class="pill">user</span></span>
+          </div>
+        </div>
+        <h3 class="section-name">.list.dense（36）</h3>
+        <div class="list divided dense">
+          <div class="list-row"><span class="row-lead"><i data-icon="monitor"></i></span><span class="row-main"><span class="row-title">laptop-01</span></span><span class="row-end"><span class="mono">203.0.113.12</span><span class="dot ok"></span></span></div>
+          <div class="list-row"><span class="row-lead"><i data-icon="monitor"></i></span><span class="row-main"><span class="row-title">nas-home</span></span><span class="row-end"><span class="mono">203.0.113.31</span><span class="dot idle"></span></span></div>
+          <div class="list-row"><span class="row-lead"><i data-icon="cloud"></i></span><span class="row-main"><span class="row-title">vps-edge</span></span><span class="row-end"><span class="mono">203.0.113.7</span><span class="dot ok"></span></span></div>
+        </div>
+        <div class="flow u-mt-4">
+          <button class="btn-ghost danger" type="button" id="ack-btn"><i data-icon="trash-2"></i>重置节点…</button>
+          <span class="out" id="ack-out"></span>
+        </div>
+      </section>
+    </div>
+
+    <!-- ========== 表格增强 ========== -->
+    <section class="glass panel u-mt-4">
+      <div class="section-head"><h2 class="panel-title">表格增强</h2><span class="out" id="sort-out">点表头排序</span></div>
+      <p class="note">排序按钮（./table）、可点 / 选中行（aria-selected）、行状态色条、冻结首列、操作列、合计行；375 宽横滚，首列不走。</p>
+      <div class="table-wrap bleed">
+        <table class="tbl hover" id="t1">
+          <thead><tr>
+            <th aria-sort="none" class="col-sticky"><button type="button" class="th-sort">名称</button></th>
+            <th aria-sort="none"><button type="button" class="th-sort">状态</button></th>
+            <th aria-sort="descending" class="col-num"><button type="button" class="th-sort">金额</button></th>
+            <th aria-sort="none" class="col-num"><button type="button" class="th-sort">数量</button></th>
+            <th aria-sort="none"><button type="button" class="th-sort">更新</button></th>
+            <th class="col-actions" aria-label="操作"></th>
+          </tr></thead>
+          <tbody>
+            <tr tabindex="0" aria-selected="false" class="ok"><td class="col-sticky">Project Alpha</td><td><span class="pill ok">正常</span></td><td class="col-num" data-sort="128400">¥128,400</td><td class="col-num">42</td><td class="num">11-08 14:20</td><td class="col-actions"><button class="btn-icon" type="button" aria-label="编辑"><i data-icon="pencil"></i></button></td></tr>
+            <tr tabindex="0" aria-selected="true"><td class="col-sticky">Beta Service</td><td><span class="pill">闲置</span></td><td class="col-num" data-sort="86000">¥86,000</td><td class="col-num">7</td><td class="num">11-07 09:02</td><td class="col-actions"><button class="btn-icon" type="button" aria-label="编辑"><i data-icon="pencil"></i></button></td></tr>
+            <tr tabindex="0" aria-selected="false" class="err"><td class="col-sticky">Gamma Worker</td><td><span class="pill err">失败</span></td><td class="col-num" data-sort="12480">¥12,480</td><td class="col-num">3</td><td class="num">11-06 22:41</td><td class="col-actions"><button class="btn-icon" type="button" aria-label="编辑"><i data-icon="pencil"></i></button></td></tr>
+            <tr tabindex="0" aria-selected="false" class="warn"><td class="col-sticky">Delta Queue</td><td><span class="pill warn">积压</span></td><td class="col-num" data-sort="54000">¥54,000</td><td class="col-num">18</td><td class="num">11-05 17:30</td><td class="col-actions"><button class="btn-icon" type="button" aria-label="编辑"><i data-icon="pencil"></i></button></td></tr>
+          </tbody>
+          <tfoot><tr class="total"><td class="col-sticky">合计</td><td></td><td class="col-num">¥280,880</td><td class="col-num">70</td><td></td><td></td></tr></tfoot>
+        </table>
+      </div>
+
+      <div class="cols u-mt-4">
+        <div>
+          <h3 class="section-name">数字表 .numeric · 紧凑</h3>
+          <div class="table-wrap">
+            <table class="tbl numeric compact">
+              <thead><tr><th>月份</th><th>收入</th><th>支出</th><th>结余</th></tr></thead>
+              <tbody>
+                <tr><td>9 月</td><td>320,000</td><td>214,300</td><td class="amt-inc">105,700</td></tr>
+                <tr><td>10 月</td><td>320,000</td><td>298,120</td><td class="amt-inc">21,880</td></tr>
+                <tr><td>11 月</td><td>320,000</td><td>341,500</td><td class="amt-exp">−21,500</td></tr>
+              </tbody>
+              <tfoot><tr><td>合计</td><td>960,000</td><td>853,920</td><td>106,080</td></tr></tfoot>
+            </table>
+          </div>
+        </div>
+        <div>
+          <h3 class="section-name">空状态行</h3>
+          <div class="table-wrap">
+            <table class="tbl">
+              <thead><tr><th>时间</th><th>事件</th><th class="col-num">耗时</th></tr></thead>
+              <tbody><tr class="empty-row"><td colspan="3">暂无记录</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="section-name">窄屏卡片化 .reflow（≤640px）</h3>
+      <div class="table-wrap">
+        <table class="tbl reflow hover">
+          <thead><tr><th>任务</th><th>负责人</th><th>结果</th><th class="col-num">次数</th><th class="col-actions" aria-label="操作"></th></tr></thead>
+          <tbody>
+            <tr class="err"><td>EJ123456789JP</td><td data-label="负责人">alex</td><td data-label="结果"><span class="pill err">查询失败</span></td><td data-label="次数" class="col-num">12</td><td class="col-actions"><button class="btn btn-small" type="button">重试</button></td></tr>
+            <tr class="ok"><td>RR987654321JP</td><td data-label="负责人">lin</td><td data-label="结果"><span class="pill ok">已投递</span></td><td data-label="次数" class="col-num">4</td><td class="col-actions"><button class="btn-ghost btn-small" type="button">归档</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ========== 缩略图条 ========== -->
+    <section class="glass panel">
+      <h2 class="panel-title">缩略图条 .thumb-strip</h2>
+      <p class="note">点选切换选中；右上角删除；末尾加号添加位；加载中 / 失败；「+N」遮罩。点开大图交给 depth-carousel（DESIGN.md §16）。</p>
+      <ul class="thumb-strip" id="strip">
+        <li><button type="button" class="thumb-tile" aria-pressed="true" aria-label="图片 1"><svg class="sw" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7aa2d6"/><stop offset="1" stop-color="#3b4f7a"/></linearGradient></defs><rect width="64" height="64" fill="url(#g1)"/><circle cx="20" cy="22" r="7" fill="#f2d68a"/><path d="M0 52 22 34l14 12 10-8 18 14v10H0z" fill="#22314f"/></svg></button><button type="button" class="thumb-remove" aria-label="删除图片 1"></button></li>
+        <li><button type="button" class="thumb-tile" aria-pressed="false" aria-label="图片 2"><svg class="sw" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" fill="#c98e7a"/><rect x="14" y="16" width="36" height="32" rx="4" fill="#f3e3d3"/><rect x="20" y="22" width="24" height="4" fill="#c98e7a"/></svg></button><button type="button" class="thumb-remove" aria-label="删除图片 2"></button></li>
+        <li><button type="button" class="thumb-tile loading" aria-pressed="false" aria-label="图片 3（上传中）"><svg class="sw" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" fill="#6f9b84"/><path d="M0 44c16-10 30-10 64 0v20H0z" fill="#3e6352"/></svg></button></li>
+        <li><button type="button" class="thumb-tile error" aria-pressed="false" aria-label="图片 4（上传失败）"><i data-icon="image"></i></button><button type="button" class="thumb-remove" aria-label="删除图片 4"></button></li>
+        <li><button type="button" class="thumb-tile" aria-label="还有 5 张"><svg class="sw" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" fill="#8a7fb3"/></svg><span class="thumb-more">+5</span></button></li>
+        <li><button type="button" class="thumb-add" aria-label="添加图片" id="add"></button></li>
+      </ul>
+      <ul class="thumb-strip sm u-mt-2">
+        <li><span class="thumb-tile"><svg class="sw" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" fill="#7aa2d6"/></svg></span></li>
+        <li><span class="thumb-tile"><svg class="sw" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" fill="#c98e7a"/></svg></span></li>
+        <li><button type="button" class="thumb-add" disabled aria-label="添加图片（已达上限）"></button></li>
+      </ul>
+    </section>
+
+    <div class="cols">
+      <!-- ========== 可选缩略图网格 + 选项卡 ========== -->
+      <section class="glass panel">
+        <h2 class="panel-title">缩略图网格 · 选项卡</h2>
+        <p class="note">.thumb-grid 多选（选中左上角带勾）；.choice-card 跟随 input:checked。</p>
+        <div class="thumb-grid" id="grid" role="group" aria-label="候选图">
+          <button type="button" class="thumb-tile" aria-pressed="true" aria-label="候选 1"><svg class="sw" viewBox="0 0 64 48" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect width="64" height="48" fill="#7aa2d6"/><circle cx="18" cy="16" r="6" fill="#f2d68a"/><path d="M0 40 20 26l12 9 10-7 22 14v6H0z" fill="#22314f"/></svg></button>
+          <button type="button" class="thumb-tile" aria-pressed="false" aria-label="候选 2"><svg class="sw" viewBox="0 0 64 48" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect width="64" height="48" fill="#c98e7a"/><rect x="18" y="10" width="28" height="28" rx="4" fill="#f3e3d3"/></svg></button>
+          <button type="button" class="thumb-tile" aria-pressed="true" aria-label="候选 3"><svg class="sw" viewBox="0 0 64 48" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect width="64" height="48" fill="#6f9b84"/><path d="M0 34c16-8 30-8 64 0v14H0z" fill="#3e6352"/></svg></button>
+        </div>
+        <div class="choice-group u-mt-4">
+          <label class="choice-card"><input type="radio" name="plan" checked><span class="choice-body"><span class="choice-title">标准套餐</span><span class="choice-sub">每月 5 次 · 自动续期</span></span></label>
+          <label class="choice-card"><input type="radio" name="plan"><span class="choice-body"><span class="choice-title">高级套餐</span><span class="choice-sub">不限次数</span></span></label>
+          <label class="choice-card"><input type="radio" name="plan" disabled><span class="choice-body"><span class="choice-title">企业套餐</span><span class="choice-sub">暂不可选</span></span></label>
+        </div>
+        <h3 class="section-name">可点胶囊选中 · 大缩略图行</h3>
+        <div class="flow" id="pills">
+          <button class="pill" type="button" aria-pressed="true">全部<span class="count">24</span></button>
+          <button class="pill ok" type="button" aria-pressed="false">在售<span class="count">18</span></button>
+          <button class="pill warn" type="button" aria-pressed="true">已下架<span class="count">4</span></button>
+          <button class="pill err" type="button" aria-pressed="false">404<span class="count">2</span></button>
+        </div>
+        <div class="list divided u-mt-3">
+          <a class="list-row" href="#"><span class="row-lead lg"><span class="thumb-tile"><svg class="sw" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" fill="#c98e7a"/><rect x="18" y="14" width="28" height="36" rx="4" fill="#f3e3d3"/></svg></span></span><span class="row-main"><span class="row-title">保湿精华 30ml</span><span class="row-sub">Brand Example · 抽选中</span></span><span class="row-end"><span class="pill ok">在售</span><span class="row-chevron"></span></span></a>
+        </div>
+      </section>
+
+      <!-- ========== 空状态 + 终端浮钮 ========== -->
+      <section class="glass panel">
+        <h2 class="panel-title">空状态 · 终端浮钮</h2>
+        <div class="inner">
+          <div class="empty"><i data-icon="package"></i><p class="empty-title">还没有包裹</p><p class="empty-desc">新的入库包裹会出现在这里，也可以手动登记运单号。</p><div class="empty-actions"><button class="btn btn-small" type="button"><i data-icon="plus"></i>登记包裹</button></div></div>
+        </div>
+        <div class="inner u-mt-3">
+          <div class="empty compact"><i data-icon="circle-check"></i><p class="empty-title">全部处理完了</p></div>
+        </div>
+        <div class="term u-mt-3">
+          <button class="term-head" type="button"><span class="term-dot" data-live="1"></span><span class="term-title">job · sync</span></button>
+          <div class="term-body" style="height: 120px"><div class="term-line info">[14:20:01] 开始同步</div><div class="term-line">[14:20:02] 拉取 128 条</div><div class="term-line warn">[14:20:05] 2 条缺少图片</div><div class="term-line">[14:20:06] 写入完成</div></div>
+          <button class="term-follow" type="button"><i data-icon="arrow-down"></i>回到最新</button>
+        </div>
+      </section>
+    </div>
+
+  </main>
+
+  <div class="action-bar" role="region" aria-label="已选操作" id="bar">
+    <div class="action-bar-text">已选 <b>3</b> 项 · <b>2.40</b> kg</div>
+    <div class="action-bar-actions">
+      <button class="btn-ghost" type="button" id="bar-clear">清空</button>
+      <button class="btn" type="button" id="bar-go">寄出</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { enhanceIcons } from "../icons.js";
+  import { enhanceSortTable } from "../table.js";
+  import { enhanceCopyButtons } from "../copy.js";
+  import { confirm } from "../confirm.js";
+  import { toast } from "../toast.js";
+
+  enhanceIcons();
+  enhanceCopyButtons(document, { onCopy: (ok) => ok && toast("已复制", { tone: "ok" }) });
+
+  const out = document.getElementById("sort-out");
+  enhanceSortTable(document.getElementById("t1"), {
+    onSort: ({ th, direction }) => { out.textContent = `${th.textContent.trim()} · ${direction === "ascending" ? "升序" : "降序"}`; }
+  });
+
+  // 可点行：单选
+  const rows = document.querySelectorAll("#t1 tbody tr");
+  for (const r of rows) {
+    const pick = () => rows.forEach((x) => x.setAttribute("aria-selected", String(x === r)));
+    r.addEventListener("click", (e) => { if (!e.target.closest("button")) pick(); });
+    r.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); } });
+  }
+
+  // 缩略图：单选 + 删除
+  const strip = document.getElementById("strip");
+  strip.addEventListener("click", (e) => {
+    const rm = e.target.closest(".thumb-remove");
+    if (rm) { rm.parentElement.remove(); return; }
+    const t = e.target.closest("button.thumb-tile");
+    if (t && t.hasAttribute("aria-pressed")) strip.querySelectorAll(".thumb-tile[aria-pressed]").forEach((x) => x.setAttribute("aria-pressed", String(x === t)));
+  });
+  document.getElementById("add").addEventListener("click", () => toast("选择文件…", { tone: "info" }));
+
+  // 缩略图网格：多选；胶囊：单选
+  document.getElementById("grid").addEventListener("click", (e) => {
+    const t = e.target.closest(".thumb-tile");
+    if (t) t.setAttribute("aria-pressed", String(t.getAttribute("aria-pressed") !== "true"));
+  });
+  const pills = document.querySelectorAll("#pills .pill");
+  for (const p of pills) p.addEventListener("click", () => pills.forEach((x) => x.setAttribute("aria-pressed", String(x === p))));
+
+  // 勾选确认
+  const ackOut = document.getElementById("ack-out");
+  document.getElementById("ack-btn").addEventListener("click", async () => {
+    const ok = await confirm({ title: "重置节点？", message: "会断开该节点上的所有连接，正在进行的传输会中断。", danger: true, confirmLabel: "重置", ack: "我明白这会中断正在进行的传输" });
+    ackOut.textContent = ok ? "已确认" : "已取消";
+  });
+
+  // 底部操作条
+  const bar = document.getElementById("bar");
+  if (new URLSearchParams(location.search).get("bar") === "0") bar.hidden = true;
+  document.getElementById("bar-clear").addEventListener("click", () => { bar.hidden = true; });
+  document.getElementById("bar-go").addEventListener("click", () => toast("已提交 3 项", { tone: "ok" }));
+</script>
+</body>
+</html>
