@@ -4998,7 +4998,8 @@ textarea.field { vertical-align: top; }
   min-height: calc(var(--h-lg) * 4);
   overflow: hidden;
   border-radius: var(--r-md);
-  background: var(--inner-bg);
+  /* 不透明底：卡片本身半透明，舞台后面不能透出页面 */
+  background: linear-gradient(var(--inner-bg), var(--inner-bg)), var(--bg);
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
@@ -5085,6 +5086,7 @@ textarea.field { vertical-align: top; }
 }
 .lightbox-count { color: var(--text-dim); font-variant-numeric: tabular-nums; }
 .lightbox-sep { align-self: stretch; width: 1px; margin: var(--sp-2) var(--sp-1); background: var(--line-soft); }
+.lightbox-bar > .btn-icon { width: var(--h-md); height: var(--h-md); border-radius: var(--r-sm); }
 .lightbox-pct { min-width: calc(var(--h-md) * 1.75); font-variant-numeric: tabular-nums; }
 .lightbox-live {
   position: absolute;
