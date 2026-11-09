@@ -496,6 +496,15 @@ export function mountGLTheme(meta, container, params, ctx, factory, opts = {}) {
       onResize() {
         if (!inst || !gpuReady) return;
         inst.resize?.();
+        // 改 canvas.width/height 会立刻清空绘图缓冲；等下一个 rAF 再画会合成出一帧空白（闪一下），
+        // 所以在同一个回调里同步补画一帧
+        if (loop && surface && !surface.lost) {
+          try {
+            inst.render(loop.time, 0);
+          } catch (e) {
+            console.warn(e);
+          }
+        }
         loop?.requestFrame();
       },
       onLost() {

@@ -90,7 +90,10 @@ a {
 
 .bg-layer {
   position: fixed;
-  inset: 0;
+  /* 高度按大视口（lvh）固定：手机浏览器地址栏 / 工具栏收放时背景层尺寸不变，画布不重建、不闪、光线不跳 */
+  inset: 0 0 auto 0;
+  height: 100vh;
+  height: 100lvh;
   z-index: 0;
   overflow: hidden;
   transform: translateZ(0);
