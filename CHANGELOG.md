@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.31.0 — （未发布）
+## v0.31.0 — 2026-11-09
 
 **新增**
 - 底部抽屉下拉关闭：`mountOverlay(overlay, { dragClose: true })` + 抓手 `.sheet-grabber`（DESIGN.md §15）。≤899px 时从上沿（抓手 + `.sheet-head`）往下拖，卡片跟手、遮罩变淡，
