@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.31.0 — （未发布）
+
+**新增**
+- 底部抽屉下拉关闭：`mountOverlay(overlay, { dragClose: true })` + 抓手 `.sheet-grabber`（DESIGN.md §15）。≤899px 时从上沿（抓手 + `.sheet-head`）往下拖，卡片跟手、遮罩变淡，
+  松手按距离（卡片高 30%，最多 200px）或速度决定关闭还是弹回；宽屏不生效、抓手隐藏。handle 新增 `dragBy(dy)` / `release(dy, velocity?)`，给组件把自己区域里的下滑接进来。
+  `dragClose: { sheet?, handle? }` 可改卡片与拖动区。
+
+**可见变化**
+- 无。不给 `dragClose`、不放 `.sheet-grabber` 的弹层行为与外观都不变。
+
 ## v0.30.0 — 2026-11-08
 
 **通用组件第 3 批**（DESIGN.md §16.4，手测页 `demo/components-v030.html`）：各站还在手写的形态收进包里，全部按 §3.1 刻度、与 `.dot` / `.pill` 同一色族。纯新增，旧类保留。

@@ -839,6 +839,26 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
 - **`mountOverlay(overlayEl, { onClose, lockScroll = true }) → { destroy() }`**（`@szyyw/design/overlay`）：遮罩点击关闭要求按下与松开都落在遮罩本身
   （拖选文字松手在遮罩上不误关）；嵌套弹层的 body 滚动锁引用计数；Esc 只关最上层；模块顶层不碰 DOM。
   它不搬动 / 移除元素，`onClose` 里由应用卸载并 `destroy()`。
+- **底部抽屉下拉关闭（v0.31.0）**：`mountOverlay(overlay, { onClose, dragClose: true })` + 抓手 `.sheet-grabber`（放在 `.sheet` 第一个子元素）。
+  ≤899px（`.sheet` 是底部抽屉）时，从上沿（抓手 + `.sheet-head`，其中的按钮 / 链接 / 输入框除外）往下拖：卡片跟手、遮罩随位移变淡；
+  松手时下拖超过卡片高 30%（最多 200px）或快速下甩 → 卡片滑出屏幕后调 `onClose`，否则弹回（`--dur-base` / `--ease-out`，reduced-motion 下无动画）。往上拖只有一点阻尼位移。
+  宽屏（居中弹窗）下抓手隐藏、拖动不生效。`dragClose: { sheet?, handle? }` 可指定卡片元素与拖动区选择器（缺省第一个 `.sheet`、`.sheet-grabber, .sheet-head`）。
+  返回的 handle 多两个方法：`dragBy(dy)`（组件把自己区域里的下滑接进来，返回是否生效）、`release(dy, velocity?)`（返回是否判定为关闭）——`./lightbox` 没放大时在图上竖向下滑就是这样接的。
+  JS 在卡片上写 `data-drag-close`（头部 `touch-action: none`）与拖动中的 `data-dragging`。**不给 `dragClose` 时行为与外观完全不变**；`onClose` 应把弹层移除（不移除时卡片会复原）。
+
+```html
+<div class="overlay">
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="t1">
+    <div class="sheet-grabber" aria-hidden="true"></div>
+    <div class="sheet-head"><h2 class="sheet-title" id="t1">筛选</h2><button class="close-x" aria-label="关闭"></button></div>
+    <div class="sheet-body">…</div>
+  </div>
+</div>
+<script type="module">
+  import { mountOverlay } from "@szyyw/design/overlay";
+  const ov = mountOverlay(overlay, { dragClose: true, onClose: () => { ov.destroy(); overlay.remove(); } });
+</script>
+```
 
 ## 15.1 居中主体栏 `.app-main`（v0.25.0）
 

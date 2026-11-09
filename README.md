@@ -402,7 +402,7 @@ enhanceCopyButtons();                                                // [data-co
 | `./branched-menu` | `mountBranchedMenu`、`ICONS`、`DEFAULTS` |
 | `./menu` | `attachMenu` |
 | `./techtext` | `enhanceTechText`、`mountTechText`、`runningCount`、`DEFAULTS` |
-| `./overlay` | `mountOverlay`（遮罩点击 / Esc 关闭 + body 滚动锁引用计数） |
+| `./overlay` | `mountOverlay`（遮罩点击 / Esc 关闭 + body 滚动锁引用计数；v0.31.0 起 `dragClose` 底部抽屉下拉关闭 + `.sheet-grabber` 抓手，DESIGN.md §15） |
 | `./depth-carousel` | `mountDepthCarousel`、`DEFAULTS`、`resolveEase`、`cubicBezier`（纵深轮播 / 弹层看图，DESIGN.md §16） |
 | `./confirm` | `armConfirm`、`confirm`、`CONFIRM_TEXTS`（按钮二次确认 / 确认对话框，v0.30.0 起 `confirm({ ack })` 勾选确认，DESIGN.md §16.3–§16.4） |
 | `./disclosure` | `mountDisclosure`、`enhanceDisclosures`（按钮式折叠区块，DESIGN.md §16.3） |

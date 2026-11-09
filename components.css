@@ -1250,6 +1250,32 @@ table.tbl {
 
 .sheet-foot .btn, .sheet-foot .btn-ghost { flex: 1; }
 
+/* 抓手（v0.31.0）：底部抽屉上沿的一条短横，配 mountOverlay({ dragClose: true }) 往下拖关闭。
+   <div class="sheet"><div class="sheet-grabber" aria-hidden="true"></div><div class="sheet-head">…</div>…</div>
+   只在 ≤899px（.sheet 是底部抽屉）显示；宽屏是居中弹窗，抓手隐藏。没有抓手、没开 dragClose 的 .sheet 不受影响 */
+.sheet-grabber { display: none; }
+@media (max-width: 899px) {
+  .sheet-grabber {
+    flex: none;
+    display: grid;
+    place-items: center;
+    height: var(--sp-5);
+    cursor: grab;
+    touch-action: none;
+  }
+  .sheet-grabber::before {
+    content: "";
+    width: var(--h-md);
+    height: var(--sp-1);
+    border-radius: var(--r-pill);
+    background: var(--control-border);
+  }
+  .sheet-grabber + .sheet-head { padding-top: 0; }
+  /* 开了 dragClose 的抽屉：头部也是拖动区，交给 JS 处理手势 */
+  .sheet[data-drag-close] > .sheet-head { touch-action: none; }
+  .sheet[data-dragging], .sheet[data-dragging] .sheet-grabber { cursor: grabbing; }
+}
+
 /* 关闭键（v0.28.0）：32×32 方块、无边框，悬停衬底。里面放 ./icons 的 x 图标，
    或者干脆留空——<button class="close-x" aria-label="关闭"></button>（标签之间不要留空白）自动画 Lucide x */
 .close-x {
