@@ -453,6 +453,16 @@ export function openLightbox(options = {}) {
 
   function onPointerUp(e) {
     pointers.delete(e.pointerId);
+    if (pointers.size === 1 && g && g.axis === "pinch") {
+      // 张合中先抬起一根手指（哪根先抬都一样）：以剩下那根手指和当前视图重建手势，
+      // 否则剩下那根一动就按张合前的视图平移，缩放倍数弹回去；axis 保持 pinch，不触发翻页 / 下拉
+      const [rest] = pointers.values();
+      Object.assign(g, {
+        startX: rest.x, startY: rest.y, view, dist: 0, moved: true,
+        lastX: rest.x, lastY: rest.y, lastT: e.timeStamp, vx: 0, vy: 0
+      });
+      return;
+    }
     if (pointers.size > 0 || !g) return;
     const cur = g;
     g = null;
