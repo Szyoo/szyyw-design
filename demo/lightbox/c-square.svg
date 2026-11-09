@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1200 1200">
+<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#10b981"/><stop offset="1" stop-color="#3b82f6"/></linearGradient>
+<rect width="1200" height="1200" fill="url(#bg)"/>
+<circle cx="864" cy="360" r="192" fill="#fff" fill-opacity=".25"/>
+<text x="50%" y="54%" text-anchor="middle" font-family="system-ui,sans-serif" font-size="150" font-weight="700" fill="#fff" fill-opacity=".9">1200×1200</text>
+<text x="50%" y="738" text-anchor="middle" font-family="ui-monospace,monospace" font-size="37" fill="#fff" fill-opacity=".75">1 px = 1 px · c-square</text>
+</svg>

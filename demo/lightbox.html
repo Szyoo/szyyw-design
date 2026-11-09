@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>v0.31.0 原图查看器 · 手测</title>
+<!--
+  v0.31.0 原图查看器 ./lightbox、空缩略图占位、底部抽屉下拉关闭的手测页（不进 package files），对应 DESIGN.md §16.5 / §15。
+  仓库根目录 `python3 -m http.server 8080`，打开 http://localhost:8080/demo/lightbox.html
+    ?scheme=light|dark|auto   明暗（缺省 dark）
+    ?open=<i>                 打开后直接看第一条缩略图带的第 i 张（截图用）
+  示例图在 demo/lightbox/（生成的 SVG 渐变图，含 6000×4000 的大图测 1:1）；第 4 张故意指向不存在的文件，测失败态。
+  看点：缩略图模糊占位 → 原图淡入；双击 / 滚轮 / + − 0 / 1:1；左右滑跟手（首尾阻尼）；缩略图带跳转；
+  375 宽触屏：大半屏卡片、抓手往下拖关闭、图上竖向下滑关闭；空占位与缩略图条同高。
+-->
+<script>
+  (function () {
+    var s = new URLSearchParams(location.search).get("scheme");
+    document.documentElement.setAttribute("data-scheme", s === "light" || s === "auto" ? s : "dark");
+  })();
+</script>
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../components.css">
+<style>
+  .demo { padding-bottom: var(--sp-6); }
+  .demo > section { margin-bottom: var(--sp-4); }
+  .demo h2.panel-title { margin-bottom: var(--sp-1); }
+  .note { margin: 0 0 var(--sp-3); font-size: var(--fs-sm); color: var(--text-dim); }
+  .demo h3.section-name { margin-top: var(--sp-5); }
+  .demo h3.section-name:first-of-type { margin-top: var(--sp-4); }
+  .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--sp-4); align-items: start; }
+  .out { font-size: var(--fs-sm); color: var(--text-dim); }
+</style>
+</head>
+<body>
+<div class="bg-layer" aria-hidden="true"></div>
+<div class="app-frame">
+  <header class="app-header">
+    <div class="app-brand">
+      <h1 class="app-title">原图查看器</h1>
+      <span class="app-sub">lightbox · v0.31.0</span>
+    </div>
+  </header>
+
+  <main class="app-main demo">
+
+    <section class="glass panel">
+      <h2 class="panel-title">声明式 enhanceLightbox</h2>
+      <p class="note">磁贴写 <code>data-lightbox-src</code>（可选 <code>data-lightbox-thumb</code> / <code>-w</code> / <code>-h</code> / <code>-group</code>），点开同一条里的全部图片。第 4 张加载失败，第 5 张 6000×4000 测 1:1。</p>
+      <ul class="thumb-strip" id="strip1">
+        <li><button type="button" class="thumb-tile" aria-label="查看图片 1" data-lightbox-src="lightbox/a-landscape.svg" data-lightbox-w="1600" data-lightbox-h="1000"><img src="lightbox/a-landscape-thumb.svg" alt="横图 1600×1000"></button></li>
+        <li><button type="button" class="thumb-tile" aria-label="查看图片 2" data-lightbox-src="lightbox/b-portrait.svg"><img src="lightbox/b-portrait-thumb.svg" alt="竖图 900×1600"></button></li>
+        <li><button type="button" class="thumb-tile" aria-label="查看图片 3" data-lightbox-src="lightbox/c-square.svg" data-lightbox-w="1200" data-lightbox-h="1200"><img src="lightbox/c-square-thumb.svg" alt="方图"></button></li>
+        <li><button type="button" class="thumb-tile" aria-label="查看图片 4" data-lightbox-src="lightbox/missing.jpg" data-lightbox-thumb="lightbox/d-pano-thumb.svg"><img src="lightbox/d-pano-thumb.svg" alt="加载失败的图"></button></li>
+        <li><button type="button" class="thumb-tile" aria-label="查看图片 5" data-lightbox-src="lightbox/e-huge.svg" data-lightbox-w="6000" data-lightbox-h="4000"><img src="lightbox/e-huge-thumb.svg" alt="大图 6000×4000"></button></li>
+        <li><button type="button" class="thumb-tile" aria-label="查看图片 6" data-lightbox-src="lightbox/d-pano.svg"><img src="lightbox/d-pano-thumb.svg" alt="全景 3000×900"></button></li>
+      </ul>
+
+      <h3 class="section-name">跨条分组（data-lightbox-group）· .sm</h3>
+      <div class="cols">
+        <ul class="thumb-strip sm">
+          <li><button type="button" class="thumb-tile" aria-label="查看" data-lightbox-group="g2" data-lightbox-src="lightbox/c-square.svg"><img src="lightbox/c-square-thumb.svg" alt="方图"></button></li>
+          <li><button type="button" class="thumb-tile" aria-label="查看" data-lightbox-group="g2" data-lightbox-src="lightbox/b-portrait.svg"><img src="lightbox/b-portrait-thumb.svg" alt="竖图"></button></li>
+        </ul>
+        <ul class="thumb-strip sm">
+          <li><button type="button" class="thumb-tile" aria-label="查看" data-lightbox-group="g2" data-lightbox-src="lightbox/a-landscape.svg"><img src="lightbox/a-landscape-thumb.svg" alt="横图"></button></li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="glass panel">
+      <h2 class="panel-title">空缩略图占位 .thumb-strip-empty</h2>
+      <p class="note">不可点，与 .thumb-strip 同高（缺省 64 + 上下 8，.sm 48 + 上下 8）；左右对比。</p>
+      <div class="cols">
+        <div><div class="thumb-strip-empty">还没有照片</div></div>
+        <div><ul class="thumb-strip"><li><button type="button" class="thumb-tile" aria-label="查看" data-lightbox-src="lightbox/a-landscape.svg"><img src="lightbox/a-landscape-thumb.svg" alt=""></button></li></ul></div>
+        <div><div class="thumb-strip-empty sm">还没有照片</div></div>
+        <div><ul class="thumb-strip sm"><li><button type="button" class="thumb-tile" aria-label="查看" data-lightbox-src="lightbox/c-square.svg"><img src="lightbox/c-square-thumb.svg" alt=""></button></li></ul></div>
+      </div>
+    </section>
+
+    <section class="glass panel">
+      <h2 class="panel-title">JS openLightbox / 底部抽屉下拉关闭</h2>
+      <p class="note">单张时不显示缩略图带与翻页键；英文文案；下面的「筛选」是普通 .sheet + .sheet-grabber + mountOverlay({ dragClose: true })，窄屏从上沿往下拖关闭。</p>
+      <div class="row wrap">
+        <button type="button" class="btn-ghost" id="one">只有一张（en）</button>
+        <button type="button" class="btn-ghost" id="sheet">底部抽屉（dragClose）</button>
+        <span class="out" id="out"></span>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script type="module">
+  import { enhanceLightbox, openLightbox } from "../lightbox.js";
+  import { mountOverlay } from "../overlay.js";
+
+  const out = document.getElementById("out");
+  window.__undoLightbox = enhanceLightbox(document, { onClose: () => { out.textContent = "已关闭"; } });
+
+  document.getElementById("one").addEventListener("click", () => {
+    openLightbox({ items: [{ src: "lightbox/d-pano.svg", thumb: "lightbox/d-pano-thumb.svg", alt: "Panorama" }], locale: "en" });
+  });
+
+  document.getElementById("sheet").addEventListener("click", (e) => {
+    const overlay = document.createElement("div");
+    overlay.className = "overlay";
+    overlay.innerHTML = `<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="st">
+      <div class="sheet-grabber" aria-hidden="true"></div>
+      <div class="sheet-head"><h2 class="sheet-title" id="st">筛选</h2><button type="button" class="close-x" aria-label="关闭"></button></div>
+      <div class="sheet-body"><p class="note">窄屏下从抓手或标题行往下拖：超过三成高度或快速下甩关闭，拖一点点弹回。</p></div>
+    </div>`;
+    document.body.append(overlay);
+    const opener = e.currentTarget;
+    const done = () => { ov.destroy(); overlay.remove(); opener.focus(); out.textContent = "抽屉已关闭"; };
+    const ov = mountOverlay(overlay, { dragClose: true, onClose: done });
+    overlay.querySelector(".close-x").addEventListener("click", done);
+  });
+
+  const open = new URLSearchParams(location.search).get("open");
+  if (open !== null) document.querySelectorAll("#strip1 .thumb-tile")[Number(open) || 0]?.click();
+</script>
+</body>
+</html>

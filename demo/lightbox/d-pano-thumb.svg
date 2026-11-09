@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="72" viewBox="0 0 3000 900">
+<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0ea5e9"/><stop offset="1" stop-color="#a855f7"/></linearGradient>
+<rect width="3000" height="900" fill="url(#bg)"/><circle cx="2160" cy="270" r="144" fill="#fff" fill-opacity=".25"/>
+</svg>

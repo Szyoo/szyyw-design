@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="3000" height="900" viewBox="0 0 3000 900">
+<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0ea5e9"/><stop offset="1" stop-color="#a855f7"/></linearGradient>
+<rect width="3000" height="900" fill="url(#bg)"/>
+<circle cx="2160" cy="270" r="144" fill="#fff" fill-opacity=".25"/>
+<text x="50%" y="54%" text-anchor="middle" font-family="system-ui,sans-serif" font-size="112" font-weight="700" fill="#fff" fill-opacity=".9">3000×900</text>
+<text x="50%" y="553" text-anchor="middle" font-family="ui-monospace,monospace" font-size="28" fill="#fff" fill-opacity=".75">1 px = 1 px · d-pano</text>
+</svg>
