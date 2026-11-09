@@ -351,6 +351,21 @@ enhanceSortTable(table, { onSort: ({ index, direction }) => … });   // th[aria
 enhanceCopyButtons();                                                // [data-copy] 按钮
 ```
 
+### 原图查看器（v0.31.0）
+
+缩略图点开看原图：放大（双击 / 双指 / 滚轮 / 1:1）、平移、跟手翻页、缩略图带，手机上是可下拉关闭的大半屏卡片。细则见 DESIGN.md §16.5，手测页 `demo/lightbox.html`。
+
+```html
+<ul class="thumb-strip"><li><button type="button" class="thumb-tile" aria-label="查看照片" data-lightbox-src="/p/1.jpg" data-lightbox-w="4032" data-lightbox-h="3024"><img src="/p/1-360.jpg" alt=""></button></li></ul>
+<div class="thumb-strip-empty">还没有照片</div>   <!-- 没有图时的同高占位 -->
+```
+
+```js
+import { enhanceLightbox, openLightbox } from "@szyyw/design/lightbox";
+enhanceLightbox();                                              // [data-lightbox-src] 磁贴
+openLightbox({ items: [{ src, thumb, width, height }], start: 0, onClose });
+```
+
 ### 刻度与交互状态（v0.28.0）
 
 `tokens.css` 带一套明暗无关的刻度：字号 `--fs-*`、行高 `--lh-*`、圆角 `--r-*`、控件高度 `--h-sm/md/lg`（28 / 36 / 44）、间距 `--sp-1…6`、
@@ -408,6 +423,7 @@ enhanceCopyButtons();                                                // [data-co
 | `./disclosure` | `mountDisclosure`、`enhanceDisclosures`（按钮式折叠区块，DESIGN.md §16.3） |
 | `./copy` | `copyText`、`mountCopy`、`enhanceCopyButtons`、`COPY_TEXTS`（一键复制，DESIGN.md §16.4） |
 | `./table` | `enhanceSortTable`（可排序表头，DESIGN.md §16.4） |
+| `./lightbox` | `openLightbox`、`enhanceLightbox`、`LIGHTBOX_TEXTS`（原图查看器：渐进加载、放大平移、跟手翻页、缩略图带、手机下拉关闭，DESIGN.md §16.5） |
 | `./icons` | `icon`、`iconSvg`、`enhanceIcons`、`hasIcon`、`ICON_NAMES`、`LUCIDE_VERSION`（Lucide 线性图标，DESIGN.md §16.2） |
 | `./version` | `VERSION`、`REPO` |
 

@@ -664,6 +664,8 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
   可点胶囊选中 `button.pill[aria-pressed=true]` `.empty-title` `.empty-desc` `.empty-actions` `.empty.compact` `.term-follow` `.confirm-ack`；
   CSS 变量 `--stat-min` `--thumb` `--thumb-min` `--thumb-ratio` `--action-bar-offset` `--action-bar-w`（应用设）与 `--action-bar-space`（包写，可读）；
   JS `./copy`（`copyText` `mountCopy` `enhanceCopyButtons` `COPY_TEXTS`）`./table`（`enhanceSortTable`）、`confirm({ ack })`；`--mask-*` 是内部变量，别引用
+- v0.31.0 新增（§16.5、§15）：`.thumb-strip-empty`（`.sm` `.lg`）`.sheet-grabber`；属性 `data-lightbox-src` `data-lightbox-thumb` `data-lightbox-w` `data-lightbox-h` `data-lightbox-group`，
+  `data-drag-close` `data-dragging`（overlay.js 写在 `.sheet` 上）；CSS 变量 `--lightbox-h`；JS `./lightbox`（`openLightbox` `enhanceLightbox` `LIGHTBOX_TEXTS`）、`mountOverlay({ dragClose })` 与 handle 的 `dragBy` `release`
 - v0.24.0 新增（§16）：`.depth-carousel` 及其 `__*` 子类与状态类、CSS 变量 `--dc-height` `--dc-min-height` `--dc-tint` `--dc-fit`；JS `./depth-carousel`（`mountDepthCarousel`）
 - v0.15.0 新增（§14）：JS `./techtext`（`mountTechText` `enhanceTechText` `DEFAULTS`）、`mountChrome({ techText })` 与 `handle.techText`；
   类 `.tech-text`（JS 加在被增强的元素上，可用来写选中色等外观）。`.tech-text-canvas` 是内部实现，别套用
@@ -673,6 +675,7 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
 
 - `.settings-panel` `.settings-toggle` `.appearance-*`（含 v0.19.0 的 `.appearance-status`）`.theme-param-choice` `.panel-body` `.panel-foot` `.ctl*` `.update-*`
   （外观 / 背景参数弹层；v0.9.0 把 `.settings-panel` 的定位挪给 `.corner-panel`，借用它的门户抽屉因此摊到了页面底部）
+- `.lightbox` `.lightbox-*`（v0.31.0 原图查看器的结构，lightbox.js 生成；只有 `--lightbox-h` 是可调的）
 - `.corner-tools` `.scheme-toggle` `.locale-toggle` `.locale-menu*` `.app-switcher*` `.account-*` `.guest-note`
   （`.corner-tools` 容器由 corner.js 管，别手写；按钮用 `createCornerButton`）
 
@@ -1359,7 +1362,7 @@ cell.innerHTML = iconSvg("copy");                    // 字符串：模板拼接
   `.thumb-grid`：自适应网格（列宽下限 `--thumb-min` 120px，格子按 `--thumb-ratio` 4 / 3 定高），同一块 `.thumb-tile`；选中格左上角多一枚勾（多选一眼可见）。
 - `.choice-card`：带配图的单选 / 多选卡，整块是 `label`；选中跟随里面的 `input:checked`（也认 `.selected` / `[aria-checked=true]`），着色族；悬停描边、键盘焦点整卡画环、input 禁用整卡 .45。
   `.choice-group` 是自适应网格（最小 14rem）。
-- 与 Depth Carousel 的关系：缩略图条 / 网格负责**挑选与编辑**（选中、添加、删除、上传状态），点开大图仍交给 `mountDepthCarousel`（§16，放 `.overlay` + `.sheet.wide`）；
+- 与 Depth Carousel 的关系：缩略图条 / 网格负责**挑选与编辑**（选中、添加、删除、上传状态）；点开看原图（放大、平移）用 `./lightbox`（v0.31.0，§16.5），纵深轮播式浏览用 `mountDepthCarousel`（§16，放 `.overlay` + `.sheet.wide`）；
   两者并排时用 Depth Carousel 的 `onChange` 同步缩略图的 `aria-current`，点缩略图调 `goTo(i)`。
 - 迁移：照片格 `.thumbs > .thumb-btn > img.thumb` + `.thumb-more` / `.thumb-empty`、聊天附件盘 `.bridge-att` + `.bridge-att-x` → `.thumb-strip`；
   候选图多选 `.cand-grid > .cand-thumb.picked` → `.thumb-grid`；配图单选卡 `.opt.picked` → `.choice-card`。
@@ -1424,6 +1427,69 @@ cell.innerHTML = iconSvg("copy");                    // 字符串：模板拼接
   旧的 `.empty-icon`（emoji 34px）照常，新代码用图标：🎁 → `package` / `star`，📋 → `file-text`，✅ → `circle-check`。
 - **终端「回到最新」** `.term-follow`：放在 `.term` 里（`.term-body` 之后），贴右下角、终端配色、`./icons` 的 `arrow-down` 可放在文字前；何时显示（用户往上翻了）由应用决定，用 `hidden` 开关。
 - **勾选确认** `confirm({ ack: "我明白…" })`：说明下方加复选框（`.confirm-ack`），勾上之前确认键禁用；不给 `ack` 时与之前完全相同。
+
+## 16.5 原图查看器 `./lightbox` · 空缩略图占位（v0.31.0）
+
+缩略图点开看原图的查看器，框架无关的 JS 模块（写法与 `./confirm` `./copy` 一致）；外观全部由包里已有的件拼成：`.overlay` + `.sheet.wide`、`.close-x`、`.btn-icon` / `.btn-ghost.btn-small`、
+`.thumb-strip.sm` + `.thumb-tile`（选中态照旧）、`.spinner.lg`、`.empty.compact`、`.sheet-grabber`。手测页 `demo/lightbox.html`（`?scheme=light`，`?open=<i>` 直接打开第 i 张）。
+
+### 用法
+
+```html
+<ul class="thumb-strip">
+  <li><button type="button" class="thumb-tile" aria-label="查看照片 1"
+      data-lightbox-src="/photos/1.jpg" data-lightbox-w="4032" data-lightbox-h="3024"><img src="/photos/1-360.jpg" alt="门牌"></button></li>
+  <li><button type="button" class="thumb-tile" aria-label="查看照片 2" data-lightbox-src="/photos/2.jpg"><img src="/photos/2-360.jpg" alt=""></button></li>
+</ul>
+<div class="thumb-strip-empty sm">还没有照片</div>
+```
+
+```js
+import { openLightbox, enhanceLightbox, LIGHTBOX_TEXTS } from "@szyyw/design/lightbox";
+const undo = enhanceLightbox();                       // 声明式：事件委托，重复调用不重复绑定，返回解绑函数
+const lb = openLightbox({ items, start: 2, onClose }); // 命令式 → { close(), go(i), destroy() }
+```
+
+- **`openLightbox({ items, start = 0, locale?, labels?, onClose?, returnFocus? })`**：`items` 为 `{ src, thumb?, alt?, width?, height? }[]`（没有 `src` 的项丢掉），打开时做快照，
+  之后调用方换掉数组不影响正在看的。挂到 body，`mountOverlay({ dragClose })` 处理遮罩点击、Esc、滚动锁与下拉关闭；`close()` 关闭并调 `onClose`，`destroy()` 静默移除；
+  两者都撤掉全部监听，焦点回到 `returnFocus`（缺省打开时的焦点元素）。`go(i)` 跳到第 i 张。
+- **`enhanceLightbox(root = document, { locale?, labels?, onClose? })`**：`.thumb-strip` 里带 `data-lightbox-src` 的 `.thumb-tile` 点击打开，从被点的那张开始。
+  属性：`data-lightbox-src`（原图，必填）、`data-lightbox-thumb`（缺省取磁贴里 img 的 src）、`data-lightbox-w` / `data-lightbox-h`（原图尺寸）、`data-lightbox-group`
+  （同组跨条；不写时 = 同一条里没写组的磁贴）。禁用 / `aria-disabled` 的磁贴不响应；`a.thumb-tile` 带修饰键点击交给浏览器。带 `data-lightbox-src` 的磁贴是放大光标。
+- **文案** `LIGHTBOX_TEXTS`（zh / ja / en，缺省 zh），`labels` 覆盖任意键：`dialog` `close` `prev` `next` `zoomIn` `zoomOut` `reset` `actualSize` `original` `openOriginal`
+  `loading` `loadFailed` `openInNewTab` `position`（「第 {i} / {n} 张」）`image`（缺省 alt「图片 {i} / {n}」）`thumbs` `thumb`（「第 {i} 张」）。
+
+### 行为
+
+- **显示原图**：按原图比例算好像素尺寸居中（小图也放大到撑满舞台），只有图上是放大光标，空白处点击不放大。
+- **渐进加载**：有 `thumb` 时先用它撑出版面并模糊显示（`--blur-sm`），舞台中央 `.spinner.lg`；原图到了淡入盖上（`--dur-base`）。版面尺寸依次取：已加载原图的 naturalWidth/Height →
+  `width` / `height` → 缩略图比例。底栏的「原图 W×H」与 1:1 加载后以 naturalWidth/Height 为准。失败：`.empty.compact`（「图片加载失败」+「在新标签打开原图」）。相邻前后各预加载一张。
+- **放大**：双击 / 双点图片（在点的位置放大到 2.5 倍，放大时双击任意处还原）、双指张合、滚轮（没放大时只在图上生效）、`+` / `-` 键与按钮（每步 1.5 倍）、1:1（原图一像素 = 一个 CSS 像素，
+  不乘 devicePixelRatio）；`0` 键或点百分比还原。上限 max(5, 1:1 倍数)。放大后拖动平移，不许拖出边。
+- **翻页**（没放大时）：左右滑跟手，松手按距离（舞台宽 20%）或速度（快速甩）切换，否则回弹；首尾张拖动 0.3 倍阻尼、不越过。`←` `→` 键与两侧翻页键切换，首尾循环（同原来的看图组件）。
+  切换后缩放还原。方向锁：先判定水平还是垂直再跟手。
+- **关闭**：关闭键、Esc、点遮罩；≤899px 从抓手 / 头部往下拖（§15 `dragClose`）；**没放大时在图上竖向下滑**（方向锁判为垂直、触屏指针）也接到同一个下拉关闭，与左右翻页不冲突。
+- **底部**：一张以上时缩略图带（`.thumb-strip.sm`，当前项 `aria-current` 选中环，自动滚进视野，点了直接跳）；底栏依次「i / n · 原图 W×H」、分隔、缩小、百分比、放大、1:1、分隔、
+  「打开原图」（新标签，`rel="noopener"`）。
+- **形态**：桌面是居中的独立小窗（`.sheet.wide`，舞台高 `--lightbox-h` 缺省 `min(70dvh, 620px)`，可在 `.lightbox-sheet` 上改）；≤899px 是底部升起的大半屏卡片：下沿贴屏幕底
+  （底部安全区用内边距）、上沿离顶部 44px + 顶部安全区，看得到后面变暗的页面，上沿圆角 + 抓手，关闭键与抓手同一行靠右；舞台吃掉除头部与底栏外的全部高度。
+  触屏（`hover: none`）收起翻页键与 + − 1:1，只留百分比。reduced-motion 下去掉缩放、淡入、滑动动画。
+- **无障碍**：`role="dialog"` `aria-modal="true"` + `labels.dialog`；打开时焦点在弹层上、Tab 困在弹层里；键盘监听挂在弹层自身（不挂 window），关闭即撤；
+  翻页键、缩放键、关闭键都有 aria-label；切图时 `aria-live="polite"` 播报「第 i / n 张」。
+- 类名 `.lightbox` `.lightbox-*` 是内部实现（§11），应用不要套用或覆写；要调舞台高度用 `--lightbox-h`。
+
+### 空缩略图占位 `.thumb-strip-empty`
+
+放在 `.thumb-strip` 的位置上、不可点的虚线框（`--glass-border`），内含一行小字（`--fs-sm`、`--text-dim`）。高度 = 磁贴 + 上下 8：缺省 64 + 16，`.sm` 48 + 16，`.lg` 96 + 16，
+与同档 `.thumb-strip` 等高，换上真缩略图时版面不跳。圆角跟磁贴（缺省 12，`.sm` 8）。
+
+### 迁移
+
+- 应用侧原来的看图组件（`.photo-viewer` `.photo-sheet` `.photo-stage` `.photo-stage-img` `.photo-nav` `.photo-viewer-bar` `.photo-viewer-sep` `.photo-zoom-btn` 一整套样式 + 自写手势）
+  → 删掉，点缩略图时 `openLightbox({ items: photos.map((p) => ({ src: 原图, thumb: 缩略图, width, height })), start: i })`；
+  或者磁贴写 `data-lightbox-src` 后在应用入口调一次 `enhanceLightbox()`。React 里不需要再 `createPortal`，`useState` 存打开的序号也可以去掉。
+- `.thumb-strip .thumb-tile { cursor: zoom-in }` 的局部覆写 → 删掉（带 `data-lightbox-src` 时包里给；用 `openLightbox` 自己接点击的，保留这一条或给磁贴加 `data-lightbox-src`）。
+- 自写的空占位 `.thumb-empty`（同高虚线框）→ `.thumb-strip-empty`（`.sm` 同名）。
 
 ## 17. 出处与许可
 

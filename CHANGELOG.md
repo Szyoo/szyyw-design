@@ -6,9 +6,22 @@
 - 底部抽屉下拉关闭：`mountOverlay(overlay, { dragClose: true })` + 抓手 `.sheet-grabber`（DESIGN.md §15）。≤899px 时从上沿（抓手 + `.sheet-head`）往下拖，卡片跟手、遮罩变淡，
   松手按距离（卡片高 30%，最多 200px）或速度决定关闭还是弹回；宽屏不生效、抓手隐藏。handle 新增 `dragBy(dy)` / `release(dy, velocity?)`，给组件把自己区域里的下滑接进来。
   `dragClose: { sheet?, handle? }` 可改卡片与拖动区。
+- 原图查看器 `./lightbox`（DESIGN.md §16.5，手测页 `demo/lightbox.html`）：`openLightbox({ items, start, locale, labels, onClose, returnFocus }) → { close(), go(i), destroy() }`、
+  声明式 `enhanceLightbox(root?)`（`.thumb-strip` 里带 `data-lightbox-src` 的 `.thumb-tile`，可选 `data-lightbox-thumb` / `-w` / `-h` / `-group`）、文案 `LIGHTBOX_TEXTS`（zh / ja / en）。
+  显示原图并按比例居中；双击 / 双指 / 滚轮 / + − / 1:1 放大，上限 max(5, 1:1)，平移不出边；缩略图模糊占位 + 转圈的渐进加载、失败态与「在新标签打开原图」、相邻预加载；
+  左右滑跟手（距离 / 速度判定，首尾阻尼）、← → 与翻页键；一张以上时底部缩略图带；底栏「打开原图」；桌面居中小窗，≤899px 大半屏卡片（抓手 / 头部或图上竖向下滑关闭）；
+  键盘只在弹层内处理，切图 aria-live 播报。
+- 空缩略图占位 `.thumb-strip-empty`（`.sm` `.lg`）：不可点的虚线框 + 一行小字，与同档 `.thumb-strip` 等高。
+
+**应用侧怎么迁**
+- 应用侧原来的看图组件（`.photo-viewer` / `.photo-sheet` / `.photo-stage*` / `.photo-nav` / `.photo-viewer-bar` / `.photo-viewer-sep` / `.photo-zoom-btn` 样式 + 自写手势与 Portal）
+  → 删掉，改成 `openLightbox({ items: photos.map((p) => ({ src: 原图, thumb: 缩略图, width, height })), start: i })`，或磁贴写 `data-lightbox-src` 后调一次 `enhanceLightbox()`。
+  行为差异：左右滑改为跟手、到首尾不再循环（← → 与翻页键仍循环）；加载中先显示模糊缩略图；多了缩略图带、「打开原图」、失败态与读屏播报；手机上从整屏改为可下拉关闭的大半屏卡片。
+- `.thumb-strip .thumb-tile { cursor: zoom-in }` 的局部覆写 → 删掉（带 `data-lightbox-src` 的磁贴包里给放大光标）。
+- 自写空占位 `.thumb-empty`（`.sm`）→ `.thumb-strip-empty`（`.sm`），高度相同。
 
 **可见变化**
-- 无。不给 `dragClose`、不放 `.sheet-grabber` 的弹层行为与外观都不变。
+- 无。不给 `dragClose`、不放 `.sheet-grabber` 的弹层行为与外观都不变；其余全是新增的类与模块。
 
 ## v0.30.0 — 2026-11-08
 
