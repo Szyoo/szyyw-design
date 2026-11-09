@@ -5122,7 +5122,7 @@ textarea.field { vertical-align: top; }
 }
 /* 触屏：翻页靠左右滑、缩放靠双指，翻页键和 + − 1:1 收起，只留百分比（点它还原） */
 @media (max-width: 899px) and (hover: none) {
-  .lightbox-nav, .lightbox-zoom { display: none; }
+  .lightbox-nav, .lightbox-zoom, .lightbox-sep.end { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .lightbox-frame, .lightbox-full { transition: none; }

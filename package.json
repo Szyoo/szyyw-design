@@ -152,6 +152,10 @@
     "./table": {
       "types": "./table.d.ts",
       "default": "./table.js"
+    },
+    "./lightbox": {
+      "types": "./lightbox.d.ts",
+      "default": "./lightbox.js"
     }
   },
   "files": [
@@ -229,6 +233,8 @@
     "copy.d.ts",
     "table.js",
     "table.d.ts",
+    "lightbox.js",
+    "lightbox.d.ts",
     "fonts/"
   ]
 }
