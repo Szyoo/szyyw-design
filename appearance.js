@@ -58,6 +58,8 @@ import {
   pickRandomTheme
 } from "./appearance-data.js";
 import { appearanceText } from "./appearance-text.js";
+import { chromeText } from "./chrome-text.js";
+import { icon } from "./icons.js";
 
 const EVENT = "szyyw:appearancechange";
 
@@ -676,7 +678,8 @@ export function mountAppearancePanel({
   dotField = {},
   labels = {},
   locale = "zh",
-  cursor = true
+  cursor = true,
+  reload = null
 } = {}) {
   if (field && !field.setOptions) throw new Error("mountAppearancePanel 的 field 需要 mountDotField() 返回的实例");
   ensureBridge();
@@ -706,6 +709,19 @@ export function mountAppearancePanel({
     closeLabel: text.close,
     withFoot: false
   });
+
+  // 「刷新页面」（v0.32.0）：主屏 App 没有地址栏、不能下拉刷新，放在弹层头部、关闭键左边
+  let reloadBtn = null;
+  if (reload && reload.label) {
+    reloadBtn = document.createElement("button");
+    reloadBtn.type = "button";
+    reloadBtn.className = "close-x panel-reload";
+    reloadBtn.title = reload.label;
+    reloadBtn.setAttribute("aria-label", reload.label);
+    reloadBtn.append(icon("refresh-cw"));
+    reloadBtn.addEventListener("click", () => (reload.onClick ? reload.onClick() : location.reload()));
+    closeBtn.before(reloadBtn);
+  }
 
   /* ---------- 主题 / 配色 / 明暗 / 鼠标效果 ---------- */
 
@@ -959,7 +975,8 @@ export function mountAppearance({
   onChange = null,
   dotField = {},
   cursorEffect = null,
-  randomEvery = "day"
+  randomEvery = "day",
+  reload = false
 } = {}) {
   const keys = appearanceCookieNames(cookiePrefix);
   configureScheme({ persist, storageKey: keys.scheme });
@@ -986,7 +1003,11 @@ export function mountAppearance({
     toggle?.destroy();
     panel?.destroy();
     toggle = mountSchemeToggle({ locale: loc, labels: labels.schemes });
-    panel = mountAppearancePanel({ background: bg, locale: loc, labels, onChange, dotField });
+    // 刷新按钮的文案跟着语言走（chrome-text 的 reload.label），应用给了 label 就用应用的
+    const reloadOpt = reload
+      ? { label: (typeof reload === "object" && reload.label) || chromeText(loc).reload.label, onClick: typeof reload === "object" ? reload.onClick : undefined }
+      : null;
+    panel = mountAppearancePanel({ background: bg, locale: loc, labels, onChange, dotField, reload: reloadOpt });
   };
   mountUi(locale);
 

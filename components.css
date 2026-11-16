@@ -468,6 +468,12 @@ a.corner-tool { text-decoration: none; }
   flex-wrap: nowrap;
 }
 
+/* 头部的「刷新页面」（v0.32.0，主屏 App 下 mountChrome 自动加）：和关闭键挨在一起靠右，两枚之间留 --sp-1 */
+.corner-panel .panel-head > .panel-reload {
+  margin-left: auto;
+  margin-right: calc(var(--sp-1) - var(--sp-3));
+}
+
 /* 面板高度随内容（上限是视口）：基准取内容高、允许收缩，超出才在这里滚 */
 .panel-body {
   flex: 1 1 auto;

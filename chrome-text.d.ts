@@ -31,15 +31,22 @@ export interface LocaleToggleText {
   short: Record<string, string>;
 }
 
+/** v0.32.0：外观弹层头部「刷新页面」按钮的文案（只在主屏 App 下出现） */
+export interface ReloadText {
+  label: string;
+}
+
 export interface ChromeText {
   switcher: SwitcherText;
   account: AccountText;
+  reload: ReloadText;
   locale: LocaleToggleText;
 }
 
 export interface ChromeTextOverrides {
   switcher?: Partial<SwitcherText>;
   account?: AccountLabels;
+  reload?: Partial<ReloadText>;
   locale?: Partial<Omit<LocaleToggleText, "names" | "short">> & { names?: Record<string, string>; short?: Record<string, string> };
 }
 

@@ -4,6 +4,7 @@
      应用切换器(5) · 账户菜单(6) · 🌗(10) · 语言(15) · 外观(20) + 点阵背景 / 光斑 + 外观持久化。
    等价于 mountAppearance +（SSO 站点）mountAppSwitcher + mountAccountMenu +（给了语言列表）mountLocaleToggle，
    全部同一个 locale；setLocale 一次同步所有子件，背景画布不重建。
+   v0.32.0：主屏 App（standalone）下外观弹层头部自动多一枚「刷新页面」（reload: false 关掉）。
 
    非 SSO 应用传 portal: null（或 false），只挂外观与语言。
    ============================================================ */
@@ -14,6 +15,7 @@ import { mountAccountMenu } from "./account.js";
 import { mountLocaleToggle } from "./locale-toggle.js";
 import { mountTechText } from "./techtext.js";
 import { enhanceTabs } from "./tabs.js";
+import { isStandalone } from "./webapp.js";
 
 const DEFAULT_PORTAL = "https://szyyw.xyz";
 const DEFAULT_TECH_TEXT = ".app-title, .wordmark";
@@ -84,6 +86,9 @@ function watchTechText(selector, opts, onChange) {
  *        并跟进之后才插入 / 移除的匹配元素；false = 不开；字符串 = 选择器；对象 = { selector?, ...TechText 选项 }
  * @param {boolean|{root?: ParentNode}} options.tabs  .tabs / .seg 的滑动滑块（tabs.js）。v0.23.0 起缺省开启（整个 document，
  *        跟进之后插入的轨道与选中态变化）；false = 不开（选中项仍是纯 CSS 的凸起样式）
+ * @param {boolean|{label?: string, onClick?: () => void}} options.reload  v0.32.0：主屏 App（standalone）下
+ *        在外观弹层头部、关闭键左边自动多一枚「刷新页面」（refresh-cw）；浏览器里打开时不出现。
+ *        缺省 true；false = 关掉；对象可改文案 / 点击行为（缺省 location.reload()）
  */
 export function mountChrome({
   background = null,
@@ -96,12 +101,18 @@ export function mountChrome({
   account: accountOpts = {},
   localeToggle: localeOpts = null,
   techText: techTextOpts = true,
-  tabs: tabsOpts = true
+  tabs: tabsOpts = true,
+  reload = true
 } = {}) {
   let current = locale;
 
+  // 刷新入口只在主屏 App 下出现（没有地址栏、不能下拉刷新）；放外观弹层头部而不是工具位：
+  // 手机上工具位已有切换器 / 账户 / 🌗 / 语言 / 外观四五枚，再加一枚会挤占顶栏标题
+  const reloadOpt = reload !== false && isStandalone() ? (typeof reload === "object" ? reload : true) : false;
+
   const appearance = mountAppearance({
     ...(appearanceOpts || {}),
+    reload: reloadOpt,
     background,
     persist,
     cookiePrefix,

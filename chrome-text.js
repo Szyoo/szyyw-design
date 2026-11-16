@@ -1,6 +1,6 @@
 /* ============================================================
    @szyyw/design · chrome-text.js
-   工具位「外壳」部件的内置文案（zh / ja / en）：应用切换器、账户菜单、语言切换。
+   工具位「外壳」部件的内置文案（zh / ja / en）：应用切换器、账户菜单、语言切换、刷新页面（v0.32.0）。
    外观弹层 / 🌗 / 背景参数的文案在 appearance-text.js，两者同一套用法：
    应用只传 locale；个别词用 labels 覆盖；未知语言回退中文，缺键按中文补齐。
    零 DOM、零 import（服务端也可 import）。
@@ -31,6 +31,10 @@ const zh = {
     statusFmt: "（{code}）",
     roles: { admin: "管理员", user: "用户", guest: "访客" }
   },
+  /** 外观弹层头部的「刷新页面」（v0.32.0，只在主屏 App 下出现） */
+  reload: {
+    label: "刷新页面"
+  },
   locale: {
     title: "语言",
     names: LOCALE_NAMES,
@@ -54,6 +58,9 @@ const ja = {
     logoutFailed: "ログアウトに失敗しました{status}。もう一度お試しください",
     statusFmt: "（{code}）",
     roles: { admin: "管理者", user: "ユーザー", guest: "ゲスト" }
+  },
+  reload: {
+    label: "ページを再読み込み"
   },
   locale: {
     title: "言語",
@@ -79,6 +86,9 @@ const en = {
     statusFmt: " ({code})",
     roles: { admin: "Admin", user: "User", guest: "Guest" }
   },
+  reload: {
+    label: "Reload page"
+  },
   locale: {
     title: "Language",
     names: LOCALE_NAMES,
@@ -96,7 +106,7 @@ export function chromeLocale(locale) {
 
 /**
  * 某语言的全套外壳文案：缺键按中文补齐，再逐段叠 overrides
- * （{ switcher?, account?: { roles? }, locale?: { names?, short? } }）。返回新对象，不改内置表。
+ * （{ switcher?, account?: { roles? }, reload?, locale?: { names?, short? } }）。返回新对象，不改内置表。
  */
 export function chromeText(locale, overrides = {}) {
   const base = CHROME_TEXT[chromeLocale(locale)];
@@ -111,6 +121,7 @@ export function chromeText(locale, overrides = {}) {
       ...oa,
       roles: { ...zh.account.roles, ...base.account.roles, ...(oa.roles || {}) }
     },
+    reload: { ...zh.reload, ...base.reload, ...(o.reload || {}) },
     locale: {
       ...zh.locale,
       ...base.locale,

@@ -76,4 +76,10 @@ export function mountChrome(options?: {
    * false = 不开（选中项仍是纯 CSS 的凸起样式，外观一致只是不滑动）；{ root } = 只增强该范围
    */
   tabs?: boolean | { root?: ParentNode };
+  /**
+   * v0.32.0：主屏 App（standalone，见 webapp.js 的 isStandalone）下，外观弹层头部、关闭键左边自动多一枚
+   * 「刷新页面」（refresh-cw，文案按 locale 取 chrome-text 的 reload.label）；浏览器里打开时不出现。
+   * 缺省 true；false = 关掉；对象可改文案 / 点击行为（缺省 location.reload()）
+   */
+  reload?: boolean | { label?: string; onClick?: () => void };
 }): ChromeHandle;

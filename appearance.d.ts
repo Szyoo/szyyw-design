@@ -148,6 +148,8 @@ export function mountAppearancePanel(options?: {
   /** 背景参数段与版本行（与 mountDotFieldSettings 同名同义） */
   dotField?: ThemeParamsOptions;
   labels?: AppearancePanelLabels;
+  /** v0.32.0：弹层头部、关闭键左边的「刷新页面」按钮（refresh-cw）；缺省不出。onClick 缺省 location.reload() */
+  reload?: { label: string; onClick?: () => void } | null;
 }): AppearancePanelHandle;
 
 /** 打开最近一次 mountAppearancePanel 挂出的面板；没挂过返回 false（no-op） */
@@ -191,4 +193,9 @@ export function mountAppearance(options?: {
   onChange?: (appearance: AppearanceChange, changed: AppearanceKey[]) => void | Promise<unknown>;
   /** 背景参数段与版本行（同 mountAppearancePanel） */
   dotField?: ThemeParamsOptions;
+  /**
+   * v0.32.0：弹层头部的「刷新页面」按钮；缺省 false（不出）。true = 文案按 locale 取 chrome-text 的 reload.label；
+   * 对象可改文案 / 点击行为。mountChrome 只在主屏 App（standalone）下自动传 true
+   */
+  reload?: boolean | { label?: string; onClick?: () => void };
 }): AppearanceHandle;
