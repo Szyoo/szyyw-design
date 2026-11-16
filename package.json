@@ -156,6 +156,10 @@
     "./lightbox": {
       "types": "./lightbox.d.ts",
       "default": "./lightbox.js"
+    },
+    "./webapp": {
+      "types": "./webapp.d.ts",
+      "default": "./webapp.js"
     }
   },
   "files": [
@@ -235,6 +239,8 @@
     "table.d.ts",
     "lightbox.js",
     "lightbox.d.ts",
+    "webapp.js",
+    "webapp.d.ts",
     "fonts/"
   ]
 }
