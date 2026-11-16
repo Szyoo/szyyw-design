@@ -20,6 +20,7 @@
 
 import { mountOverlay } from "./overlay.js";
 import { icon } from "./icons.js";
+import { focusInput } from "./webapp.js";
 
 export const LIGHTBOX_TEXTS = {
   zh: {
@@ -568,7 +569,11 @@ export function openLightbox(options = {}) {
     stage.removeEventListener("wheel", onWheel);
     sheet.removeEventListener("keydown", onKeydown);
     overlay.remove();
-    if (prevFocus && prevFocus.isConnected && typeof prevFocus.focus === "function") prevFocus.focus({ preventScroll: true });
+    // 焦点还给打开前的元素；那是输入框（键盘开着时点了图）时，触屏上不还——关闭那一下焦点在灯箱里，
+    // 还回去会把键盘重新弹出来（v0.32.0）。应用显式给了 returnFocus 时照旧
+    if (options.returnFocus) {
+      if (prevFocus.isConnected && typeof prevFocus.focus === "function") prevFocus.focus({ preventScroll: true });
+    } else focusInput(prevFocus);
   }
 
   function close() {

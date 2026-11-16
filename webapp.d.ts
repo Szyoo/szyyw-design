@@ -11,6 +11,13 @@ export function isStandalone(): boolean;
 export function fitViewport(): () => void;
 
 /**
+ * v0.32.0：把焦点交还给输入框，但在触屏上不平白弹出键盘。
+ * (pointer: coarse) 下，el 是文字输入（input / textarea / contenteditable）且 hadFocus 为真（这次点按开始时它就有焦点）
+ * 或此刻仍是焦点时才 focus；精确指针或非文字元素照常 focus({ preventScroll: true })。返回是否真的 focus 了
+ */
+export function focusInput(el: HTMLElement | null | undefined, options?: { hadFocus?: boolean }): boolean;
+
+/**
  * v0.32.0：缺省的忙判断——焦点在有内容的文字 input / textarea / contenteditable 上，
  * 或页面上有 dialog[open]、可见的 .drawer / .sheet / .overlay（confirm、lightbox 都在 .overlay 里）。
  */

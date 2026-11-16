@@ -21,6 +21,7 @@
    ============================================================ */
 
 import { mountOverlay } from "./overlay.js";
+import { focusInput } from "./webapp.js";
 
 export const CONFIRM_TEXTS = {
   zh: { confirm: "确定", cancel: "取消", armed: "再点一次确认", dialog: "确认" },
@@ -274,7 +275,8 @@ export function confirm(options = {}) {
             field.setAttribute("aria-invalid", "true");
             msg.textContent = err;
             msg.hidden = !err;
-            field.focus();
+            // 触屏上只有点「确定」时输入框本来就有焦点才拉回去，不平白弹键盘（v0.32.0）
+            focusInput(field, { hadFocus: fieldHadFocus });
             return;
           }
           result = v;
@@ -284,7 +286,8 @@ export function confirm(options = {}) {
       ov.destroy();
       sheet.removeEventListener("keydown", onKeydown);
       overlay.remove();
-      if (prevFocus && prevFocus.isConnected && typeof prevFocus.focus === "function") prevFocus.focus({ preventScroll: true });
+      // 焦点还给打开前的元素；是输入框时触屏上不还（关闭那一下焦点在弹层里，还回去会弹键盘，v0.32.0）
+      focusInput(prevFocus);
       resolve(result);
     }
 
@@ -307,6 +310,8 @@ export function confirm(options = {}) {
       }
     }
     sheet.addEventListener("keydown", onKeydown);
+    let fieldHadFocus = false;
+    if (field) sheet.addEventListener("pointerdown", () => { fieldHadFocus = document.activeElement === field; }, true);
     cancelBtn.addEventListener("click", () => finish(false));
     okBtn.addEventListener("click", () => finish(true));
     ackBox?.addEventListener("change", () => { okBtn.disabled = !ackBox.checked; });

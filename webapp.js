@@ -64,6 +64,39 @@ export function fitViewport() {
   };
 }
 
+/** 触屏为主的设备（软键盘）：(pointer: coarse) */
+function coarsePointer() {
+  try {
+    return !!window.matchMedia?.("(pointer: coarse)").matches;
+  } catch {
+    return false;
+  }
+}
+
+/** 会弹出软键盘的元素：文字类 input / textarea / contenteditable */
+function isTextEntry(el) {
+  if (!el || el.nodeType !== 1) return false;
+  if (el.isContentEditable || el.tagName === "TEXTAREA") return true;
+  return el.tagName === "INPUT" && !NON_TEXT_INPUTS.has(el.type);
+}
+
+/**
+ * 把焦点交还给输入框，但在触屏上不平白弹出键盘（v0.32.0）。
+ * 组件在点按 / 选完菜单项 / 关闭弹层后想回到输入框时用它代替 el.focus()：
+ * (pointer: coarse) 下，el 是文字输入且「这次点按开始时它本来就有焦点」（hadFocus，或此刻仍是焦点）才 focus；
+ * 其余情况（精确指针、非文字元素）照常 focus({ preventScroll: true })。
+ * hadFocus 的取法：在点按区域上监听 pointerdown（捕获阶段），记下 document.activeElement === el。
+ * @param {HTMLElement|null|undefined} el
+ * @param {{ hadFocus?: boolean }} [options]
+ * @returns {boolean} 是否真的 focus 了
+ */
+export function focusInput(el, { hadFocus = false } = {}) {
+  if (!el || typeof el.focus !== "function" || !el.isConnected) return false;
+  if (coarsePointer() && isTextEntry(el) && !hadFocus && document.activeElement !== el) return false;
+  el.focus({ preventScroll: true });
+  return true;
+}
+
 /** 不算「正在输入」的 input 类型（值不是用户打的字） */
 const NON_TEXT_INPUTS = new Set(["button", "checkbox", "color", "file", "hidden", "image", "radio", "range", "reset", "submit"]);
 
