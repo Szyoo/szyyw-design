@@ -617,6 +617,13 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
   否则禁用态会被盖成可点的样子。
 - 开关 `.switch`（v0.19.0 Squish 动效、可选拖动增强）与下拉 Glide Select（原生 `<select>` 的渐进增强）见 §16。
 
+### 已知坑：整页只有一个文本框时，iCloud 密码扩展会把它当用户名
+
+Chrome 的 iCloud 密码扩展不看 `<form>`，而是把整页的 input / textarea / button 当成一张逻辑表单交给分类器判断。整页只有一个文本框（比如聊天输入框），且这个域名在 iCloud 里存过密码（各子域共用门户的密码）时，它会把这个框当成「用户名」，点进去就弹出「允许 iCloud 密码自动填充」的提示。
+
+- `autocomplete="off"`、`data-1p-ignore` 都无效；localhost 没存过密码，本地复现不了。
+- 页面上有第二个文本框（比如搜索框）之后就不再弹出。包里不提供隐藏输入框之类的规避手段；遇到时优先按页面需要补真实的第二个输入（搜索、筛选），否则接受这个提示。
+
 ## 11. 公开类与内部类
 
 **公开 API**（项目可以直接写在自己的标记里，跨版本保持语义；改动会进 CHANGELOG 并按 semver 处理）：
@@ -1103,7 +1110,7 @@ cell.innerHTML = iconSvg("copy");                    // 字符串：模板拼接
 - 名字是编译期穷举的（`IconName`），运行时未知名字直接抛错，不画占位；`hasIcon(name)` 给外部输入做判断。
   另认 Lucide 改名前的常用旧名：`alert-triangle` `alert-circle` `help-circle` `check-circle` `x-circle` `more-horizontal` `more-vertical` `home`。
 - 收录（88 枚，`ICON_NAMES`；手测页 `demo/icons.html` 全列）：
-  增减 `x` `plus` `minus` `check`；方向 `chevron-left/right/up/down` `chevrons-left/right` `arrow-left/right/up/down` `arrow-up-right` `arrow-left-right` `arrow-down-right` `chevrons-up-down`（v0.30.0）；
+  增减 `x` `plus` `minus` `check`；方向 `chevron-left/right/up/down` `chevrons-left/right` `arrow-left/right/up/down` `arrow-up-right` `arrow-left-right` `arrow-down-right` `chevrons-up-down`（v0.30.0）、`arrow-right-to-line` `arrow-right-from-line`（v0.33.0，移入 / 移出、转入 / 转出）；
   操作 `copy` `clipboard` `external-link` `link` `refresh-cw` `rotate-ccw` `search` `filter` `trash-2` `pencil` `save` `download` `upload` `share-2` `send`；
   视图 `zoom-in` `zoom-out` `maximize` `minimize` `maximize-2` `minimize-2` `scan`（1:1 原尺寸）`eye` `eye-off` `menu` `ellipsis` `ellipsis-vertical` `grip-vertical` `settings` `sliders-horizontal`；
   状态 `info` `circle-help` `circle-alert` `triangle-alert` `circle-check` `circle-x` `loader` `loader-circle`（配 `spin`）；
@@ -1415,6 +1422,8 @@ cell.innerHTML = iconSvg("copy");                    // 字符串：模板拼接
 - 层级 40（同底部导航）：低于 `.overlay` / `.sheet` 50、`.menu` 55、toast 60，弹层打开时盖住它。页面有底部导航时设 `--action-bar-offset: calc(var(--nav-h) + 12px)`。
 - 显示时（没有 `hidden`）自动：`--toast-offset` 抬到操作条上方；`.app-main` 末尾补一段同高留白（`::after`，高 `--action-bar-space`），最后一行内容滚得出来。不用 `.app-main` 的页面自己用 `padding-bottom: var(--action-bar-space)`。
 - ≤640px：左右各留 8、按钮换到下一行等分撑满。`.sticky`：改为 `position: sticky` 留在文档流（贴所在滚动容器底部，比如长表单页尾），不触发上面的全局调整。
+- `.inline`（v0.33.0）：右侧只有紧凑小控件（徽标、`.btn-icon`、小按钮）时用，窄屏下不另起一行、按钮不撑满；说明文字可换行。适合状态条。
+- `.sticky` 在 ≤640px（v0.33.0）：贴到屏幕最下沿，上圆角、下方直角，安全区垫在内边距里，下面不再露出页面内容。宽屏仍悬浮在底部上方 12px。
 - 弹层里的按钮行用 `.sheet-foot`，不要放 `.action-bar`。
 - 迁移：寄出条 `.ship-bar`（fixed + 自写居中 / 安全区）、手机端底部状态条 `.pol-bar` + 手调 `--toast-offset` → `.action-bar`。
 

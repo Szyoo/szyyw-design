@@ -4803,6 +4803,8 @@ textarea.field { vertical-align: top; }
   animation: rise var(--dur-base) var(--ease) both;
 }
 .action-bar.sticky { position: sticky; z-index: 20; left: auto; right: auto; width: auto; margin-inline: 0; bottom: calc(var(--sp-3) + var(--safe-bottom)); animation: none; }
+/* v0.33.0 .inline：右侧只放紧凑的小控件（徽标、图标按钮）时用——窄屏下不另起一行、按钮不撑满；说明文字可多行 */
+.action-bar.inline > .action-bar-text { flex: 1 1 0; }
 .action-bar-text { flex: 1 1 auto; min-width: 0; color: var(--text-dim); overflow-wrap: anywhere; }
 .action-bar-text :is(b, strong) { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
 .action-bar-actions { flex: none; display: flex; align-items: center; gap: var(--sp-2); }
@@ -4816,6 +4818,15 @@ textarea.field { vertical-align: top; }
   .action-bar { flex-wrap: wrap; padding: var(--sp-3); }
   .action-bar-actions { flex: 1 1 100%; }
   .action-bar-actions > :is(.btn, .btn-ghost) { flex: 1 1 0; }
+  .action-bar.inline > .action-bar-actions { flex: none; margin-left: auto; }
+  .action-bar.inline > .action-bar-actions > :is(.btn, .btn-ghost) { flex: none; }
+  /* 贴底状态条（.sticky）在窄屏贴到屏幕最下沿：上圆角、下方直角，安全区垫在内边距里，下面不再露出页面内容 */
+  .action-bar.sticky {
+    bottom: 0;
+    border-bottom: 0;
+    border-radius: var(--r-lg) var(--r-lg) 0 0;
+    padding-bottom: calc(var(--sp-3) + var(--safe-bottom));
+  }
   :root:has(.action-bar:not([hidden], .sticky)) {
     --action-bar-space: calc(var(--action-bar-offset, var(--sp-2)) + var(--h-lg) + var(--sp-3) * 3 + var(--sp-2) + var(--fs-md) * var(--lh-snug) + 2px);
   }

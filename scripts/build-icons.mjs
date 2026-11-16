@@ -22,7 +22,7 @@ const NAMES = [
   "x", "plus", "minus", "check",
   // 方向
   "chevron-left", "chevron-right", "chevron-up", "chevron-down", "chevrons-left", "chevrons-right",
-  "arrow-left", "arrow-right", "arrow-up", "arrow-down", "arrow-up-right", "arrow-left-right", "arrow-down-right", "chevrons-up-down",
+  "arrow-left", "arrow-right", "arrow-up", "arrow-down", "arrow-up-right", "arrow-left-right", "arrow-down-right", "arrow-right-to-line", "arrow-right-from-line", "chevrons-up-down",
   // 操作
   "copy", "clipboard", "external-link", "link", "refresh-cw", "rotate-ccw", "search", "filter",
   "trash-2", "pencil", "save", "download", "upload", "share-2", "send",

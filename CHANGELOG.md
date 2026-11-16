@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.33.0 — 2026-11-16
+
+**新增**
+- 图标 `arrow-right-to-line`、`arrow-right-from-line`（共 90 枚）：移入 / 移出、转入 / 转出。
+- `.action-bar.inline`：右侧只有紧凑小控件时，窄屏下不另起一行、按钮不撑满。
+
+**改动**
+- `.action-bar.sticky` 在 ≤640px 贴到屏幕最下沿（上圆角、下方直角、安全区垫在内边距里），下面不再露出页面内容。宽屏不变。
+- DESIGN.md §10 记一条已知坑：整页只有一个文本框时，Chrome 的 iCloud 密码扩展会把它当用户名并弹出自动填充提示。
+
+**应用侧怎么迁**
+- 资金池等处借用 `log-in` / `log-out` 表示「移入 / 移出」的 → `arrow-right-to-line` / `arrow-right-from-line`。
+- 贴底状态条右侧只有徽标、图标按钮的 → 加 `.inline`。
+
+**可见变化**
+- 窄屏上的 `.action-bar.sticky`：从悬浮改为贴底。
+
 ## v0.32.0 — 2026-11-16
 
 **主屏 Web App**（DESIGN.md §16.6，手测页 `demo/webapp.html`）：所有应用都要能「添加到主屏幕」当独立 App 用，通用部分收进包里。

@@ -37,6 +37,8 @@ const ICON_DATA = {
   "arrow-up-right": "<path d=\"M7 7h10v10\"/><path d=\"M7 17 17 7\"/>",
   "arrow-left-right": "<path d=\"M8 3 4 7l4 4\"/><path d=\"M4 7h16\"/><path d=\"m16 21 4-4-4-4\"/><path d=\"M20 17H4\"/>",
   "arrow-down-right": "<path d=\"m7 7 10 10\"/><path d=\"M17 7v10H7\"/>",
+  "arrow-right-to-line": "<path d=\"M17 12H3\"/><path d=\"m11 18 6-6-6-6\"/><path d=\"M21 5v14\"/>",
+  "arrow-right-from-line": "<path d=\"M3 5v14\"/><path d=\"M21 12H7\"/><path d=\"m15 18 6-6-6-6\"/>",
   "chevrons-up-down": "<path d=\"m7 15 5 5 5-5\"/><path d=\"m7 9 5-5 5 5\"/>",
   "copy": "<rect width=\"14\" height=\"14\" x=\"8\" y=\"8\" rx=\"2\" ry=\"2\"/><path d=\"M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2\"/>",
   "clipboard": "<rect width=\"8\" height=\"4\" x=\"8\" y=\"2\" rx=\"1\" ry=\"1\"/><path d=\"M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2\"/>",
