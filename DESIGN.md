@@ -129,6 +129,7 @@ z-index 0   .bg-layer        点阵背景（fixed，独立合成层）
 z-index 1   .app-frame       内容层
 z-index 20  .section-head.sticky  吸顶小标题（v0.22.0，内容层里；被标题行盖过）
 z-index 21  .page-head.sticky     吸顶标题行（v0.22.0；低于应用自己的顶栏 30，不盖工具位 / 弹层 / sheet）
+z-index 29  .app-frame::before   状态栏遮罩（v0.32.0，§16.6；内容层里、fixed、高 = 顶部安全区，盖住上滚的内容，低于顶栏）
 z-index 30  侧栏 / 顶栏（sticky/fixed + backdrop-blur）
 z-index 40  底部导航 / .action-bar 底部操作条（v0.30.0，§16.4）
 z-index 45  .corner-tools    右上角工具位
@@ -364,6 +365,7 @@ pixel-blast 时间按 `speed` 积分（上游改速度时相位会跳）、液�
 +（给了 `localeToggle.locales`）`mountLocaleToggle`，同一个 `locale`。`handle.setLocale(l)` 同步全部子件（画布不重建）；
 用户在语言按钮里选了新语言时，`mountChrome` 先自己 `setLocale`，再调 `localeToggle.onChange` 让应用换自己的文案 / 存偏好。
 非 SSO 应用传 `portal: null`。`switcher: false` / `account: false` 可单独不挂。
+v0.32.0：以主屏 App（standalone）打开时，外观弹层头部、关闭键左边自动多一枚「刷新页面」（`refresh-cw`，§16.6）；`reload: false` 关掉。
 
 **语言切换 `mountLocaleToggle({ locales, current, onChange, order = 15, labels })`**：按钮显示当前语言短名
 （中 / 日 / EN），点开 `.glass.corner-panel` 列表，各语言用自己的写法列出（中文 / 日本語 / English），
@@ -664,6 +666,9 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
   可点胶囊选中 `button.pill[aria-pressed=true]` `.empty-title` `.empty-desc` `.empty-actions` `.empty.compact` `.term-follow` `.confirm-ack`；
   CSS 变量 `--stat-min` `--thumb` `--thumb-min` `--thumb-ratio` `--action-bar-offset` `--action-bar-w`（应用设）与 `--action-bar-space`（包写，可读）；
   JS `./copy`（`copyText` `mountCopy` `enhanceCopyButtons` `COPY_TEXTS`）`./table`（`enhanceSortTable`）、`confirm({ ack })`；`--mask-*` 是内部变量，别引用
+- v0.32.0 新增（§16.6）：`body.app-screen` `.app-fill`；`html.kb-open`（webapp.js 写）；token `--safe-bottom`，CSS 变量 `--app-h`（webapp.js 写，可读）；
+  属性 `<html data-version>`（约定）；JS `./webapp`（`isStandalone` `fitViewport` `autoUpdate` `defaultIsBusy` `focusInput`）、`mountChrome({ reload })`、
+  `mountAppearance({ reload })` / `mountAppearancePanel({ reload })`、`chromeText().reload`；`.panel-reload` 是内部类
 - v0.31.0 新增（§16.5、§15）：`.thumb-strip-empty`（`.sm` `.lg`）`.sheet-grabber`；属性 `data-lightbox-src` `data-lightbox-thumb` `data-lightbox-w` `data-lightbox-h` `data-lightbox-group`，
   `data-drag-close` `data-dragging`（overlay.js 写在 `.sheet` 上）；CSS 变量 `--lightbox-h`；JS `./lightbox`（`openLightbox` `enhanceLightbox` `LIGHTBOX_TEXTS`）、`mountOverlay({ dragClose })` 与 handle 的 `dragBy` `release`
 - v0.24.0 新增（§16）：`.depth-carousel` 及其 `__*` 子类与状态类、CSS 变量 `--dc-height` `--dc-min-height` `--dc-tint` `--dc-fit`；JS `./depth-carousel`（`mountDepthCarousel`）
@@ -878,6 +883,7 @@ v0.9.0 之前它是带遮罩、锁滚动、从右侧滑入的抽屉，已统一�
 - 自带一层半透明底 `--page-veil`（暗 `rgba(11,16,32,.52)` / 浅 `rgba(238,241,248,.62)`）：压住背景主题、托起正文与卡片之间的文字，仍透出一点背景；
   明暗两种模式都生效。左右边缘在内距里渐隐（`--page-veil-fade`，缺省 32px）；≤640px 铺满宽度、不渐隐，不产生横向滚动。
 - 旋钮：`--page-max-w`（缺省 1080px）、`--page-pad-x`（左右内距，缺省 24px，≤640px 为 16px）。上下内距由应用自定（`.app-main` 不设 padding-block）。
+  v0.32.0 起左右内距取 `max(--page-pad-x, 安全区 + --sp-2)`：横屏刘海 / 灵动岛一侧自动让开（§16.6），没有安全区时与原来一样。
 - 底层画在 `::before`（z-index -1），不新建层叠上下文：`.drawer` / `.sheet` / `.overlay` / `.corner-panel` 等 fixed 浮层与
   `.page-head.sticky` / `.section-head.sticky` 吸顶标题的层级都照旧（§3）。顶栏给工具位让位仍用 `.corner-clear` / `--corner-rail-w`。
 - `.app-frame` 与 `.app-main` 分两层写：别把两个类放在同一个元素上（`.app-frame` 是内容层，`.app-main` 是其中居中的一栏）。
@@ -1490,6 +1496,136 @@ const lb = openLightbox({ items, start: 2, onClose }); // 命令式 → { close(
   或者磁贴写 `data-lightbox-src` 后在应用入口调一次 `enhanceLightbox()`。React 里不需要再 `createPortal`，`useState` 存打开的序号也可以去掉。
 - `.thumb-strip .thumb-tile { cursor: zoom-in }` 的局部覆写 → 删掉（带 `data-lightbox-src` 时包里给；用 `openLightbox` 自己接点击的，保留这一条或给磁贴加 `data-lightbox-src`）。
 - 自写的空占位 `.thumb-empty`（同高虚线框）→ `.thumb-strip-empty`（`.sm` 同名）。
+
+## 16.6 主屏 Web App `./webapp`（v0.32.0）
+
+**硬性要求：每个应用都要能「添加到主屏幕」当独立 App 用。** 下面的 head 片段、manifest、整屏写法与两条禁令各应用都要照做；
+运行时部分在 `./webapp`，样式在 `tokens.css`（`--safe-bottom`）与 `components.css`（`.app-screen` `.app-fill`、安全区），升级包后大部分零改动生效。
+手测页 `demo/webapp.html`（`?ver=` 模拟线上版本、`?interval=` 检查间隔、`?scheme=`）。
+
+### head 片段
+
+```html
+<html lang="zh-CN" data-version="{{ 应用版本 }}">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">           <!-- 180×180 PNG，不透明底 -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="短名">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0b1020">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#eef1f8">
+```
+
+- `viewport-fit=cover` + `black-translucent`：页面铺到刘海 / Home 指示条底下，安全区由包里的样式让开（见下「安全区」）。
+- theme-color 两条按明暗取 `--bg`（SSR 项目用 `themeColorFor(a.palette, a.scheme)`，§2.1）；scheme.js 运行时会另写一条带 `data-szyyw` 的跟随当前明暗。
+- `data-version` 写当前部署的版本（构建号、git 短哈希都行），`autoUpdate` 拿它和线上比。
+
+### manifest 模板
+
+```json
+{
+  "name": "完整名称",
+  "short_name": "短名",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0b1020",
+  "theme_color": "#0b1020",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
+```
+
+- 图标 192 与 512 两档 PNG；建议另出一张 maskable（主体放在中间 80% 的安全圈内、四周铺满底色），安卓桌面裁成圆 / 方圆时不切到内容。
+- iOS 不读 manifest 的图标，用 head 里 180×180 的 `apple-touch-icon`（不要透明底，iOS 会填黑）。
+- `background_color` / `theme_color` 用暗色 `--bg`（启动画面与任务切换器的底色）。
+
+### 整屏页面：`body.app-screen` + `.app-fill` + `fitViewport()`
+
+聊天、地图这类「一屏就是整个应用，只有内部区域滚动，底部有输入栏」的页面：
+
+```html
+<body class="app-screen">
+  <div class="bg-layer"></div>
+  <div class="app-frame app-fill chat">          <!-- 纵向 flex：头 / 滚动区（flex: 1; min-height: 0; overflow: auto）/ 输入栏 -->
+    <header class="app-header">…</header>
+    <div class="messages">…</div>
+    <form class="composer"><div class="field-row">…</div></form>   <!-- padding-bottom: calc(var(--sp-2) + var(--safe-bottom)) -->
+  </div>
+</body>
+```
+
+```js
+import { fitViewport } from "@szyyw/design/webapp";
+const unfit = fitViewport();     // 离开整屏页面（SPA 换路由）时调 unfit()
+```
+
+- `body.app-screen`（连同 `html:has(> body.app-screen)`）：`height: 100%; overflow: hidden; overscroll-behavior: none`，页面本身不滚、不回弹；`min-height: 0` 盖过 body 的 `100dvh`。
+  整屏页面不加 `.app-frame` 底部安全区，也不要顶部状态栏遮罩（内容只在内部区域滚动，不会穿过状态栏；顶栏 `.app-header` 自己让开顶部安全区）。
+- `.app-fill`：`height: 100vh`（兜底）→ `var(--app-h, 100dvh)`，`min-height: 0`（叠在 `.app-frame` 上时也能变矮）。
+- `fitViewport(): () => void`：监听 `visualViewport` 的 resize / scroll（rAF 合并成每帧一次）——
+  `--app-h` = `round(visualViewport.height)px`（写在 `<html>` 上）；键盘高度（`documentElement.clientHeight − visualViewport.height`）超过 120px 时 `<html>` 加 `kb-open`；
+  页面被 iOS 推走（`scrollY` 或 `visualViewport.offsetTop` 不为 0）时 `scrollTo(0, 0)`。效果：键盘弹起时整屏变矮、输入栏贴着键盘，不被顶出屏幕。
+  没有 `visualViewport` 时什么都不做、返回空函数；卸载时移除监听并清掉 `--app-h` 与 `kb-open`。**只给整屏页面用**，文档滚动的普通页面不要接。
+
+### 安全区 `--safe-bottom`
+
+- `tokens.css`：`--safe-bottom: env(safe-area-inset-bottom, 0px)`；`html.kb-open` 下为 `0px`（键盘盖住了 Home 指示条，那段留白不需要了）。
+- 包里贴底的组件都用它：`.action-bar`（含 `.sticky` 与 ≤640px）、`.drawer` 底边与 ≤640px 的 `.drawer-foot`、`.sheet-foot`、`.lightbox-body`、`.toast-region`。
+  **应用自己贴底的元素也用 `var(--safe-bottom)`，不要直接写 `env(safe-area-inset-bottom)`。**
+- `.app-frame` 底部 `padding-bottom: var(--safe-bottom)`：文档滚动的页面滚到底时，最后一块内容不被 Home 指示条盖住（全局 border-box，不会多出滚动）。
+- 横屏：`.app-main` 与单用的 `.auth-shell` 左右内距取 `max(原内距, env(safe-area-inset-left / right) + --sp-2)`，刘海 / 灵动岛一侧让开。
+- 顶部：`.app-frame::before` 是 fixed 的状态栏遮罩（z 29，§3）——高 = 顶部安全区，底色 `--bg`，下沿渐隐 `--sp-2`（不超过安全区），`pointer-events: none`；
+  竖屏主屏 App 上滚的内容不再从时间 / 电量图标底下穿过。盖住内容与吸顶标题，低于应用顶栏（30）、工具位、弹层、toast。
+  `.app-frame` 上别加 transform / filter / contain（会让 fixed 失效，遮罩跟着页面滚走）。
+- 安全区为 0 时（桌面、非刘海设备、浏览器里竖屏）以上全部为 0，外观不变。
+
+### 自动更新 `autoUpdate()` 与刷新入口
+
+```js
+import { autoUpdate } from "@szyyw/design/webapp";
+autoUpdate({
+  current: document.documentElement.dataset.version,
+  check: async () => (await (await fetch("/api/version", { cache: "no-store" })).json()).version
+});
+```
+
+- `autoUpdate({ current, check, isBusy = defaultIsBusy, intervalMs = 600000, awayMs = 1800000 }): () => void`，返回停止函数。
+  - `current` 为空时什么都不做。`check()` 返回线上版本；抛错或返回空值视为未知、不刷新；同一时刻只有一个 `check()` 在跑。
+  - 每 `intervalMs`（10 分钟）检查一次（页面在后台时跳过），回到前台（visibilitychange）时也检查；版本不同且不忙 → `location.reload()`。
+  - 在后台待超过 `awayMs`（30 分钟）再回来，不忙就直接刷新（像原生 App 被系统回收后重开），不等检查。
+  - 忙的时候不刷新，记下「有新版本」，之后在 **focusout、点击、Esc、`<dialog>` 关闭** 之后的下一轮事件循环、每次定时、回到前台时重试，一旦不忙就刷新。
+- `defaultIsBusy()`：焦点在有内容的文字 input / textarea / contenteditable 上；或页面上有 `dialog[open]`、可见的 `.drawer` / `.sheet` / `.overlay`
+  （`confirm`、`lightbox` 都在 `.overlay` 里）。只看「焦点所在」的输入框：有草稿的输入栏失焦后不算忙——**带草稿的应用（聊天输入栏等）传自己的 `isBusy`**，
+  例如 `() => !!composer.value.trim() || defaultIsBusy()`。
+- 刷新入口：`mountChrome` 在 standalone 下自动在外观弹层头部、关闭键左边加「刷新页面」（`refresh-cw`，文案 `chromeText(locale).reload.label`：刷新页面 / ページを再読み込み / Reload page），
+  点击 `location.reload()`；浏览器里不出现；`reload: false` 关掉，`reload: { label?, onClick? }` 改文案 / 行为。
+  放弹层头部而不是工具位：手机上工具位已有切换器 / 账户 / 🌗 /（语言）/ 外观四五枚，再加一枚会挤占顶栏标题；刷新是低频操作，多点一下可以接受。
+- `isStandalone()`：`matchMedia('(display-mode: standalone)').matches || navigator.standalone === true`。
+
+### 触屏焦点 `focusInput(el, { hadFocus })`
+
+组件在点按 / 选完菜单项 / 关闭弹层后把焦点交还给输入框时，触屏上会平白弹出键盘。`focusInput` 代替 `el.focus()`：`(pointer: coarse)` 下，
+`el` 是文字输入且「这次点按开始时它本来就有焦点」（`hadFocus`，在点按区域上用捕获阶段的 pointerdown 记下 `document.activeElement === el`）或此刻仍是焦点时才 focus；
+精确指针与非文字元素照常 `focus({ preventScroll: true })`。包里用到的地方：`confirm` 关闭后交还焦点、输入校验失败拉回输入框；`lightbox` 关闭后交还焦点（显式给了 `returnFocus` 时照旧）。
+`confirm({ input })` 打开时聚焦输入框不变（那就是要输入）。
+
+### 两条禁令
+
+1. **不要用 `100vh` 当整屏高度。** 手机上 `100vh` 是工具栏收起后的大视口，比实际看得见的高；整屏用 `.app-fill`（`--app-h` / `100dvh`），至少一屏用 `100dvh`（先写 `100vh` 兜底）。
+   背景层 `.bg-layer` 的 `100lvh` 是刻意的（地址栏收放时不重建画布），不算。
+2. **不要靠下拉刷新。** standalone 下没有地址栏，`overscroll-behavior: none` 的整屏页面也拉不动；拿新代码靠 `autoUpdate`，手动刷新靠工具位外观弹层里的「刷新页面」。
+
+### 迁移
+
+- 应用侧原来的实现（内联 visualViewport 脚本、`--app-h` / `kb-open`、自写的版本检查与 `idle()`、整屏页面的 `html, body { height: 100%; overflow: hidden }`）
+  → `fitViewport()`、`autoUpdate({ current, check, isBusy })`、`body.app-screen` + `.app-fill`。注意 `kb-open` 现在加在 `<html>` 上（原来在 body 上的选择器要改）。
+- 自写的 `env(safe-area-inset-bottom)` → `var(--safe-bottom)`；自写的「输入框 pointerdown 时是否已有焦点」逻辑 → `focusInput(input, { hadFocus })`。
 
 ## 17. 出处与许可
 

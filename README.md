@@ -366,6 +366,21 @@ enhanceLightbox();                                              // [data-lightbo
 openLightbox({ items: [{ src, thumb, width, height }], start: 0, onClose });
 ```
 
+### 主屏 Web App（v0.32.0）
+
+每个应用都要能「添加到主屏幕」当独立 App 用：head 片段（`viewport-fit=cover`、manifest、`apple-mobile-web-app-*`、明暗两条 theme-color）、manifest 模板与两条禁令见 DESIGN.md §16.6，手测页 `demo/webapp.html`。
+贴底元素用 `var(--safe-bottom)`；主屏打开时 `mountChrome` 自动在外观弹层里加「刷新页面」。
+
+```html
+<html data-version="1.4.2"> … <body class="app-screen"><div class="app-frame app-fill">…</div></body>
+```
+
+```js
+import { fitViewport, autoUpdate } from "@szyyw/design/webapp";
+fitViewport();                                                   // 整屏页面：--app-h 跟随可见视口，键盘弹起时 html.kb-open
+autoUpdate({ current: document.documentElement.dataset.version, check: () => fetchVersion() });
+```
+
 ### 刻度与交互状态（v0.28.0）
 
 `tokens.css` 带一套明暗无关的刻度：字号 `--fs-*`、行高 `--lh-*`、圆角 `--r-*`、控件高度 `--h-sm/md/lg`（28 / 36 / 44）、间距 `--sp-1…6`、
@@ -424,6 +439,7 @@ openLightbox({ items: [{ src, thumb, width, height }], start: 0, onClose });
 | `./copy` | `copyText`、`mountCopy`、`enhanceCopyButtons`、`COPY_TEXTS`（一键复制，DESIGN.md §16.4） |
 | `./table` | `enhanceSortTable`（可排序表头，DESIGN.md §16.4） |
 | `./lightbox` | `openLightbox`、`enhanceLightbox`、`LIGHTBOX_TEXTS`（原图查看器：渐进加载、放大平移、跟手翻页、缩略图带、手机下拉关闭，DESIGN.md §16.5） |
+| `./webapp` | `isStandalone`、`fitViewport`、`autoUpdate`、`defaultIsBusy`、`focusInput`（主屏 Web App：整屏跟随可见视口、新版本自动刷新、触屏不平白弹键盘，DESIGN.md §16.6） |
 | `./icons` | `icon`、`iconSvg`、`enhanceIcons`、`hasIcon`、`ICON_NAMES`、`LUCIDE_VERSION`（Lucide 线性图标，DESIGN.md §16.2） |
 | `./version` | `VERSION`、`REPO` |
 

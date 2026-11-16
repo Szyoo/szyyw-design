@@ -1,5 +1,40 @@
 # Changelog
 
+## v0.32.0 — （未发布）
+
+**主屏 Web App**（DESIGN.md §16.6，手测页 `demo/webapp.html`）：所有应用都要能「添加到主屏幕」当独立 App 用，通用部分收进包里。
+
+**新增**
+- 新模块 `./webapp`：`isStandalone()`；`fitViewport()`（整屏页面跟随 `visualViewport`：`<html>` 上写 `--app-h`，键盘高度 > 120px 时加 `kb-open`，页面被推走时滚回顶部，返回卸载函数）；
+  `autoUpdate({ current, check, isBusy, intervalMs, awayMs })`（定时 + 回到前台检查版本，不同且不忙就刷新；后台超过 30 分钟回来不忙直接刷新；忙时在 focusout / 点击 / Esc / dialog 关闭后重试）；
+  `defaultIsBusy()`；`focusInput(el, { hadFocus })`（触屏上不平白弹键盘的 focus）。
+- 整屏布局 `body.app-screen`（页面不滚、不回弹，`min-height: 0`）与高度工具 `.app-fill`（`var(--app-h, 100dvh)`，`100vh` 兜底）。
+- token `--safe-bottom`（`env(safe-area-inset-bottom)`，`html.kb-open` 下为 0）。
+- `mountChrome` 新选项 `reload`（缺省 true）：主屏 App（standalone）下外观弹层头部、关闭键左边自动多一枚「刷新页面」（`refresh-cw`），浏览器里不出现；
+  `mountAppearance({ reload })` / `mountAppearancePanel({ reload })` 同步新增，文案进 `chromeText().reload`（zh / ja / en）。
+- 状态栏遮罩：`.app-frame::before` 固定在顶部，高 = 顶部安全区，底色 `--bg`、下沿渐隐，`pointer-events: none`，z 29（内容层里，低于顶栏 / 工具位 / 弹层 / toast）；`body.app-screen` 不加。
+
+**修复**
+- 触屏上关闭 `confirm` / `lightbox` 后不再把焦点还给输入框而弹出键盘；`confirm({ input })` 点「确定」校验失败时，只有输入框原本就有焦点才拉回去。桌面行为不变。
+
+**应用侧怎么迁**
+- head 加齐 DESIGN.md §16.6 的片段（`viewport-fit=cover`、`<link rel="manifest">`、`apple-mobile-web-app-capable` / `mobile-web-app-capable`、`black-translucent`、
+  `apple-mobile-web-app-title`、明暗两条 `theme-color`、180×180 `apple-touch-icon`），按模板出 manifest 与 192 / 512（+ maskable）图标；`<html data-version>` 写当前版本。
+- 应用侧原来的实现（内联 visualViewport 脚本、自写 `--app-h` / `kb-open`、版本检查与 `idle()`、整屏页面的 `html, body { height: 100%; overflow: hidden }`）
+  → `fitViewport()`、`autoUpdate({ current, check, isBusy })`、`body.app-screen` + `.app-fill`。`kb-open` 现在在 `<html>` 上，原来写在 body 上的选择器改成 `html.kb-open …`。
+  有草稿输入栏的应用给 `autoUpdate` 传自己的 `isBusy`（缺省只看焦点所在的输入框）。
+- 自写的 `env(safe-area-inset-bottom)` → `var(--safe-bottom)`；整屏高度别再写 `100vh`（用 `.app-fill` 或 `100dvh`）；自写的触屏回焦逻辑 → `focusInput`。
+- 已经自己加了刷新按钮的应用：去掉自己的，或给 `mountChrome({ reload: false })`。
+
+**可见变化**
+- 安全区：包里贴底的组件（`.action-bar`、`.drawer` / `.drawer-foot`、`.sheet-foot`、`.lightbox-body`、`.toast-region`）改用 `--safe-bottom`；平时数值不变，
+  `fitViewport()` 判定键盘弹起（`html.kb-open`）时底部安全区归零。
+- 横屏刘海：`.app-main` 与单用的 `.auth-shell` 左右内距改为 `max(原内距, 安全区 + 8px)`，横屏时刘海 / 灵动岛一侧不再盖住内容。
+- `.app-frame` 底部加 `padding-bottom: var(--safe-bottom)`：有 Home 指示条的设备上，文档滚动页面滚到底时最后一块内容不被盖住（整屏 `.app-screen` 不加）。
+- 状态栏遮罩：竖屏主屏 App 上滚的内容不再从状态栏底下穿过。
+- `body` 与 `.app-frame` 的 `min-height` 由 `100vh` 改为 `100dvh`（`100vh` 兜底）：手机上短页面不再多出一截滚动。
+- 以上在没有安全区的环境（桌面、非刘海设备、浏览器里竖屏）都为 0 / 与原来相同，桌面外观不变。
+
 ## v0.31.2 — 2026-11-09
 
 **修复**
