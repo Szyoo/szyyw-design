@@ -225,6 +225,17 @@
   --blur-lg: 18px;
 }
 
+/* ===== 安全区（v0.32.0，主屏 Web App） =====
+   组件贴底的位置一律用 --safe-bottom，不直接写 env(safe-area-inset-bottom)：
+   键盘弹起时（html.kb-open，由 webapp.js 的 fitViewport() 切换）底部的 Home 指示条被键盘盖住，
+   这段留白不再需要，归零后输入栏正好贴着键盘。规则见 DESIGN.md「主屏 Web App」。 */
+:root {
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+html.kb-open {
+  --safe-bottom: 0px;
+}
+
 /* ===== themes-webgl ===== */
 /* WebGL 背景主题（themes/gradient-waves.js / side-rays.js / pixel-blast.js）的取色 token。
    颜色的 alpha 是该主题的「强度系数」：浅色模式整体压低，叠在浅底上也不刺眼、不抢正文。 */

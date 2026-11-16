@@ -40,7 +40,9 @@ body {
   font-family: 'Inter', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', system-ui, sans-serif;
   font-size: var(--fs-body);
   line-height: var(--lh-body);
+  /* 先写 100vh 兜底，再写 100dvh（v0.32.0）：手机上 100vh 比实际看得见的高，整页会多出一截滚动 */
   min-height: 100vh;
+  min-height: 100dvh;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -104,6 +106,26 @@ a {
   position: relative;
   z-index: 1;
   min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* ---------- 整屏页面（v0.32.0，主屏 Web App；DESIGN.md「主屏 Web App」） ----------
+   聊天、地图这类「一屏就是整个应用、只有内部区域滚动、底部有输入栏」的页面：<body class="app-screen">。
+   页面本身不滚动、不回弹（body 的 min-height 100dvh 在手机上仍可能比实际可见的高，这里归零盖过）；
+   整屏容器加 .app-fill，高度跟随可见视口——--app-h 由 webapp.js 的 fitViewport() 写在 <html> 上，
+   键盘弹起时随之变矮，输入栏贴着键盘；没接 fitViewport 时退回 100dvh / 100vh。 */
+html:has(> body.app-screen),
+body.app-screen {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+body.app-screen { min-height: 0; }
+.app-fill {
+  height: 100vh;
+  height: var(--app-h, 100dvh);
+  /* 高度就是可见视口：盖过 .app-frame 等自带的 min-height（叠在 .app-frame 上时键盘弹起也要能变矮） */
+  min-height: 0;
 }
 
 /* 居中主体栏（.app-main，v0.25.0）：.app-frame > .app-main > …
@@ -1248,7 +1270,7 @@ table.tbl {
   flex: none;
   display: flex;
   gap: var(--sp-2);
-  padding: var(--sp-3) var(--sp-4) calc(var(--sp-4) + env(safe-area-inset-bottom, 0px));
+  padding: var(--sp-3) var(--sp-4) calc(var(--sp-4) + var(--safe-bottom));
 }
 
 .sheet-foot .btn, .sheet-foot .btn-ghost { flex: 1; }
@@ -1948,7 +1970,7 @@ table.tbl {
 .toast-region {
   position: fixed;
   left: 50%;
-  bottom: calc(var(--toast-offset, 20px) + env(safe-area-inset-bottom, 0px));
+  bottom: calc(var(--toast-offset, 20px) + var(--safe-bottom));
   transform: translateX(-50%);
   z-index: 60;
   display: flex;
@@ -2139,7 +2161,7 @@ select.field.small { padding-right: 30px; }
   position: fixed;
   top: var(--drawer-top, calc(12px + env(safe-area-inset-top, 0px)));
   right: calc(12px + env(safe-area-inset-right, 0px));
-  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(12px + var(--safe-bottom));
   z-index: 51;
   width: min(var(--drawer-w, 440px), calc(100vw - 24px));
   display: flex;
@@ -2204,7 +2226,7 @@ select.field.small { padding-right: 30px; }
     border: none;
     padding-top: env(safe-area-inset-top, 0px);
   }
-  .drawer-foot { padding-bottom: calc(var(--sp-4) + env(safe-area-inset-bottom, 0px)); }
+  .drawer-foot { padding-bottom: calc(var(--sp-4) + var(--safe-bottom)); }
 }
 
 /* ---------- 页头（.app-header）----------
@@ -4727,7 +4749,7 @@ textarea.field { vertical-align: top; }
   z-index: 40;
   left: 0;
   right: 0;
-  bottom: calc(var(--action-bar-offset, var(--sp-4)) + env(safe-area-inset-bottom, 0px));
+  bottom: calc(var(--action-bar-offset, var(--sp-4)) + var(--safe-bottom));
   width: min(var(--action-bar-w, 720px), calc(100% - var(--sp-4) * 2));
   margin-inline: auto;
   display: flex;
@@ -4746,7 +4768,7 @@ textarea.field { vertical-align: top; }
   line-height: var(--lh-snug);
   animation: rise var(--dur-base) var(--ease) both;
 }
-.action-bar.sticky { position: sticky; z-index: 20; left: auto; right: auto; width: auto; margin-inline: 0; bottom: calc(var(--sp-3) + env(safe-area-inset-bottom, 0px)); animation: none; }
+.action-bar.sticky { position: sticky; z-index: 20; left: auto; right: auto; width: auto; margin-inline: 0; bottom: calc(var(--sp-3) + var(--safe-bottom)); animation: none; }
 .action-bar-text { flex: 1 1 auto; min-width: 0; color: var(--text-dim); overflow-wrap: anywhere; }
 .action-bar-text :is(b, strong) { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
 .action-bar-actions { flex: none; display: flex; align-items: center; gap: var(--sp-2); }
@@ -4756,7 +4778,7 @@ textarea.field { vertical-align: top; }
 }
 :root:has(.action-bar:not([hidden], .sticky)) .app-main::after { content: ""; display: block; height: var(--action-bar-space); }
 @media (max-width: 640px) {
-  .action-bar:not(.sticky) { width: calc(100% - var(--sp-2) * 2); bottom: calc(var(--action-bar-offset, var(--sp-2)) + env(safe-area-inset-bottom, 0px)); }
+  .action-bar:not(.sticky) { width: calc(100% - var(--sp-2) * 2); bottom: calc(var(--action-bar-offset, var(--sp-2)) + var(--safe-bottom)); }
   .action-bar { flex-wrap: wrap; padding: var(--sp-3); }
   .action-bar-actions { flex: 1 1 100%; }
   .action-bar-actions > :is(.btn, .btn-ghost) { flex: 1 1 0; }
@@ -5120,7 +5142,7 @@ textarea.field { vertical-align: top; }
     padding: 0 var(--sp-2);
   }
   .lightbox-sheet { position: relative; }
-  .lightbox-body { padding: 0 0 calc(var(--sp-2) + env(safe-area-inset-bottom, 0px)); }
+  .lightbox-body { padding: 0 0 calc(var(--sp-2) + var(--safe-bottom)); }
   .lightbox-stage { flex: 1; height: auto; min-height: 0; border-radius: 0; }
   .lightbox-thumbs { margin-inline: 0; padding-inline: var(--sp-3); scroll-padding-inline: var(--sp-3); }
   .lightbox-bar { padding: var(--sp-2) var(--sp-3) 0; }
