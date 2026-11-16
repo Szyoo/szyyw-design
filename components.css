@@ -111,8 +111,23 @@ a {
      全局 border-box，min-height 已含这段，不会多出滚动；没有安全区（桌面、竖屏浏览器）时为 0，外观不变 */
   padding-bottom: var(--safe-bottom);
 }
-/* 整屏页面自己管底部（输入栏用 --safe-bottom），外框不再垫 */
+/* 状态栏遮罩（v0.32.0）：主屏 App 竖屏配 black-translucent 时状态栏透明，页面上滚的内容会从时间 / 电量图标底下穿过。
+   顶部固定一条 --bg 底（高 = 顶部安全区，下沿再渐隐 --sp-2，但不超过安全区本身）。
+   画在 .app-frame 的层叠上下文里（z 29）：盖住滚动内容与吸顶标题（20 / 21），低于应用顶栏（30）——
+   顶栏自己带安全区内距——也就低于工具位、弹层、toast 等挂在 body 上的层。不拦点击。
+   安全区为 0（桌面、非刘海设备、浏览器里、横屏）时高度为 0，没有任何可见变化 */
+.app-frame::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 29;
+  height: calc(env(safe-area-inset-top, 0px) + min(var(--sp-2), env(safe-area-inset-top, 0px)));
+  background: linear-gradient(to bottom, var(--bg) env(safe-area-inset-top, 0px), transparent);
+  pointer-events: none;
+}
+/* 整屏页面自己管底部（输入栏用 --safe-bottom），外框不再垫；内容只在内部区域滚动、不会穿过状态栏，也不要遮罩 */
 body.app-screen .app-frame { padding-bottom: 0; }
+body.app-screen .app-frame::before { content: none; }
 
 /* ---------- 整屏页面（v0.32.0，主屏 Web App；DESIGN.md「主屏 Web App」） ----------
    聊天、地图这类「一屏就是整个应用、只有内部区域滚动、底部有输入栏」的页面：<body class="app-screen">。
