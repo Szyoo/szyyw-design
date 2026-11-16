@@ -107,7 +107,12 @@ a {
   z-index: 1;
   min-height: 100vh;
   min-height: 100dvh;
+  /* 底部安全区（v0.32.0）：文档滚动的页面滚到底时，最后一块内容不被 Home 指示条盖住。
+     全局 border-box，min-height 已含这段，不会多出滚动；没有安全区（桌面、竖屏浏览器）时为 0，外观不变 */
+  padding-bottom: var(--safe-bottom);
 }
+/* 整屏页面自己管底部（输入栏用 --safe-bottom），外框不再垫 */
+body.app-screen .app-frame { padding-bottom: 0; }
 
 /* ---------- 整屏页面（v0.32.0，主屏 Web App；DESIGN.md「主屏 Web App」） ----------
    聊天、地图这类「一屏就是整个应用、只有内部区域滚动、底部有输入栏」的页面：<body class="app-screen">。
@@ -144,7 +149,10 @@ body.app-screen { min-height: 0; }
   width: 100%;
   max-width: var(--page-max-w);
   margin-inline: auto;
-  padding-inline: var(--page-pad-x);
+  /* 左右安全区（v0.32.0）：横屏且 viewport-fit=cover 时内容会延伸到刘海一侧，内距至少让开安全区再加 --sp-2；
+     没有安全区（竖屏、桌面）时 max() 取原内距，外观不变 */
+  padding-left: max(var(--page-pad-x), calc(env(safe-area-inset-left, 0px) + var(--sp-2)));
+  padding-right: max(var(--page-pad-x), calc(env(safe-area-inset-right, 0px) + var(--sp-2)));
 }
 .app-main::before {
   content: "";
@@ -3980,7 +3988,12 @@ select.field.small { padding-right: 30px; }
   justify-content: flex-start;
   padding-block: max(var(--sp-6), 12svh) var(--sp-6);
 }
-.auth-shell:not(.app-main) { min-height: 100svh; padding-inline: var(--sp-4); }
+.auth-shell:not(.app-main) {
+  min-height: 100svh;
+  /* 左右安全区（v0.32.0）：同 .app-main，横屏刘海一侧至少让开安全区 + --sp-2 */
+  padding-left: max(var(--sp-4), calc(env(safe-area-inset-left, 0px) + var(--sp-2)));
+  padding-right: max(var(--sp-4), calc(env(safe-area-inset-right, 0px) + var(--sp-2)));
+}
 @media (min-width: 641px) and (min-height: 560px) {
   .auth-shell { justify-content: center; padding-block: var(--sp-6); }
 }
