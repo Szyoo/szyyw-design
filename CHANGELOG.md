@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.33.1 — 2026-11-16
+
+**修复**
+- iOS 主屏 App（standalone + `black-translucent`）里 `body.app-screen` 整屏页面底部空出一截（高度等于顶部安全区）：根元素 `overflow: hidden` 时 WebKit 把视口算成「屏高 − 顶部安全区」，`--app-h`、`100dvh`、背景层都短一截并被裁掉。主屏模式下 `body.app-screen` 改为根元素不裁剪、body 至少 `100lvh`，视口恢复整屏；键盘弹起 / 收起时 `--app-h` 照常跟随。浏览器里打开不受影响。
+
 ## v0.33.0 — 2026-11-16
 
 **新增**

@@ -147,6 +147,18 @@ body.app-screen { min-height: 0; }
   /* 高度就是可见视口：盖过 .app-frame 等自带的 min-height（叠在 .app-frame 上时键盘弹起也要能变矮） */
   min-height: 0;
 }
+/* v0.33.1：iOS 主屏 App（standalone + black-translucent）里，根元素 overflow: hidden 时 WebKit 把视口算成
+   「屏高 − 顶部安全区」（innerHeight / visualViewport / 100dvh 都短一截），超出部分被裁掉，底部露出一条空白。
+   内容撑到大视口（100lvh = 屏高）且根元素不裁剪时，它才把视口放大到整屏。所以主屏模式下：
+   根元素不裁剪、body 至少 100lvh；页面仍不滚动（内容正好一屏，fitViewport 兜底滚回顶部），回弹由 overscroll-behavior 关掉。 */
+@media (display-mode: standalone) {
+  html:has(> body.app-screen),
+  body.app-screen {
+    height: auto;
+    overflow: visible;
+  }
+  body.app-screen { min-height: 100vh; min-height: 100lvh; }
+}
 
 /* 居中主体栏（.app-main，v0.25.0）：.app-frame > .app-main > …
    定宽居中、两侧留空的那一栏，自带一层半透明底（--page-veil），让正文在各背景主题上更清楚，仍透出一点背景。
