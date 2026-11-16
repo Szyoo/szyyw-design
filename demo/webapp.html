@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="zh-CN" data-version="1">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Web App 手测">
+<title>v0.32.0 主屏 Web App · 手测</title>
+<!--
+  v0.32.0 主屏 Web App（./webapp、body.app-screen、.app-fill、--safe-bottom）的手测页（不进 package files），对应 DESIGN.md「主屏 Web App」。
+  仓库根目录 `python3 -m http.server 8080`，打开 http://localhost:8080/demo/webapp.html
+    ?scheme=light|dark|auto   明暗（缺省 dark）
+    ?ver=<v>                  模拟线上版本（假的 check() 返回它）；与页面已加载的版本不同就会自动刷新
+    ?interval=<ms>            autoUpdate 检查间隔（缺省 3000，手测用；真实应用缺省 10 分钟）
+  「已加载版本」第一次是 <html data-version>（1），之后取上一次 check 看到的版本——模拟「刷新后拿到了新代码」，不会循环刷新。
+  看点：手机上点底部输入框，键盘弹起时输入栏贴着键盘、--app-h 变小、出现 kb-open，页面不被顶走；
+  输入框里有字或开着底部抽屉时版本变了也不刷新，清空并失焦 / 关掉抽屉后刷新；主屏打开时外观弹层头部有「刷新页面」。
+-->
+<script>
+  (function () {
+    var s = new URLSearchParams(location.search).get("scheme");
+    document.documentElement.setAttribute("data-scheme", s === "light" || s === "auto" ? s : "dark");
+    // 「刷新后拿到新代码」：上一次 check 看到的线上版本就是这次加载的版本
+    try {
+      var served = sessionStorage.getItem("webapp-demo:served");
+      if (served) document.documentElement.dataset.version = served;
+      sessionStorage.setItem("webapp-demo:loads", String(Number(sessionStorage.getItem("webapp-demo:loads") || 0) + 1));
+    } catch (e) {}
+  })();
+</script>
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../components.css">
+<style>
+  /* 整屏：头 / 中间滚动区 / 底部输入栏 */
+  .shell { display: flex; flex-direction: column; }
+  .shell > .app-header { flex: none; }
+  .scroller {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
+    padding: var(--sp-3) var(--sp-4);
+  }
+  .composer {
+    flex: none;
+    padding: var(--sp-2) var(--sp-4) calc(var(--sp-2) + var(--safe-bottom));
+  }
+  .msg { margin: 0; max-width: 32rem; }
+  .state { display: grid; grid-template-columns: auto 1fr; gap: var(--sp-1) var(--sp-3); margin: 0; font-size: var(--fs-sm); }
+  .state dt { color: var(--text-dim); }
+  .state dd { margin: 0; }
+  .note { margin: 0; font-size: var(--fs-sm); color: var(--text-dim); }
+</style>
+</head>
+<body class="app-screen">
+<div class="bg-layer" aria-hidden="true"></div>
+<div class="app-frame app-fill shell">
+  <header class="app-header">
+    <div class="app-brand">
+      <h1 class="app-title">Web App</h1>
+      <span class="app-sub">webapp · v0.32.0</span>
+    </div>
+  </header>
+
+  <div class="scroller" id="scroller">
+    <section class="glass panel">
+      <h2 class="panel-title">状态</h2>
+      <dl class="state">
+        <dt>isStandalone()</dt><dd class="num" id="s-standalone">—</dd>
+        <dt>--app-h</dt><dd class="num" id="s-apph">—</dd>
+        <dt>html.kb-open</dt><dd class="num" id="s-kb">—</dd>
+        <dt>--safe-bottom</dt><dd class="num" id="s-safe">—</dd>
+        <dt>已加载版本</dt><dd class="num" id="s-ver">—</dd>
+        <dt>线上版本</dt><dd class="num" id="s-served">—</dd>
+        <dt>defaultIsBusy()</dt><dd class="num" id="s-busy">—</dd>
+        <dt>本标签页加载次数</dt><dd class="num" id="s-loads">—</dd>
+      </dl>
+      <div class="row wrap" style="margin-top: var(--sp-3)">
+        <button type="button" class="btn-ghost btn-small" id="bump">模拟发版（线上版本 +1）</button>
+        <button type="button" class="btn-ghost btn-small" id="sheet">打开底部抽屉</button>
+        <button type="button" class="btn-ghost btn-small" id="prompt">输入框式确认</button>
+        <button type="button" class="btn-ghost btn-small" id="reset">重置版本</button>
+      </div>
+    </section>
+    <p class="note">下面是填充内容，让中间区域能滚动；页面本身不滚、不回弹。</p>
+    <div id="fill"></div>
+  </div>
+
+  <form class="composer" id="composer" autocomplete="off">
+    <div class="field-row">
+      <input class="field" id="input" placeholder="输入点什么…">
+      <button type="submit" class="btn">发送</button>
+    </div>
+  </form>
+</div>
+
+<script type="module">
+  import { isStandalone, fitViewport, autoUpdate, defaultIsBusy } from "../webapp.js";
+  import { mountChrome } from "../chrome.js";
+  import { mountOverlay } from "../overlay.js";
+  import { confirm } from "../confirm.js";
+
+  const q = new URLSearchParams(location.search);
+  const $ = (id) => document.getElementById(id);
+  const store = {
+    get: (k) => { try { return sessionStorage.getItem(k); } catch { return null; } },
+    set: (k, v) => { try { v == null ? sessionStorage.removeItem(k) : sessionStorage.setItem(k, v); } catch {} }
+  };
+
+  window.__chrome = mountChrome({ background: document.querySelector(".bg-layer"), portal: null, persist: "none" });
+  window.__unfit = fitViewport();
+
+  // 假的线上版本：?ver= 优先，「模拟发版」按钮在它基础上 +1
+  const loaded = document.documentElement.dataset.version;
+  let served = q.get("ver") || store.get("webapp-demo:bumped") || loaded;
+  window.__setServed = (v) => { served = String(v); store.set("webapp-demo:bumped", served); };
+  window.__checks = 0;
+  window.__stopUpdate = autoUpdate({
+    current: loaded,
+    check: async () => {
+      window.__checks++;
+      store.set("webapp-demo:served", served);
+      return served;
+    },
+    intervalMs: Number(q.get("interval")) || 3000
+  });
+
+  $("bump").addEventListener("click", () => window.__setServed(Number(served) + 1 || 2));
+  $("reset").addEventListener("click", () => {
+    store.set("webapp-demo:served", null);
+    store.set("webapp-demo:bumped", null);
+    store.set("webapp-demo:loads", null);
+    location.href = location.pathname + (q.get("scheme") ? `?scheme=${q.get("scheme")}` : "");
+  });
+  $("sheet").addEventListener("click", () => {
+    const overlay = document.createElement("div");
+    overlay.className = "overlay";
+    overlay.innerHTML = `<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="st">
+      <div class="sheet-grabber" aria-hidden="true"></div>
+      <div class="sheet-head"><h2 class="sheet-title" id="st">底部抽屉</h2><button type="button" class="close-x" aria-label="关闭"></button></div>
+      <div class="sheet-body"><p class="note">开着时算「忙」，版本变了也不刷新；关掉后刷新。</p></div>
+      <div class="sheet-foot"><button type="button" class="btn" data-close>好</button></div>
+    </div>`;
+    document.body.append(overlay);
+    const done = () => { ov.destroy(); overlay.remove(); };
+    const ov = mountOverlay(overlay, { dragClose: true, onClose: done });
+    overlay.querySelectorAll(".close-x, [data-close]").forEach((b) => b.addEventListener("click", done));
+  });
+  $("prompt").addEventListener("click", async () => {
+    const v = await confirm({ title: "改个名字", input: { value: "示例", required: true, requiredMessage: "不能为空" } });
+    if (v !== null) addMsg(`改名为：${v}`);
+  });
+
+  const fill = $("fill");
+  const addMsg = (text) => {
+    const p = document.createElement("p");
+    p.className = "glass panel msg";
+    p.textContent = text;
+    fill.append(p);
+    $("scroller").scrollTop = $("scroller").scrollHeight;
+  };
+  for (let i = 1; i <= 12; i++) addMsg(`第 ${i} 条填充消息：整屏布局里只有这块区域滚动。`);
+  $("composer").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const v = $("input").value.trim();
+    if (!v) return;
+    addMsg(v);
+    $("input").value = "";
+  });
+
+  const root = document.documentElement;
+  function render() {
+    const cs = getComputedStyle(root);
+    $("s-standalone").textContent = String(isStandalone());
+    $("s-apph").textContent = root.style.getPropertyValue("--app-h") || "（未设）";
+    $("s-kb").textContent = String(root.classList.contains("kb-open"));
+    $("s-safe").textContent = cs.getPropertyValue("--safe-bottom").trim() || "0px";
+    $("s-ver").textContent = loaded;
+    $("s-served").textContent = served;
+    $("s-busy").textContent = String(defaultIsBusy());
+    $("s-loads").textContent = store.get("webapp-demo:loads") || "1";
+  }
+  render();
+  setInterval(render, 200);
+  window.__render = render;
+</script>
+</body>
+</html>
