@@ -28,6 +28,7 @@ const RAIL_WIDTH_VAR = "--corner-rail-w";
 let rail = null;
 let railObserver = null;
 let railMutations = null;
+let pageObserver = null;
 
 const PANEL_TOP_VAR = "--corner-panel-top";
 const PANEL_RIGHT_VAR = "--corner-panel-right";
@@ -49,6 +50,10 @@ function setVar(name, value) {
  *   纵排时挂在下方会压住下面那几枚按钮。用实测值而不是按方向写死，
  *   未登录时「登录」按钮比一枚图标宽，写死的偏移会对不上。
  */
+function publishOnShow() {
+  if (!document.hidden) publishRailHeight();
+}
+
 function publishRailHeight() {
   if (!rail?.isConnected) return;
   setVar(RAIL_HEIGHT_VAR, `${rail.offsetHeight}px`);
@@ -100,6 +105,16 @@ export function cornerRail() {
   }
   // 窗口变宽变窄时工具位自身尺寸不变（观察不到），但 right 的像素值要跟着重算
   window.addEventListener("resize", publishRailHeight, { passive: true });
+  // 主屏 App 冷启动时可能在页面还没有宽度时就量了（--corner-rail-w 成 0，全宽顶栏右端被按钮压住），
+  // 之后工具位尺寸不变、也不一定有窗口 resize：页面尺寸定下来、从后台回到前台时再量（v0.33.3）
+  if (typeof ResizeObserver !== "undefined") {
+    pageObserver?.disconnect();
+    pageObserver = new ResizeObserver(publishRailHeight);
+    pageObserver.observe(document.documentElement);
+  }
+  window.addEventListener("pageshow", publishRailHeight);
+  document.addEventListener("visibilitychange", publishOnShow);
+  requestAnimationFrame(publishRailHeight);
   publishRailHeight();
   return rail;
 }
@@ -127,6 +142,10 @@ export function mountCornerTool(el, { order = 50 } = {}) {
       document.documentElement.style.removeProperty(PANEL_TOP_VAR);
       document.documentElement.style.removeProperty(PANEL_RIGHT_VAR);
       window.removeEventListener("resize", publishRailHeight);
+      window.removeEventListener("pageshow", publishRailHeight);
+      document.removeEventListener("visibilitychange", publishOnShow);
+      pageObserver?.disconnect();
+      pageObserver = null;
       if (rail === host) rail = null;
     } else {
       publishRailHeight();

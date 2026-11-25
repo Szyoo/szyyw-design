@@ -1580,6 +1580,7 @@ const unfit = fitViewport();     // 离开整屏页面（SPA 换路由）时调 
 - `fitViewport(): () => void`：监听 `visualViewport` 的 resize / scroll（rAF 合并成每帧一次）——
   `--app-h` = `round(visualViewport.height)px`（写在 `<html>` 上）；键盘高度（`documentElement.clientHeight − visualViewport.height`）超过 120px 时 `<html>` 加 `kb-open`；
   页面被 iOS 推走（`scrollY` 或 `visualViewport.offsetTop` 不为 0）时 `scrollTo(0, 0)`。效果：键盘弹起时整屏变矮、输入栏贴着键盘，不被顶出屏幕。
+  窗口 `resize` / `orientationchange`（横竖屏切换）后除下一帧外，再在 150 / 400 / 800ms 各量一次：iOS 旋转途中连发中间值、转完不一定补发 `visualViewport` resize，只量一次会让 `--app-h` 停在旋转中途（v0.33.3）。
   没有 `visualViewport` 时什么都不做、返回空函数；卸载时移除监听并清掉 `--app-h` 与 `kb-open`。**只给整屏页面用**，文档滚动的普通页面不要接。
 
 ### 安全区 `--safe-bottom`

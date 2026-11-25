@@ -31,6 +31,9 @@ export function isStandalone() {
  * - 键盘高度（布局视口高 − 可见视口高）超过 120px 时给 <html> 加 kb-open（--safe-bottom 归零）；
  * - 页面被推走（scrollY / visualViewport.offsetTop 不为 0）时滚回顶部。
  * resize / scroll 回调用 requestAnimationFrame 合并成每帧一次。没有 visualViewport 的环境什么都不做。
+ * 横竖屏切换（v0.33.3）：iOS 旋转途中连发一串中间值，转完不一定再补一次 visualViewport resize，
+ * --app-h 会停在旋转中途的值（键盘开着转回竖屏时输入栏跑到很高的位置，iOS 再推页面、这里再滚回，来回闪）。
+ * 所以窗口 resize / orientationchange 之后，除了下一帧，再在 150 / 400 / 800ms 各量一次，取稳定后的值。
  * @returns {() => void} 卸载：移除监听，并清掉 --app-h 与 kb-open
  */
 export function fitViewport() {
@@ -49,14 +52,30 @@ export function fitViewport() {
   const later = () => {
     if (!raf) raf = requestAnimationFrame(fit);
   };
+  // 旋转 / 窗口尺寸变化：数值要过一会儿才稳定，分几次补量
+  let timers = [];
+  const settle = () => {
+    later();
+    for (const t of timers) clearTimeout(t);
+    timers = [150, 400, 800].map((ms) => setTimeout(later, ms));
+  };
+  const orientation = typeof screen !== "undefined" ? screen.orientation : null;
 
   vv.addEventListener("resize", later);
   vv.addEventListener("scroll", later);
+  window.addEventListener("resize", settle);
+  window.addEventListener("orientationchange", settle);
+  orientation?.addEventListener?.("change", settle);
   fit();
 
   return () => {
     vv.removeEventListener("resize", later);
     vv.removeEventListener("scroll", later);
+    window.removeEventListener("resize", settle);
+    window.removeEventListener("orientationchange", settle);
+    orientation?.removeEventListener?.("change", settle);
+    for (const t of timers) clearTimeout(t);
+    timers = [];
     if (raf) cancelAnimationFrame(raf);
     raf = 0;
     root.style.removeProperty(APP_H);
